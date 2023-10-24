@@ -1,0 +1,9 @@
+allprojects {
+	repositories {
+		mavenCentral()
+	}
+
+	task genwrapper(type: Wrapper) {
+		gradleVersion = '8.3'
+	}
+}

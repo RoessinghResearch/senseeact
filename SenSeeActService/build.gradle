@@ -1,0 +1,27 @@
+plugins {
+	id 'java'
+	id 'java-library'
+}
+
+group = 'nl.rrd'
+version = '6.0.7'
+sourceCompatibility = 17
+targetCompatibility = 17
+archivesBaseName = 'senseeact-service'
+
+dependencies {
+	api project(':SenSeeActServiceLib')
+	api 'com.google.zxing:core:3.5.1'
+	api 'com.google.zxing:javase:3.5.1'
+}
+
+test {
+	testLogging.showStandardStreams = true
+}
+
+javadoc {
+	options {
+		links 'https://docs.oracle.com/en/java/javase/17/docs/api/'
+		addBooleanOption('Xdoclint:all,-missing,-html', true)
+	}
+}

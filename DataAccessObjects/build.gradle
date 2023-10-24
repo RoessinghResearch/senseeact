@@ -1,0 +1,42 @@
+plugins {
+	id 'java'
+	id 'java-library'
+}
+
+group = 'nl.rrd'
+version = 5.0
+sourceCompatibility = 17
+targetCompatibility = 17
+archivesBaseName = 'senseeact-dao'
+
+dependencies {
+	api project (':RRDUtils')
+	api 'mysql:mysql-connector-java:8.0.33'
+	testImplementation 'junit:junit:4.13.2'
+	testImplementation 'org.slf4j:slf4j-simple:2.0.5'
+}
+
+test {
+	testLogging.showStandardStreams = true
+}
+
+gradle.taskGraph.whenReady {
+	tasks.withType(Test) {
+		project.properties.each { key, value ->
+			if (!key.matches('test.+') || !(value instanceof String))
+				return
+			systemProperty key, value
+		}
+	}
+}
+
+compileJava {
+	options.compilerArgs = ["-Xlint:deprecation"]
+}
+
+javadoc {
+	options {
+		links 'https://docs.oracle.com/en/java/javase/17/docs/api/'
+		addBooleanOption('Xdoclint:all,-missing,-html', true)
+	}
+}
