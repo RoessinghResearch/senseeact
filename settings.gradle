@@ -1,5 +1,5 @@
 include ':DataAccessObjects', ':SenSeeActClient',
 		':SenSeeActServiceLib', ':SenSeeActService',
-		':RRDUtils',
+		':RRDUtils'
 
 project(':RRDUtils').projectDir = new File(settingsDir, '../rrd-utils/RRDUtils').getCanonicalFile()
