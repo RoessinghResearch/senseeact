@@ -1,0 +1,21 @@
+button {
+	width: 224px;
+	height: 48px;
+	border: 0;
+	border-radius: 24px;
+	background-color: #5298b2;
+	margin: 0 auto;
+	text-align: center;
+	font-family: 'Oswald', sans-serif;
+	text-transform: uppercase;
+	font-size: 20px;
+	color: white;
+	cursor: pointer;
+}
+
+button:disabled {
+	border: 0.5px solid #afafaf;
+	background-color: #ececec;
+	color: #afafaf;
+	cursor: default;
+}

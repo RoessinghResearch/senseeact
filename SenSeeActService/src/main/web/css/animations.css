@@ -1,0 +1,47 @@
+@keyframes animation-button-click {
+	0% {
+		background: #5298b2;
+	}
+	50% {
+		background: #227391;
+	}
+	100% {
+		background: #5298b2;
+	}
+}
+
+.animate-button-click {
+	animation-name: animation-button-click;
+	animation-timing-function: ease;
+	animation-duration: 200ms;
+}
+
+@keyframes animation-toast-fade-in {
+	0% {
+		opacity: 0.0;
+	}
+	100% {
+		opacity: 1.0;
+	}
+}
+
+.animate-toast-fade-in {
+	animation-name: animation-toast-fade-in;
+	animation-timing-function: ease;
+	animation-duration: 400ms;
+}
+
+@keyframes animation-toast-fade-out {
+	0% {
+		opacity: 1.0;
+	}
+	100% {
+		opacity: 0.0;
+	}
+}
+
+.animate-toast-fade-out {
+	animation-name: animation-toast-fade-out;
+	animation-timing-function: ease;
+	animation-duration: 400ms;
+}

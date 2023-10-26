@@ -1,0 +1,95 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+	<title>SenSeeAct - Roessingh Research and Development</title>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+
+	<script type="text/javascript">
+		var version = '1';
+		var basePath = '/senseeact';
+		var servicePath = '/servlets/senseeact/v6.0.7';
+		
+		function initCss(name) {
+			document.write('<link rel="stylesheet" type="text/css" href="' +
+				basePath + '/css/' + name + '.css?v=' + version + '" />');
+		}
+	
+		function initJS(name) {
+			document.write('<s' + 'cript src="' + basePath + '/js/' + name +
+				'.js?v=' + version + '"></s' + 'cript>');
+		}
+		
+		function initLib(name) {
+			document.write('<s' + 'cript src="' + basePath + '/lib/' + name +
+				'"></s' + 'cript>');
+		}
+		
+		function initFavIcon(size) {
+			document.write('<link rel="icon" type="image/png" sizes="' + size +
+				'x' + size + '" href="' + basePath + '/images/favicon' + size +
+				'.png">');
+		}
+	</script>
+
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&display=swap" rel="stylesheet">
+	<link href="https://fonts.googleapis.com/css2?family=Oswald&display=swap" rel="stylesheet">
+		
+	<script type="text/javascript">
+		initCss('animations');
+		initCss('main');
+		initCss('widgets/background-image');
+		initCss('widgets/button');
+		initCss('widgets/editable-text-value');
+		initCss('widgets/icon-text-edit');
+		initCss('widgets/password-edit');
+		initCss('widgets/text');
+		initFavIcon(192);
+		initFavIcon(128);
+		initFavIcon(64);
+		initFavIcon(48);
+		initFavIcon(32);
+		initFavIcon(16);
+		document.write('<link rel="shortcut icon" href="' + basePath +
+			'/images/favicon.ico">')
+		
+		initLib('handlebars.runtime.min-v4.7.7.js');
+		initLib('i18next.min.js');
+		initLib('i18nextBrowserLanguageDetector.min.js');
+		initLib('i18nextHttpBackend.min.js');
+		initLib('jquery-3.6.0.min.js');
+		initLib('jquery-i18next.min.js');
+		initLib('moment-with-locales.min.js');
+	
+		initJS('animation');
+		initJS('client');
+		initJS('widgets/background-image');
+		initJS('widgets/editable-text-value');
+		initJS('widgets/icon-text-edit');
+		initJS('widgets/password-edit');
+
+		initJS('templates')
+		initJS('global');
+		initJS('i18n');
+	</script>
+</head>
+<body>
+	<div id="body">
+		<div id="header"></div>
+		<div id="root"></div>
+		<div id="footer"></div>
+		<div id="toast">
+			<div id="toast-text" data-i18n="unexpected_error"></div>
+		</div>
+	</div>
+	<script type="text/javascript">
+		$(function() {
+			onDocumentInitialized();
+		});
+	</script>
+</body>
+</html>

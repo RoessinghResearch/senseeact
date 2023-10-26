@@ -1,0 +1,51 @@
+div.icon-text-edit {
+	width: 100%;
+	max-width: 360px;
+	height: 42px;
+	margin: 0 auto;
+	text-align: left;
+}
+
+div.icon-text-edit input {
+	display: block;
+	width: 100%;
+	height: 42px;
+	border: 0.5px solid #5298b2;
+	border-radius: 21px;
+	margin: 0px;
+	padding: 0px 16px 0px 66px;
+	flex-grow: 1;
+	box-sizing: border-box;
+	color: #5298b2;
+	font-family: 'Open Sans', sans-serif;
+	font-weight: 600;
+	font-size: 15px;
+}
+
+div.icon-text-edit input::placeholder {
+	font-family: 'Open Sans', sans-serif;
+	font-weight: 300;
+	font-style: italic;
+	font-size: 15px;
+	color: #7f7f7f;
+}
+
+div.icon-text-edit-icon-container {
+	display: flex;
+	position: relative;
+	top: -42px;
+	width: 50px;
+	height: 42px;
+	align-items: center;
+	border-right: 0.5px solid #5298b2;
+}
+
+div.icon-text-edit-icon-container .icon {
+	position: absolute;
+	width: 28px;
+	height: 28px;
+	mask-size: 28px 28px;
+	-webkit-mask-size: 28px 28px;
+	background-color: #5298b2;
+	margin-left: 13px;
+}

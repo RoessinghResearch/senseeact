@@ -1,0 +1,18 @@
+img#senseeact-logo {
+	width: 256px;
+	height: 20px;
+	margin-top: 20px;
+	margin-bottom: 10px;
+}
+
+@media (min-width: 680px) {
+	img#senseeact-logo {
+		width: 384px;
+		height: 30px;
+		margin-top: 30px;
+	}
+}
+
+h1 {
+	margin-bottom: 12px;
+}

@@ -1,0 +1,8 @@
+RewriteEngine on
+RewriteRule "^css/.*$" - [L]
+RewriteRule "^i18n/.*$" - [L]
+RewriteRule "^images/.*$" - [L]
+RewriteRule "^js/.*$" - [L]
+RewriteRule "^lib/.*$" - [L]
+RewriteRule "^docs/.*$" - [L]
+RewriteRule "^.*$" "index.html"
