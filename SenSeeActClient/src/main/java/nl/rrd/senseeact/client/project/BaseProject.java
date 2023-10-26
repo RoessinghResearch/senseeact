@@ -1,7 +1,5 @@
 package nl.rrd.senseeact.client.project;
 
-import nl.rrd.utils.i18n.I18n;
-import nl.rrd.utils.i18n.I18nLoader;
 import nl.rrd.senseeact.client.sensor.BaseSensor;
 import nl.rrd.senseeact.dao.Database;
 import nl.rrd.senseeact.dao.DatabaseTableDef;
@@ -14,15 +12,6 @@ import java.util.*;
  * side. This includes the project name that can be presented to the user,
  * sensor specifications and the database structure. You can obtain instances
  * of this class from the {@link ProjectRepository ProjectRepository}.
- * 
- * <p><b>Project name</b></p>
- * 
- * <p>Every project has a default name that can be obtained with {@link
- * #getName() getName()}. But an app should call {@link #getLocaleName(Locale)
- * getLocaleName()}, passing the preferred locale of the user interface.
- * Locale-dependent names can be defined in the messages*.properties resources
- * of the RRDSenSeeActClient, at key project.CODE.name. The resource is located using
- * {@link I18nLoader I18nLoader}.</p>
  * 
  * <p><b>Database</b></p>
  * 
@@ -60,11 +49,9 @@ public abstract class BaseProject {
 	}
 	
 	/**
-	 * Returns the default name to present to the user. An app should not call
-	 * this method, but {@link #getLocaleName(Locale) getLocaleName()}. It
-	 * returns the default name if no locale-dependent name is defined.
+	 * Returns the project name to present to the user.
 	 * 
-	 * @return the default name
+	 * @return the project name to present to the user
 	 */
 	public String getName() {
 		return name;
@@ -81,29 +68,6 @@ public abstract class BaseProject {
 	 */
 	public String getUsernameDomain() {
 		return null;
-	}
-	
-	/**
-	 * Returns the project name to present to the user in the specified locale.
-	 * It will use {@link I18nLoader I18nLoader} to locate the
-	 * messages*.properties for the locale and it finds key project.CODE.name,
-	 * where CODE is the project code. If no locale is specified or the string
-	 * is not found, this method returns the default name.
-	 * 
-	 * @param locale the locale or null
-	 * @return the project name
-	 */
-	public String getLocaleName(Locale locale) {
-		if (locale == null)
-			return name;
-		I18n i18n = I18nLoader.getInstance().getI18n("messages", locale, true,
-				null);
-		String msgCode = "project." + code + ".name";
-		String name = i18n.get(msgCode);
-		if (name.equals(msgCode))
-			return getName();
-		else
-			return name;
 	}
 
 	/**

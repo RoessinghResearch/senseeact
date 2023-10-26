@@ -40,8 +40,8 @@ import java.util.regex.Pattern;
  * other queries.
  * 
  * <p>When the service returns an error, this class will throw a {@link
- * SenSeeActClientException HttpClientException}. General error codes that may
- * occur:</p>
+ * SenSeeActClientException SenSeeActClientException}. General error codes that
+ * may occur:</p>
  * 
  * <p><ul>
  * <li>{@link ErrorCode#AUTH_TOKEN_NOT_FOUND AUTH_TOKEN_NOT_FOUND}: If you try
