@@ -1,0 +1,28 @@
+plugins {
+	id 'java'
+	id 'java-library'
+}
+
+group = 'nl.rrd'
+version = 6.0
+sourceCompatibility = 17
+targetCompatibility = 17
+archivesBaseName = 'example-senseeact-client'
+
+dependencies {
+	api project(':SenSeeActClient')
+}
+
+javadoc {
+	doFirst() {
+		source = sourceSets.main.allJava +
+			project(':RRDUtils').sourceSets.main.allJava +
+			project(':DataAccessObjects').sourceSets.main.allJava +
+			project(':SenSeeActClient').sourceSets.main.allJava
+	}
+
+	options {
+		links 'https://docs.oracle.com/en/java/javase/17/docs/api/'
+		addBooleanOption('Xdoclint:all,-missing,-html', true)
+	}
+}

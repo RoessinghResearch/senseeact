@@ -1,0 +1,37 @@
+services:
+    senseeacttomcat:
+        image: senseeacttomcat:$DOCKER_TAG
+        ports:
+            - 10002:8080
+            - 10003:8009
+        volumes:
+            - $LOG_DIR:/var/log/senseeact
+        restart: unless-stopped
+    senseeactweb:
+        image: senseeactweb:$DOCKER_TAG
+        volumes:
+            - phpmyadmin-data:/var/www/phpmyadmin
+        ports:
+            - 10000:80
+            - 10001:8081
+        restart: unless-stopped
+    senseeactdb:
+        image: mariadb:10
+        volumes:
+            - mysql-data:/var/lib/mysql
+        environment:
+            MYSQL_ROOT_PASSWORD: $MYSQL_ROOT_PASSWORD
+        ports:
+            - 10004:3306
+        restart: unless-stopped
+    phpmyadmin:
+        image: phpmyadmin:fpm-alpine
+        volumes:
+            - phpmyadmin-data:/var/www/html
+        environment:
+            PMA_HOST: senseeactdb
+        restart: unless-stopped
+
+volumes:
+    mysql-data:
+    phpmyadmin-data:

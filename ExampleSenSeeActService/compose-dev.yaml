@@ -1,0 +1,40 @@
+# This Docker Compose file is used for the development version of SenSeeAct on
+# a local machine. The difference with the production version is that the
+# web files (src/main/web) are loaded using a bind mount of the local directory,
+# so you can make changes and try the result immediately, without building a new
+# Docker image.
+
+services:
+    senseeacttomcat:
+        image: senseeacttomcat
+        ports:
+            - 10002:8080
+            - 10003:8009
+        volumes:
+            - $LOG_DIR:/var/log/senseeact
+    senseeactweb:
+        image: senseeactweb:dev
+        volumes:
+            - phpmyadmin-data:/var/www/phpmyadmin
+            - ./build/web-src/:/usr/local/apache2/htdocs/senseeact
+        ports:
+            - 10000:80
+            - 10001:8081
+    senseeactdb:
+        image: mariadb:10
+        volumes:
+            - mysql-data:/var/lib/mysql
+        environment:
+            MYSQL_ROOT_PASSWORD: $MYSQL_ROOT_PASSWORD
+        ports:
+            - 10004:3306
+    phpmyadmin:
+        image: phpmyadmin:fpm-alpine
+        volumes:
+            - phpmyadmin-data:/var/www/html
+        environment:
+            PMA_HOST: senseeactdb
+
+volumes:
+    mysql-data:
+    phpmyadmin-data:

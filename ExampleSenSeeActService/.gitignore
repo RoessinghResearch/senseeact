@@ -1,0 +1,6 @@
+/.env
+/google-application-credentials.json
+/gradle.properties
+/gradle.*.properties
+!/gradle.sample.properties
+/src/main/resources/service.properties

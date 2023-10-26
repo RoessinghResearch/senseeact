@@ -1,0 +1,71 @@
+pipeline {
+	agent any
+	environment {
+		GOOGLE_APPLICATION_CREDENTIALS = credentials('google-application-credentials')
+		GRADLE_PROPERTIES_DEV = credentials('general-senseeact-dev-gradle-properties')
+		GRADLE_PROPERTIES_PROD = credentials('general-senseeact-prod-gradle-properties')
+	}
+	stages {
+		stage('Deploy to development') {
+			when {
+				branch 'jenkins-general-senseeact-dev'
+			}
+			steps {
+				dir('git/senseeact') {
+					sh 'mv `ls -d ../../* | grep -v "\\.\\./\\.\\./git"` .'
+				}
+				dir('git/rrd-utils') {
+					git url: 'https://github.com/RoessinghResearch/rrd-utils.git'
+				}
+				dir('git/senseeact/ExampleSenSeeActService') {
+					sh 'cp $GRADLE_PROPERTIES_DEV . && \
+						cp $GOOGLE_APPLICATION_CREDENTIALS google-application-credentials.json && \
+						chmod 755 gradlew && \
+						./gradlew dockerBuild dockerStart'
+				}
+			}
+		}
+		stage('Deploy to production') {
+			when {
+				branch 'jenkins-general-senseeact-prod'
+			}
+			steps {
+				dir('git/senseeact') {
+					sh 'mv `ls -d ../../* | grep -v "\\.\\./\\.\\./git"` .'
+				}
+				dir('git/rrd-utils') {
+					git url: 'https://github.com/RoessinghResearch/rrd-utils.git'
+				}
+				dir('git/senseeact/ExampleSenSeeActService') {
+					sh 'cp $GRADLE_PROPERTIES_PROD . && \
+						cp $GOOGLE_APPLICATION_CREDENTIALS google-application-credentials.json && \
+						chmod 755 gradlew && \
+						./gradlew dockerBuild'
+				}
+				dir('git/senseeact/ExampleSenSeeActService') {
+					sh 'dockerTag=`grep "^dockerTag=" gradle.properties | tr -d "\r\n" | sed -e "s/^dockerTag=//"` && \
+						./gradlew buildDockerCompose && \
+						scp -r build/docker-compose jenkins@${SENSEEACT_PROD_HOST}:~ && \
+						docker save -o senseeact_docker_images.tar \
+						senseeacttomcat:$dockerTag senseeactweb:$dockerTag \
+						phpmyadmin:fpm-alpine mariadb:10 && \
+						scp senseeact_docker_images.tar jenkins@${SENSEEACT_PROD_HOST}:~'
+				}
+				dir('git/senseeact/ExampleSenSeeActService') {
+					sh 'dockerProject=`grep "^dockerProject=" gradle.properties | tr -d "\r\n" | sed -e "s/^dockerProject=//"` && \
+						ssh jenkins@${SENSEEACT_PROD_HOST} \
+						"docker load --input senseeact_docker_images.tar && \
+						cd docker-compose && \
+						docker compose -p $dockerProject up -d && \
+						docker image prune -f && \
+						docker buildx prune -f"'
+				}
+			}
+		}
+	}
+	post {
+		success {
+			deleteDir()
+		}
+	}
+}

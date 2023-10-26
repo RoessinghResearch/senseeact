@@ -1,0 +1,363 @@
+plugins {
+	id 'war'
+	id 'org.springframework.boot' version '3.0.0'
+}
+
+group = 'nl.rrd'
+version = '6.0.7' // run updateVersion after changing this property
+sourceCompatibility = 17
+targetCompatibility = 17
+archivesBaseName = 'example-senseeact-service'
+
+configurations {
+	providedRuntime
+}
+
+dependencies {
+	implementation project(':SenSeeActService')
+	implementation project(':ExampleSenSeeActClient')
+	testImplementation 'junit:junit:4.13.2'
+	runtimeOnly 'ch.qos.logback:logback-classic:1.4.11'
+	testRuntimeOnly 'org.slf4j:slf4j-simple:2.0.9'
+	providedRuntime 'org.springframework.boot:spring-boot-starter-tomcat:3.1.4'
+}
+
+configurations.testRuntimeOnly.exclude group: 'ch.qos.logback', module: 'logback-classic'
+
+tasks.register('updateConfig') {
+	group = 'configuration'
+	description = 'Configures files with current values of ssaconfig properties from gradle.properties.'
+	
+	doLast() {
+		Properties props = new Properties()
+		def propPrefix = 'ssaconfig'
+		project.properties.each { key, value ->
+			if (!key.startsWith(propPrefix))
+				return
+			key = key.substring(propPrefix.length())
+			key = key[0].toLowerCase() + key.substring(1)
+			props[key] = value
+		}
+		def resDir = file('src/main/resources')
+		resDir.mkdirs()
+		def out = new File(resDir, 'service.properties')
+		out.withWriter('UTF-8') {
+			props.store(it, 'DO NOT EDIT, generated with gradlew updateConfig')
+		}
+	}
+}
+
+tasks.register('updateVersion') {
+	group = 'versioning'
+	description = 'Writes the current version to files containing the version number.'
+
+	doLast() {
+		ant.replaceregexp(file: 'src/main/webapp/WEB-INF/web.xml',
+			match: "<display-name>SenSeeAct .+</display-name>",
+			replace: "<display-name>SenSeeAct ${version}</display-name>")
+		ant.replaceregexp(file: 'src/main/resources/deployment.properties',
+			match: "version=.+",
+			replace: "version=${version}")
+		ant.replaceregexp(file: 'docker/senseeacttomcat/Dockerfile',
+			match: "rrd-senseeact-service-[0-9\\.]+\\.war",
+			replace: "rrd-senseeact-service-${version}.war")
+		ant.replaceregexp(file: 'docker/senseeactweb/Dockerfile',
+			match: "(\\\\/servlets\\\\/senseeact\\\\/)v[0-9\\.]+'",
+			replace: "\\1v${version}'")
+		ant.replaceregexp(file: 'src/main/web/index.html',
+			match: "var version = '[0-9\\.]+';",
+			replace: "var version = '${version}';")
+		ant.replaceregexp(file: 'src/main/web/index.html',
+			match: "'/servlets/senseeact/v[0-9\\.]+'",
+			replace: "'/servlets/senseeact/v${version}'")
+	}
+}
+
+tasks.register('checkResources') {
+	group = 'build'
+	description = 'Checks if required resource files exist and are up-to-date.'
+	
+	dependsOn updateConfig
+}
+
+test {
+	testLogging.showStandardStreams = true
+}
+
+gradle.taskGraph.whenReady {
+	tasks.withType(Test) {
+		def props = new Properties()
+		def propsFile = file('gradle.test.properties')
+		if (propsFile.exists()) {
+			propsFile.withReader('UTF-8') {
+				props.load(it)
+			}
+			props.each { key, value ->
+				systemProperty key, value
+			}
+		}
+	}
+}
+
+javadoc {
+	options {
+		links 'https://docs.oracle.com/en/java/javase/17/docs/api/'
+		addBooleanOption('Xdoclint:all,-missing,-html', true)
+	}
+}
+
+tasks.register('dockerDevBuild') {
+	group = 'docker'
+	description = 'Build Docker dev images'
+	
+	doLast {
+		def gitDir = file('../..')
+
+		// build senseeacttomcat
+		copy {
+			from 'docker/senseeacttomcat/Dockerfile.dockerignore'
+			into '../..'
+			rename '.*', '.dockerignore'
+		}
+		try {
+			def cmd = ['docker', '-c', project.properties.dockerContext,
+				'build', '-t', 'senseeacttomcat',
+				'-f', 'senseeact/ExampleSenSeeActService/docker/senseeacttomcat/Dockerfile',
+				'--build-arg', 'GOOGLE_APPLICATION_CREDENTIALS=senseeact/ExampleSenSeeActService/google-application-credentials.json',
+				'--build-arg', 'TOMCAT_ADMIN_USERNAME=' + project.properties.dockerTomcatUser,
+				'--build-arg', 'TOMCAT_ADMIN_PASSWORD=' + project.properties.dockerTomcatPassword,
+				'.']
+			runShell(cmd, gitDir)
+
+			// build senseeactweb
+			copy {
+				from 'docker/senseeactweb/Dockerfile.dockerignore'
+				into '../..'
+				rename '.*', '.dockerignore'
+			}
+			cmd = ['docker', '-c', project.properties.dockerContext,
+				'build', '-t', 'senseeactweb:dev', '--target', 'dev',
+				'-f', 'senseeact/ExampleSenSeeActService/docker/senseeactweb/Dockerfile',
+				'.']
+			runShell(cmd, gitDir)
+
+			// clean obsolete images and cache
+			cmd = ['docker', '-c', project.properties.dockerContext,
+				'image', 'prune', '-f']
+			runShell(cmd, gitDir)
+			cmd = ['docker', '-c', project.properties.dockerContext,
+				'buildx', 'prune', '-f']
+			runShell(cmd, gitDir)
+		} finally {
+			delete '../../.dockerignore'
+		}
+	}
+}
+
+tasks.register('dockerDevStart') {
+	group = 'docker'
+	description = 'Start SenSeeAct dev in Docker'
+	
+	doLast {
+		copy {
+			from '.env.sample'
+			into projectDir
+			rename '\\.sample', ''
+			expand(
+				'MYSQL_ROOT_PASSWORD': project.properties.ssaconfigMysqlRootPassword,
+				'LOG_DIR': project.properties.dockerLogDir,
+				'DOCKER_TAG': project.properties.dockerTag
+			)
+		}
+		def gitDir = file('../..')
+		def cmd = ['docker', 'compose',
+			'-p', project.properties.dockerProject,
+			'-f', 'senseeact/ExampleSenSeeActService/compose-dev.yaml',
+			'up', '-d']
+		def env = [
+			DOCKER_CONTEXT: project.properties.dockerContext
+		]
+		runShell(cmd, gitDir, env)
+	}
+}
+
+tasks.register('dockerBuild') {
+	group = 'docker'
+	description = 'Build Docker images'
+	
+	doLast {
+		def gitDir = file('../..')
+
+		def webUrl = project.properties.ssaconfigWebUrl
+		def pattern = ~/https?:\/\/[^\/]*(.*)/
+		def m = pattern.matcher(webUrl)
+		def webPath = m[0][1]
+
+		// build senseeacttomcat
+		copy {
+			from 'docker/senseeacttomcat/Dockerfile.dockerignore'
+			into '../..'
+			rename '.*', '.dockerignore'
+		}
+		try {
+			def cmd = ['docker', '-c', project.properties.dockerContext,
+				'build', '-t', 'senseeacttomcat:' + project.properties.dockerTag,
+				'-f', 'senseeact/ExampleSenSeeActService/docker/senseeacttomcat/Dockerfile',
+				'--build-arg', 'GOOGLE_APPLICATION_CREDENTIALS=senseeact/ExampleSenSeeActService/google-application-credentials.json',
+				'--build-arg', 'TOMCAT_ADMIN_USERNAME=' + project.properties.dockerTomcatUser,
+				'--build-arg', 'TOMCAT_ADMIN_PASSWORD=' + project.properties.dockerTomcatPassword,
+				'.']
+			runShell(cmd, gitDir)
+
+			// build senseeactweb
+			copy {
+				from 'docker/senseeactweb/Dockerfile.dockerignore'
+				into '../..'
+				rename '.*', '.dockerignore'
+			}
+			cmd = ['docker', '-c', project.properties.dockerContext,
+				'build', '-t', 'senseeactweb:' + project.properties.dockerTag,
+				'-f', 'senseeact/ExampleSenSeeActService/docker/senseeactweb/Dockerfile',
+				'--build-arg', 'WEB_PATH=' + webPath,
+				'.']
+			runShell(cmd, gitDir)
+
+			// clean obsolete images and cache
+			cmd = ['docker', '-c', project.properties.dockerContext,
+				'image', 'prune', '-f']
+			runShell(cmd, gitDir)
+			cmd = ['docker', '-c', project.properties.dockerContext,
+				'buildx', 'prune', '-f']
+			runShell(cmd, gitDir)
+		} finally {
+			delete '../../.dockerignore'
+		}
+	}
+}
+
+tasks.register('buildDockerCompose') {
+	group = 'docker'
+	description = 'Build docker compose files'
+
+	doLast {
+		copy {
+			from '.env.sample'
+			into 'build/docker-compose'
+			rename '\\.sample', ''
+			expand(
+				'MYSQL_ROOT_PASSWORD': project.properties.ssaconfigMysqlRootPassword,
+				'LOG_DIR': project.properties.dockerLogDir,
+				'DOCKER_TAG': project.properties.dockerTag
+			)
+		}
+		copy {
+			from 'compose.yaml'
+			into 'build/docker-compose'
+		}
+	}
+}
+
+tasks.register('dockerStart') {
+	dependsOn 'buildDockerCompose'
+	group = 'docker'
+	description = 'Start SenSeeAct in Docker'
+	
+	doLast {
+		def dir = file('build/docker-compose')
+		def cmd = ['docker', 'compose',
+			'-p', project.properties.dockerProject,
+			'up', '-d']
+		def env = [
+			DOCKER_CONTEXT: project.properties.dockerContext
+		]
+		runShell(cmd, dir, env)
+
+		// clean obsolete images and cache
+		def gitDir = file('../..')
+		cmd = ['docker', '-c', project.properties.dockerContext,
+			'image', 'prune', '-f']
+		runShell(cmd, gitDir)
+		cmd = ['docker', '-c', project.properties.dockerContext,
+			'buildx', 'prune', '-f']
+		runShell(cmd, gitDir)
+	}
+}
+
+tasks.register('dockerStop') {
+	group = 'docker'
+	description = 'Stop SenSeeAct in Docker'
+
+	doLast {
+		def composeDir = file('build/docker-compose')
+		def env = [
+			DOCKER_CONTEXT: project.properties.dockerContext
+		]
+		def cmd
+		if (composeDir.exists()) {
+			cmd = ['docker', 'compose',
+				'-p', project.properties.dockerProject,
+				'down']
+			runShell(cmd, composeDir, env)
+		}
+		def gitDir = file('../..')
+		cmd = ['docker', 'compose',
+			'-p', project.properties.dockerProject,
+			'-f', 'senseeact/ExampleSenSeeActService/compose-dev.yaml',
+			'down']
+		runShell(cmd, gitDir, env)
+	}
+}
+
+tasks.register('webBuild') {
+	group = 'build'
+	description = 'Build web application'
+
+	doLast {
+		copy {
+			from '../SenSeeActService/src/main/web'
+			into 'build/web-src'
+		}
+		def buildDir = file('build/web-src')
+		def cmd = ['handlebars', 'templates', '-f', 'js/templates.js']
+		runShell(cmd, buildDir)
+	}
+}
+
+processResources.dependsOn checkResources
+
+/**
+ * Runs a shell command from the specified working directory, possibly with
+ * extra environment variables. This function works on Linux, Windows and MacOS.
+ * Standard output and error output from the command are printed to standard
+ * output.
+ *
+ * cmd (List<String>): list with the command and arguments. They are simply
+ *     joined with spaces, so take care of arguments with whitespace inside.
+ * dir (File): the working directory
+ * env (Map<String,String>): the environment variables (default: empty map)
+ */
+def runShell(cmd, dir, env = [:]) {
+	def envList = env.collect { key, value -> 
+		key + '=' + value
+	}
+	def cmdStr = cmd.join(' ')
+	def cmdList
+	if (System.getProperty('os.name').toLowerCase().startsWith('win')) {
+		cmdList = ["cmd", "/c"] + cmdStr
+	} else {
+		cmdList = ['sh', '-c'] + cmdStr
+	}
+	def builder = new ProcessBuilder(cmdList)
+		.directory(dir)
+		.redirectErrorStream(true)
+	env.each { key, value ->
+		builder.environment()[key] = value
+	}
+	def proc = builder.start()
+	def output = proc.inputStream.eachLine { line ->
+		println line
+	}
+	def exitValue = proc.waitFor()
+	if (exitValue != 0)
+		throw new Exception("Command returned exit value $exitValue")
+}

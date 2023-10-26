@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE xml>
+
+<web-app
+	xmlns="http://java.sun.com/xml/ns/j2ee"
+    version="2.5"
+>
+    <display-name>SenSeeAct 6.0.7</display-name>
+    <description>
+		This web application provides the SenSeeAct Service.
+    </description>
+</web-app>

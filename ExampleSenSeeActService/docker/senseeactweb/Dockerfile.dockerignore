@@ -1,0 +1,14 @@
+# For this dockerignore file we assume that "docker build" is run from the git
+# root directory. Paths in this file are relative from there.
+#
+# This file is used in two cases:
+#
+# - With the COPY command in Dockerfile. In this case it should be next to
+#   Dockerfile as Dockerfile.dockerignore
+#
+# - When copying the workspace to a remote context. In this case it should be
+#   at the git root directory.
+
+**/
+!senseeact/SenSeeActService/src/main/web/
+!senseeact/ExampleSenSeeActService/docker/senseeactweb/
