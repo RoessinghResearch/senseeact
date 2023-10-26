@@ -1,0 +1,77 @@
+<html>
+<head>
+	<meta charset="utf-8" />
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Open+Sans&display=swap" rel="stylesheet"> 
+	<style>
+		#root {
+			font-family: 'Open Sans', sans-serif;
+			font-size: 15px;
+			max-width: 640px;
+			margin: auto;
+		}
+
+		#header {
+			background-color: #5298b2;
+			width: 100%;
+			min-width: 320px;
+			height: 80px;
+		}
+
+		#header-content {
+			display: flex;
+			margin-left: 20px;
+			margin-right: 20px;
+		}
+
+		#header-senseeact {
+			width: 42px;
+			height: 80px;
+		}
+
+		#header-by {
+			width: 20px;
+			height: 80px;
+			margin-left: 16px;
+		}
+
+		#header-rrd {
+			width: 161px;
+			height: 80px;
+			margin-left: 18px;
+		}
+
+		.center {
+			text-align: center;
+		}
+
+		.section-start {
+			padding-top: 8px;
+		}
+
+		a {
+			color: #5298b2;
+		}
+
+		a:hover {
+			color: #70beb7;
+		}
+	</style>
+</head>
+
+<body>
+<div id="root">
+	<div id="header">
+		<div id="header-content">
+			<a href="{web-base}/"><img id="header-senseeact" src="{web-base}/images/header_senseeact.png" width="42" height="80" /></a>
+			<img id="header-by" src="{web-base}/images/header_by.png" width="20" height="80" />
+			<a href="https://www.rrd.nl/"><img id="header-rrd" src="{web-base}/images/header_rrd.png" width="161" height="80" /></a>
+		</div>
+	</div>
+	<div id="content">
+		{content}
+	</div>
+</div>
+</body>
+</html>
