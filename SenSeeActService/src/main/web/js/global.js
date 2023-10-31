@@ -31,6 +31,8 @@ function initPage() {
 	$('#root').append(html);
 	html = Handlebars.templates.footer(context);
 	$('#footer').append(html);
+	html = Handlebars.templates.menu(context);
+	$('#menu').append(html);
 	$('body').localize();
 }
 

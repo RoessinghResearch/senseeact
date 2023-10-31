@@ -45,3 +45,33 @@
 	animation-timing-function: ease;
 	animation-duration: 400ms;
 }
+
+@keyframes animation-menu-show {
+	0% {
+		right: -240px;
+	}
+	100% {
+		right: 0px;
+	}
+}
+
+.animate-menu-show {
+	animation-name: animation-menu-show;
+	animation-timing-function: ease;
+	animation-duration: 400ms;
+}
+
+@keyframes animation-menu-hide {
+	0% {
+		right: 0px;
+	}
+	100% {
+		right: -240px;
+	}
+}
+
+.animate-menu-hide {
+	animation-name: animation-menu-hide;
+	animation-timing-function: ease;
+	animation-duration: 400ms;
+}
