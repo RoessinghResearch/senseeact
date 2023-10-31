@@ -75,3 +75,21 @@
 	animation-timing-function: ease;
 	animation-duration: 400ms;
 }
+
+@keyframes animation-menu-item-click {
+	0% {
+		background: white;
+	}
+	50% {
+		background: #bfbfbf;
+	}
+	100% {
+		background: white;
+	}
+}
+
+.animate-menu-item-click {
+	animation-name: animation-menu-item-click;
+	animation-timing-function: ease;
+	animation-duration: 200ms;
+}

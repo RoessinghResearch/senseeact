@@ -79,6 +79,25 @@ body {
 	-webkit-mask-image: url('../images/icon_xmark.svg');
 }
 
+.menu-item-list {
+	margin-top: 10px;
+}
+
+.menu-item {
+	color: #373844;
+	font-family: 'Oswald', sans-serif;
+	font-weight: 400;
+	font-size: 20px;
+	text-transform: uppercase;
+	padding: 6px 16px;
+	border-top: 1px solid #bfbfbf;
+	cursor: pointer;
+}
+
+.menu-item:last-child {
+	border-bottom: 1px solid #bfbfbf;
+}
+
 @media (min-width: 680px) {
 	#header-content {
 		width: 640px;
