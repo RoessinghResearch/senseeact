@@ -60,7 +60,7 @@ body {
 }
 
 .header-icon:hover {
-	background-color: #c4f5f1;
+	background-color: #f2e9dc;
 }
 
 .header-icon.user {
@@ -84,7 +84,7 @@ body {
 }
 
 .header-title:hover {
-	color: #c4f5f1;
+	color: #f2e9dc;
 }
 
 #menu .menu-icon.close {
