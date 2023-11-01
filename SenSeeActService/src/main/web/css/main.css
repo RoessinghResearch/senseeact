@@ -59,6 +59,10 @@ body {
 	background-color: white;
 }
 
+.header-icon:hover {
+	background-color: #f2e9dc;
+}
+
 .header-icon.user {
 	mask-image: url('../images/icon_user.svg');
 	-webkit-mask-image: url('../images/icon_user.svg');
@@ -68,6 +72,19 @@ body {
 	display: block;
 	mask-image: url('../images/icon_bars.svg');
 	-webkit-mask-image: url('../images/icon_bars.svg');
+}
+
+.header-title {
+	color: white;
+	font-family: 'Oswald', sans-serif;
+	font-weight: 400;
+	font-size: 20px;
+	text-transform: uppercase;
+	margin: 0px 16px;
+}
+
+.header-title:hover {
+	color: #f2e9dc;
 }
 
 #menu .menu-icon.close {
