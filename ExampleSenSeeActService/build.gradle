@@ -323,6 +323,10 @@ tasks.register('webBuild') {
 			from '../SenSeeActService/src/main/web'
 			into 'build/web-src'
 		}
+		copy {
+			from 'src/main/web'
+			into 'build/web-src'
+		}
 		def buildDir = file('build/web-src')
 		def cmd = ['handlebars', 'templates', '-f', 'js/templates.js']
 		runShell(cmd, buildDir)
