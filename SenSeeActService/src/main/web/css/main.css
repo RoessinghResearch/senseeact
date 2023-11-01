@@ -75,6 +75,7 @@ body {
 }
 
 .header-title {
+	display: none;
 	color: white;
 	font-family: 'Oswald', sans-serif;
 	font-weight: 400;
@@ -126,6 +127,10 @@ body {
 	}
 
 	.header-icon {
+		display: block;
+	}
+
+	.header-title {
 		display: block;
 	}
 
