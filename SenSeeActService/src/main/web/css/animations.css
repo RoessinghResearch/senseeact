@@ -76,12 +76,42 @@
 	animation-duration: 400ms;
 }
 
+@keyframes animation-menu-background-show {
+	0% {
+		opacity: 0.0;
+	}
+	100% {
+		opacity: 0.5;
+	}
+}
+
+.animate-menu-background-show {
+	animation-name: animation-menu-background-show;
+	animation-timing-function: ease;
+	animation-duration: 400ms;
+}
+
+@keyframes animation-menu-background-hide {
+	0% {
+		opacity: 0.5;
+	}
+	100% {
+		opacity: 0.0;
+	}
+}
+
+.animate-menu-background-hide {
+	animation-name: animation-menu-background-hide;
+	animation-timing-function: ease;
+	animation-duration: 400ms;
+}
+
 @keyframes animation-menu-item-click {
 	0% {
 		background: white;
 	}
 	50% {
-		background: #bfbfbf;
+		background: #e6e6e6;
 	}
 	100% {
 		background: white;

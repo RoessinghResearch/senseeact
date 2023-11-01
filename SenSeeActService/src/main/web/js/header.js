@@ -17,7 +17,10 @@ class HeaderController {
 	}
 
 	_onShowMenuClick(clickId) {
-		$('#menu').css('display', 'block');
+		let background = $('#menu-background');
+		background.show();
+		$('#menu').show();
+		animator.startAnimation(background, 'animate-menu-background-show');
 		animator.onAnimatedClickHandlerCompleted(clickId, null);
 	}
 }
