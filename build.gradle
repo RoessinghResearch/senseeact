@@ -3,7 +3,7 @@ allprojects {
 		mavenCentral()
 	}
 
-	task genwrapper(type: Wrapper) {
+	tasks.register('genwrapper', Wrapper) {
 		gradleVersion = '8.4'
 	}
 }
