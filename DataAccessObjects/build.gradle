@@ -19,7 +19,7 @@ dependencies {
 	api project (':RRDUtils')
 	api 'mysql:mysql-connector-java:8.0.33'
 	testImplementation 'junit:junit:4.13.2'
-	testImplementation 'org.slf4j:slf4j-simple:2.0.5'
+	testImplementation 'org.slf4j:slf4j-simple:2.0.9'
 }
 
 test {
