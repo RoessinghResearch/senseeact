@@ -1,5 +1,7 @@
 package nl.rrd.senseeact.service.scheduled;
 
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import nl.rrd.utils.AppComponents;
 import nl.rrd.utils.datetime.DateTimeUtils;
 import nl.rrd.utils.exception.DatabaseException;
@@ -15,8 +17,6 @@ import nl.rrd.senseeact.service.model.UserCache;
 import org.slf4j.Logger;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalTime;

@@ -5,13 +5,14 @@ import com.google.auth.oauth2.GoogleCredentials;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.messaging.*;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import nl.rrd.senseeact.client.model.MobileWakePushMessage;
 import nl.rrd.senseeact.dao.Database;
 import nl.rrd.senseeact.dao.DatabaseConnection;
 import nl.rrd.senseeact.dao.listener.DatabaseEvent;
 import nl.rrd.senseeact.dao.listener.DatabaseListener;
 import nl.rrd.senseeact.dao.listener.DatabaseListenerRepository;
-import nl.rrd.senseeact.service.Configuration;
 import nl.rrd.senseeact.service.DatabaseLoader;
 import nl.rrd.senseeact.service.model.MobileWakeRequest;
 import nl.rrd.senseeact.service.model.MobileWakeRequestTable;
@@ -22,8 +23,6 @@ import nl.rrd.utils.json.JsonMapper;
 import org.slf4j.Logger;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 import java.io.IOException;
 import java.util.*;
 
