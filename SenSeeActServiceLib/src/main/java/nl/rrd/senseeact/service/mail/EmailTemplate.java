@@ -43,8 +43,8 @@ public abstract class EmailTemplate {
 	 * <p>The default implementation reads the mailFrom property from the
 	 * configuration.</p>
 	 *
-	 * @param request the HTTP request
-	 * @param user the user
+	 * @param request the HTTP request or null
+	 * @param user the user or null
 	 * @return the "from" address
 	 */
 	public String getFrom(HttpServletRequest request, User user) {
@@ -56,8 +56,8 @@ public abstract class EmailTemplate {
 	 * to determine the language. This can be the Accept-Language header in the
 	 * request, or the preferred locale in the user profile.
 	 *
-	 * @param request the HTTP request
-	 * @param user the user
+	 * @param request the HTTP request or null
+	 * @param user the user or null
 	 * @return the subject
 	 */
 	public abstract String getSubject(HttpServletRequest request, User user);
@@ -70,8 +70,8 @@ public abstract class EmailTemplate {
 	 * <p>The parameters depend on the type of email. They define the dynamic
 	 * parts of the email content.</p>
 	 *
-	 * @param request the HTTP request
-	 * @param user the user
+	 * @param request the HTTP request or null
+	 * @param user the user or null
 	 * @param params the parameters
 	 * @return the HTML content
 	 */
@@ -88,8 +88,8 @@ public abstract class EmailTemplate {
 	 *
 	 * <p>The default implementation returns an empty list.</p>
 	 *
-	 * @param request the HTTP request
-	 * @param user the user
+	 * @param request the HTTP request or null
+	 * @param user the user or null
 	 * @return the inline files
 	 */
 	public List<InlineFile> getInlineFiles(HttpServletRequest request,
@@ -99,12 +99,14 @@ public abstract class EmailTemplate {
 
 	protected List<Locale> getPreferredLocales(HttpServletRequest request,
 			User user) {
-		if (user.getLocaleCode() != null)
+		if (user != null && user.getLocaleCode() != null)
 			return List.of(user.toLocale());
-		String acceptLanguage = request.getHeader("Accept-Language");
 		List<Locale> locales = new ArrayList<>();
-		if (acceptLanguage != null)
-			locales.addAll(AcceptLanguageParser.parse(acceptLanguage));
+		if (request != null) {
+			String acceptLanguage = request.getHeader("Accept-Language");
+			if (acceptLanguage != null)
+				locales.addAll(AcceptLanguageParser.parse(acceptLanguage));
+		}
 		locales.add(Locale.getDefault());
 		return locales;
 	}

@@ -23,6 +23,19 @@ public class EmailSender {
 		this.config = config;
 	}
 
+	/**
+	 * Tries to send an email. This method starts a thread to send the email,
+	 * so it won't block the caller. Any error will be logged.
+	 *
+	 * @param template the email template
+	 * @param request the HTTP request. This can be used to get the preferred
+	 * language. It can also be null.
+	 * @param user the user to which the email is sent. This can be used to get
+	 * the preferred language. It can also be null.
+	 * @param to the email address where the email should be sent to
+	 * @param contentParams any content parameters that are needed for the
+	 * template
+	 */
 	public void trySendThread(EmailTemplate template,
 			HttpServletRequest request, User user, String to,
 			Map<String,Object> contentParams) {
@@ -46,6 +59,19 @@ public class EmailSender {
 		}).start();
 	}
 
+	/**
+	 * Tries to send an email. This method may block the caller while trying
+	 * to send the mail, and it throws an exception if any error occurs.
+	 *
+	 * @param template the email template
+	 * @param request the HTTP request. This can be used to get the preferred
+	 * language. It can also be null.
+	 * @param user the user to which the email is sent. This can be used to get
+	 * the preferred language. It can also be null.
+	 * @param to the email address where the email should be sent to
+	 * @param contentParams any content parameters that are needed for the
+	 * template
+	 */
 	public void send(EmailTemplate template, HttpServletRequest request,
 			User user, String to, Map<String,Object> contentParams)
 			throws MailException, MessagingException, IOException {
