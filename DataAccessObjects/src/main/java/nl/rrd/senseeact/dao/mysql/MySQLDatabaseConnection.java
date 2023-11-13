@@ -1,15 +1,9 @@
 package nl.rrd.senseeact.dao.mysql;
 
-import nl.rrd.senseeact.dao.Database;
-import nl.rrd.senseeact.dao.DatabaseConnection;
-import nl.rrd.senseeact.dao.sql.SQLCursor;
-import nl.rrd.senseeact.dao.sql.SQLQueryRunner;
-import nl.rrd.utils.AppComponents;
-import nl.rrd.utils.exception.DatabaseException;
 import org.slf4j.Logger;
 
+import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -17,6 +11,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import nl.rrd.senseeact.dao.Database;
+import nl.rrd.senseeact.dao.DatabaseConnection;
+import nl.rrd.senseeact.dao.sql.SQLCursor;
+import nl.rrd.senseeact.dao.sql.SQLQueryRunner;
+import nl.rrd.utils.AppComponents;
+import nl.rrd.utils.exception.DatabaseException;
 
 /**
  * Implementation of {@link DatabaseConnection DatabaseConnection} for MySQL.
@@ -121,10 +122,13 @@ public class MySQLDatabaseConnection extends DatabaseConnection {
 		String url = "jdbc:mysql://" + host + ":" + port + "/";
 		if (database != null)
 			url += database;
-		url += "?user=" + URLEncoder.encode(user, StandardCharsets.UTF_8) +
-				"&password=" + URLEncoder.encode(password,
-						StandardCharsets.UTF_8) +
-				"&useSSL=false";
+		try {
+			url += "?user=" + URLEncoder.encode(user, "UTF-8") +
+					"&password=" + URLEncoder.encode(password, "UTF-8") +
+					"&useSSL=false";
+		} catch (UnsupportedEncodingException ex) {
+			throw new RuntimeException(ex.getMessage(), ex);
+		}
 		try {
 			openConn = new OpenConnection(database,
 					DriverManager.getConnection(url));
