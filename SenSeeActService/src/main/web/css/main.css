@@ -314,6 +314,15 @@ body {
 	padding-left: 12px;
 }
 
+.card-container {
+	display: grid;
+}
+
+.card-container .card {
+	grid-column: 1;
+	grid-row: 1;
+}
+
 @media (min-width: 680px) {
 	.textdiv {
 		width: 640px;
@@ -338,6 +347,20 @@ h2 {
 	font-size: 24px;
 	margin: 0px;
 	text-transform: uppercase;
+}
+
+.caption {
+	font-family: 'Oswald', sans-serif;
+	font-weight: 300;
+	font-size: 20px;
+}
+
+.action-link {
+	font-family: 'Oswald', sans-serif;
+	font-weight: 600;
+	font-size: 20px;
+	text-transform: uppercase;
+	text-decoration: none;
 }
 
 .textblue {

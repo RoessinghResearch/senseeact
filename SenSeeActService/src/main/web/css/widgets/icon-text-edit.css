@@ -22,6 +22,10 @@ div.icon-text-edit input {
 	font-size: 15px;
 }
 
+div.icon-text-edit.no-icon input {
+	padding: 0px 16px 0px 16px;
+}
+
 div.icon-text-edit input::placeholder {
 	font-family: 'Open Sans', sans-serif;
 	font-weight: 300;

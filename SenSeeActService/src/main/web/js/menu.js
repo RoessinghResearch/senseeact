@@ -66,7 +66,7 @@ class MenuController {
 	}
 
 	_onMenuItemAccountClick() {
-		window.location.href = basePath + '/account';
+		window.location.href = basePath + '/me';
 	}
 }
 

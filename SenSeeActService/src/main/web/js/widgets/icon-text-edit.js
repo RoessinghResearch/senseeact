@@ -1,8 +1,8 @@
 /**
  * Properties that can be set before rendering:
  * 
- * - icon: icon URL
- * - placeholder: placeholder text
+ * - icon: icon URL or null
+ * - placeholder: placeholder text or null
  */
 class IconTextEdit {
 	constructor(root) {
@@ -22,13 +22,16 @@ class IconTextEdit {
 			input.attr('placeholder', this.placeholder);
 		}
 		root.append(input);
-		let imgContainer = $('<div></div>')
-			.addClass('icon-text-edit-icon-container');
-		root.append(imgContainer);
-		let img = $('<div></div>')
-			.addClass('icon')
-			.css('mask-image', 'url(' + this.icon + ')');
-		imgContainer.append(img);
-		
+		if (this.icon) {
+			let imgContainer = $('<div></div>')
+				.addClass('icon-text-edit-icon-container');
+			root.append(imgContainer);
+			let img = $('<div></div>')
+				.addClass('icon')
+				.css('mask-image', 'url(' + this.icon + ')');
+			imgContainer.append(img);
+		} else {
+			root.addClass('no-icon');
+		}
 	}
 }

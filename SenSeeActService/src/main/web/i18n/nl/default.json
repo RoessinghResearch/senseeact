@@ -20,8 +20,14 @@
 	"invalid_credentials": "Het e-mailadres of het wachtwoord is onjuist.",
 	"account_inactive": "Uw account is niet meer actief.",
 	"account_blocked": "Uw account is tijdelijk geblokkeerd omdat u te vaak een verkeerd wachtwoord hebt ingevoerd. Probeer het later nog eens.",
+	"no_account": "Nog geen account?",
+	"sign_up": "Registreren",
+	"your_first_name_optional": "Uw voornaam (optioneel)",
+	"your_last_name_optional": "Uw achternaam (optioneel)",
+	"accept_terms_and_conditions": "Ik ga akkoord met de {link}Voorwaarden{/link}",
+	"continue": "Verder",
 	"not_filled": "niet ingevuld",
-	"my_account": "Mijn account",
+	"my_senseeact": "Mijn SenSeeAct",
 	"first_name": "Voornaam",
 	"last_name": "Achternaam"
 }

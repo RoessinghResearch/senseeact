@@ -1,0 +1,24 @@
+div.checkbox-container {
+	display: flex;
+	align-items: center;
+	width: 100%;
+	max-width: 360px;
+	height: 42px;
+	margin: 0 auto;
+	text-align: left;
+}
+
+div.checkbox-container input[type=checkbox] {
+	accent-color: #5298b2;
+	width: 16px;
+	height: 16px;
+	margin-top: 6px;
+}
+
+div.checkbox-container label,
+div.checkbox-container .label {
+	font-family: 'Oswald', sans-serif;
+	font-weight: 300;
+	font-size: 18px;
+	margin-left: 6px;
+}

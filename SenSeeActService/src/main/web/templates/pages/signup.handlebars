@@ -1,0 +1,32 @@
+<link rel="stylesheet" type="text/css" href="css/pages/signup.css"></link>
+<div class="white-background">
+	<div class="center" style="padding-top: 20px">
+		<h1 data-i18n="sign_up"></h1>
+		<div id="background-image"></div>
+	</div>
+</div>
+<form class="form" onsubmit="return false">
+	<div class="card-container" style="margin-top: 16px">
+		<div id="email-card" class="card">
+			<div id="first-name-edit"></div>
+			<div id="last-name-edit" style="margin-top: 8px"></div>
+			<div id="email-edit" style="margin-top: 8px"></div>
+			<div id="email-error" class="message error center" style="margin-top: 16px"></div>
+		</div>
+		<div id="password-card" class="card">
+			<div id="password-edit"></div>
+			<div id="repeat-password-edit" style="margin-top: 8px"></div>
+			<div id="accept-terms-check-container" class="checkbox-container" style="margin-top: 8px">
+				<input type="checkbox" id="accept-terms-check" name="accept-terms-check"></input>
+				<span class="label"></span>
+			</div>
+		</div>
+	</div>
+	<div class="center">
+		<button id="button" name="submit" style="margin-top: 16px" data-i18n="continue"></button>
+	</div>
+</form>
+
+<script type="text/javascript">
+	loadJS('pages/signup');
+</script>
