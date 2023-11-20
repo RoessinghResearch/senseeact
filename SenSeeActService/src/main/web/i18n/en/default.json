@@ -28,6 +28,7 @@
 	"password_too_short": "The password must be at least 6 characters",
 	"no_repeat_password_match": "The passwords are not the same",
 	"create_account_email_exists": "A user with this email address already exists",
+	"already_have_account": "Already have an account?",
 	"continue": "Continue",
 	"not_filled": "not filled",
 	"my_senseeact": "My SenSeeAct",
