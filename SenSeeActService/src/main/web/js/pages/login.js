@@ -99,7 +99,9 @@ class LoginPage {
 	}
 
 	_onLoginCompleted(error) {
-		if (error) {
+		if (error == 'unexpected_error') {
+			showToast(i18next.t(error));
+		} else if (error) {
 			this._error.text(i18next.t(error))
 			this._error.show();
 		} else {
@@ -110,7 +112,7 @@ class LoginPage {
 	_updateButtonEnabled() {
 		let email = this._emailEdit.textInput.val().trim();
 		let password = this._passwordEdit.textInput.val();
-		let hasInput = email.length > 0 && password.length > 0;
+		let hasInput = email.length != 0 && password.length != 0;
 		let button = this._button;
 		button.prop('disabled', !hasInput);
 	}

@@ -93,13 +93,14 @@ class AccountPage {
 	}
 
 	_onLogoutFail(clickId, xhr, status, error) {
-		showToast(i18next.t('unexpected_error'));
 		animator.onAnimatedClickHandlerCompleted(clickId, false);
 	}
 
 	_onLogoutCompleted(success) {
 		if (success)
 			window.location.href = basePath + '/';
+		else
+			showToast(i18next.t('unexpected_error'));
 	}
 
 	_onFirstNameEdit(value) {

@@ -7,8 +7,11 @@ class SignupPage {
 	 * - _firstNameEdit (IconTextEdit)
 	 * - _lastNameEdit (IconTextEdit)
 	 * - _emailEdit (IconTextEdit)
+	 * - _emailError (jQuery element)
 	 * - _passwordEdit (IconTextEdit)
 	 * - _repeatPasswordEdit (IconTextEdit)
+	 * - _passwordError (jQuery element)
+	 * - _acceptTermsCheck (jQuery input element)
 	 */
 	constructor() {
 		this._createView();
@@ -43,6 +46,10 @@ class SignupPage {
 		emailEdit.render();
 		emailEdit.textInput.attr('type', 'email');
 
+		let emailError = $('#email-error');
+		this._emailError = emailError;
+		emailError.hide();
+
 		let passwordEdit = new IconTextEdit($('#password-edit'));
 		this._passwordEdit = passwordEdit;
 		passwordEdit.placeholder = i18next.t('password');
@@ -55,9 +62,14 @@ class SignupPage {
 		repeatPasswordEdit.render();
 		repeatPasswordEdit.textInput.attr('type', 'password');
 
+		let passwordError = $('#password-error');
+		this._passwordError = passwordError;
+		passwordError.hide();
+
 		let acceptTerms = this._getAcceptTermsLabel();
 		let label = $('#accept-terms-check-container .label');
 		label.append(acceptTerms);
+		this._acceptTermsCheck = $('#accept-terms-check');
 
 		let error = $('#email-error');
 		this._error = error;
@@ -84,7 +96,7 @@ class SignupPage {
 		let after = acceptTermsText.substring(endTagPos + endTag.length);
 		let label = $('<span></span>');
 		label.append(document.createTextNode(before));
-		let link = $('<a></a>');
+		let link = $('<a target="_blank"></a>');
 		link.attr('href', basePath + '/privacy-policy');
 		link.text(between);
 		label.append(link);
@@ -98,26 +110,191 @@ class SignupPage {
 		emailInput.on('input', function() {
 			self._updateButtonEnabled();
 		});
-		let button = this._button;
-		animator.addAnimatedClickHandler(button, button, 'animate-button-click',
-			null,
-			function(result) {
-				self._onButtonClick();
-			}
-		);
+		let passwordEdit = this._passwordEdit.textInput;
+		passwordEdit.on('input', function() {
+			self._updateButtonEnabled();
+		});
+		let repeatPasswordEdit = this._repeatPasswordEdit.textInput;
+		repeatPasswordEdit.on('input', function() {
+			self._updateButtonEnabled();
+		});
+		let acceptTermsCheck = this._acceptTermsCheck;
+		acceptTermsCheck.on('change', function() {
+			self._updateButtonEnabled();
+		});
+		this._showEmailCard();
 	}
 
 	_updateButtonEnabled() {
-		let email = this._emailEdit.textInput.val().trim();
-		let hasInput = email.length > 0;
+		let emailCard = this._emailCard;
+		let hasInput;
+		if (emailCard.css('visibility') == 'visible') {
+			let email = this._emailEdit.textInput.val().trim();
+			hasInput = email.length != 0;
+		} else {
+			let password = this._passwordEdit.textInput.val();
+			let repeatPassword = this._repeatPasswordEdit.textInput.val();
+			let acceptTerms = this._acceptTermsCheck.prop('checked');
+			hasInput = password.length != 0 && repeatPassword.length != 0 &&
+				acceptTerms;
+		}
 		let button = this._button;
 		button.prop('disabled', !hasInput);
 	}
 
-	_onButtonClick() {
+	_showEmailCard() {
+		this._passwordCard.css('visibility', 'hidden');
+		this._emailCard.css('visibility', 'visible');
+		this._firstNameEdit.textInput.focus();
+		let button = this._button;
+		animator.clearAnimatedClickHandler(button);
+		this._updateButtonEnabled();
+		var self = this;
+		animator.addAnimatedClickHandler(button, button, 'animate-button-click',
+			null,
+			function(result) {
+				self._showPasswordCard();
+			}
+		);
+	}
+
+	_showPasswordCard() {
 		this._emailCard.css('visibility', 'hidden');
 		this._passwordCard.css('visibility', 'visible');
 		this._passwordEdit.textInput.focus();
+		let button = this._button;
+		animator.clearAnimatedClickHandler(button);
+		this._updateButtonEnabled();
+		var self = this;
+		animator.addAnimatedClickHandler(button, button, 'animate-button-click',
+			function(clickId) {
+				self._onSignupClick(clickId);
+			},
+			function(result) {
+				self._onSignupCompleted(result);
+			}
+		);
+	}
+
+	_onSignupClick(clickId) {
+		this._emailError.hide();
+		this._passwordError.hide();
+		let firstName = this._firstNameEdit.textInput.val().trim();
+		let lastName = this._lastNameEdit.textInput.val().trim();
+		let profile = {};
+		if (firstName.length != 0)
+			profile['firstName'] = firstName;
+		if (lastName.length != 0)
+			profile['lastName'] = lastName;
+		let email = this._emailEdit.textInput.val().trim();
+		let password = this._passwordEdit.textInput.val();
+		let repeatPassword = this._repeatPasswordEdit.textInput.val();
+		let errors = {};
+		if (!this._isValidEmail(email))
+			errors['emailError'] = 'invalid_email_address';
+		else if (password.length < 6)
+			errors['passwordError'] = 'password_too_short';
+		else if (password != repeatPassword)
+			errors['passwordError'] = 'no_repeat_password_match';
+		if (Object.keys(errors).length != 0) {
+			animator.onAnimatedClickHandlerCompleted(clickId, errors);
+			return;
+		}
+		var self = this;
+		let client = new SenSeeActClient();
+		client.signup(email, password, 'default')
+			.done(function(result) {
+				self._onSignupDone(clickId, profile);
+			})
+			.fail(function(xhr, status, error) {
+				self._onSignupFail(clickId, xhr, status, error);
+			});
+	}
+
+	_isValidEmail(email) {
+		if (email.length == 0)
+			return false;
+		let localDomainSep = email.lastIndexOf('@');
+		if (localDomainSep == -1)
+			return false;
+		let localPart = email.substring(0, localDomainSep);
+		let domainPart = email.substring(localDomainSep + 1);
+		
+		// validate local part
+		let allowedLocalChars = /^[A-Za-z0-9!#$%&'*+\-/=?^_`.{|}~]+$/;
+		if (!localPart.match(allowedLocalChars))
+			return false;
+
+		// validate domain part
+		let split = domainPart.split('\.');
+		if (split.length < 2)
+			return false;
+		for (let i = 0; i < split.length; i++) {
+			let domainLabel = split[i];
+			if (!domainLabel.match(/^[A-Za-z0-9\\-]+$/) ||
+					domainLabel.startsWith("-") || domainLabel.endsWith("-")) {
+				return false;
+			}
+			if (i == split.length - 1 && domainLabel.match(/^[0-9]+$/))
+				return false;
+		}
+		return true;
+	}
+
+	_onSignupDone(clickId, profile) {
+		if (Object.keys(profile) == 0) {
+			animator.onAnimatedClickHandlerCompleted(clickId, {});
+			return;
+		}
+		var self = this;
+		let client = new SenSeeActClient();
+		client.updateUser(null, profile)
+			.done(function(result) {
+				self._onUpdateUserDone(clickId);
+			})
+			.fail(function(xhr, status, error) {
+				self._onUpdateUserFail(clickId, xhr, status, error);
+			});
+	}
+
+	_onSignupFail(clickId, xhr, status, error) {
+		let errors = {};
+		if (xhr.status == 403 && xhr.responseJSON) {
+			let code = xhr.responseJSON.code;
+			if (code == 'USER_ALREADY_EXISTS') {
+				errors['emailError'] = 'create_account_email_exists';
+			}
+		}
+		if (Object.keys(errors).length == 0) {
+			errors['generalError'] = 'unexpected_error';
+		}
+		animator.onAnimatedClickHandlerCompleted(clickId, errors)
+	}
+
+	_onUpdateUserDone(clickId) {
+		animator.onAnimatedClickHandlerCompleted(clickId, {});
+	}
+
+	_onUpdateUserFail(clickId, xhr, status, error) {
+		console.log('Failed to update user');
+		console.log(xhr);
+		animator.onAnimatedClickHandlerCompleted(clickId, {});
+	}
+
+	_onSignupCompleted(errors) {
+		if (errors['generalError']) {
+			showToast(i18next.t(errors['generalError']));
+		} else if (errors['emailError']) {
+			this._emailError.text(i18next.t(errors['emailError']));
+			this._emailError.show();
+			this._showEmailCard();
+			this._emailEdit.textInput.focus();
+		} else if (errors['passwordError']) {
+			this._passwordError.text(i18next.t(errors['passwordError']));
+			this._passwordError.show();
+		} else {
+			window.location.href = basePath + '/me';
+		}
 	}
 }
 

@@ -5,3 +5,12 @@ div.error {
 div.message {
 	margin: 0 auto;
 }
+
+div.text-edit-error {
+	box-sizing: border-box;
+	width: 100%;
+	max-width: 360px;
+	margin: 0 auto;
+	color: #be2b2b;
+	padding: 0 16px;
+}

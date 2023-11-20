@@ -18,6 +18,23 @@ class SenSeeActClient {
 		});
 	}
 
+	signup(email, password, project = null, tokenExpiration = 1440) {
+		let data = {
+			email: email,
+			password: password,
+			tokenExpiration: tokenExpiration,
+			project: project,
+			cookie: true,
+			autoExtendCookie: true
+		};
+		return $.ajax({
+			type: 'POST',
+			url: servicePath + '/auth/signup',
+			data: JSON.stringify(data),
+			contentType: 'application/json'
+		});
+	}
+
 	/**
 	 * Calls endpoint GET /auth/logout.
 	 */
