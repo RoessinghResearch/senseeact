@@ -1,4 +1,4 @@
-class AccountPage {
+class MySenSeeActPage {
 	/**
 	 * Properties:
 	 * 
@@ -6,26 +6,16 @@ class AccountPage {
 	 * - _logoutButton (jQuery element)
 	 */
 	constructor() {
-		let client = new SenSeeActClient();
 		var self = this;
-		client.getUser()
-			.done(function(data) {
-				self._onGetUserDone(data);
-			})
-			.fail(function(jqXHR, textStatus, errorThrown) {
-				self._onGetUserFail(jqXHR, textStatus, errorThrown);
-			});
+		checkLogin(function(data) {
+			self._onGetUserDone(data);
+		})
 	}
 
 	_onGetUserDone(data) {
 		this._user = data;
 		this._createView();
 		this._registerEvents();
-	}
-
-	_onGetUserFail(jqXHR, textStatus, errorThrown) {
-		if (jqXHR.status == 401)
-			window.location.href = basePath + '/login';
 	}
 
 	_createView() {
@@ -128,4 +118,4 @@ class AccountPage {
 	}
 }
 
-new AccountPage();
+new MySenSeeActPage();

@@ -293,7 +293,7 @@ class SignupPage {
 			this._passwordError.text(i18next.t(errors['passwordError']));
 			this._passwordError.show();
 		} else {
-			window.location.href = basePath + '/me';
+			redirectOnLogin();
 		}
 	}
 }

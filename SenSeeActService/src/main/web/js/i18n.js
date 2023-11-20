@@ -7,7 +7,7 @@ i18next
 		ns: ['default'],
 		defaultNS: 'default',
 		backend: {
-			loadPath: 'i18n/{{lng}}/{{ns}}.json?v=' + version
+			loadPath: basePath + '/i18n/{{lng}}/{{ns}}.json?v=' + version
 		},
 		detection: {
 			order: ['querystring', 'navigator', 'cookie', 'localStorage'],

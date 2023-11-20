@@ -105,7 +105,7 @@ class LoginPage {
 			this._error.text(i18next.t(error))
 			this._error.show();
 		} else {
-			window.location.href = basePath + '/me';
+			redirectOnLogin();
 		}
 	}
 
