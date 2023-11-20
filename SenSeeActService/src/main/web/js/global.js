@@ -274,6 +274,7 @@ function _onCheckLoginFail(jqXHR, path) {
 
 function redirectOnLogin() {
 	let redirect = getCookie('redirect_on_login');
+	console.log('REDIRECT: ' + redirect);
 	if (redirect) {
 		clearCookie('redirect_on_login');
 		window.location.href = basePath + redirect;
