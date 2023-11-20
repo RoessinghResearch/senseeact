@@ -152,7 +152,7 @@ function setCookie(cname, cvalue, exdays) {
 		time.setTime(time.getTime() + exdays * 24 * 60 * 60 * 1000);
 		cookie += ';expires=' + time.toUTCString();
 	}
-	document.cookie = cookie + ';path=/;SameSite=Strict';
+	document.cookie = cookie + ';path=' + basePath + '/;SameSite=Strict';
 }
 
 function getCookie(cname) {
@@ -171,7 +171,8 @@ function getCookie(cname) {
 function clearCookie(cname) {
 	let time = new Date('1970-01-01');
 	let expires = 'expires=' + time.toUTCString();
-	document.cookie = cname + '=;' + expires + ';path=/;SameSite=Strict';
+	document.cookie = cname + '=;' + expires + ';path=' + basePath +
+		'/;SameSite=Strict';
 }
 
 function clearAllCookies() {
@@ -273,7 +274,6 @@ function _onCheckLoginFail(jqXHR, path) {
 
 function redirectOnLogin() {
 	let redirect = getCookie('redirect_on_login');
-	console.log('REDIRECT: ' + redirect);
 	if (redirect) {
 		clearCookie('redirect_on_login');
 		window.location.href = basePath + redirect;
