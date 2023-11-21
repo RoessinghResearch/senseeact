@@ -21,7 +21,7 @@ ARG TOMCAT_ADMIN_PASSWORD
 COPY --from=build /app/google-application-credentials.json /app/
 ENV GOOGLE_APPLICATION_CREDENTIALS=/app/google-application-credentials.json
 WORKDIR $CATALINA_HOME
-COPY --from=build /app/senseeact/ExampleSenSeeActService/build/libs/example-senseeact-service-6.0.7.war webapps/servlets#senseeact.war
+COPY --from=build /app/senseeact/ExampleSenSeeActService/build/libs/example-senseeact-service-6.0.8.war webapps/servlets#senseeact.war
 COPY senseeact/ExampleSenSeeActService/docker/senseeacttomcat/tomcat-users.xml conf/
 RUN sed -i -e "s/\${TOMCAT_ADMIN_USERNAME}/$TOMCAT_ADMIN_USERNAME/" \
 	-e "s/\${TOMCAT_ADMIN_PASSWORD}/$TOMCAT_ADMIN_PASSWORD/" \

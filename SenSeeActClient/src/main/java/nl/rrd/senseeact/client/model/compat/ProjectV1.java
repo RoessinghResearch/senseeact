@@ -1,6 +1,5 @@
 package nl.rrd.senseeact.client.model.compat;
 
-import nl.rrd.senseeact.client.model.Project;
 import nl.rrd.senseeact.client.project.BaseProject;
 import nl.rrd.senseeact.client.project.ProjectRepository;
 import nl.rrd.utils.json.JsonObject;
@@ -58,11 +57,5 @@ public class ProjectV1 extends JsonObject {
 	 */
 	public void setSyncUser(String syncUser) {
 		this.syncUser = syncUser;
-	}
-
-	public Project toProject() {
-		Project project = new Project();
-		project.setCode(code);
-		return project;
 	}
 }

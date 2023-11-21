@@ -9,6 +9,7 @@ import nl.rrd.senseeact.client.exception.HttpFieldError;
 import nl.rrd.senseeact.client.model.*;
 import nl.rrd.senseeact.client.model.compat.ProjectV1;
 import nl.rrd.senseeact.client.model.compat.ProjectV2;
+import nl.rrd.senseeact.client.model.compat.ProjectV3;
 import nl.rrd.senseeact.client.model.sample.LocalTimeSample;
 import nl.rrd.senseeact.client.model.sample.Sample;
 import nl.rrd.senseeact.client.model.sample.UTCSample;
@@ -62,10 +63,19 @@ public class ProjectControllerExecution {
 	public List<?> list(ProtocolVersion version, Database authDb, User user)
 			throws DatabaseException {
 		List<BaseProject> projects = getUserProjects(authDb, user);
-		if (version.ordinal() >= ProtocolVersion.V6_0_4.ordinal()) {
+		if (version.ordinal() >= ProtocolVersion.V6_0_8.ordinal()) {
 			List<Project> result = new ArrayList<>();
 			for (BaseProject baseProject : projects) {
 				Project project = new Project();
+				project.setCode(baseProject.getCode());
+				project.setName(baseProject.getName());
+				result.add(project);
+			}
+			return result;
+		} else if (version.ordinal() >= ProtocolVersion.V6_0_4.ordinal()) {
+			List<ProjectV3> result = new ArrayList<>();
+			for (BaseProject baseProject : projects) {
+				ProjectV3 project = new ProjectV3();
 				project.setCode(baseProject.getCode());
 				result.add(project);
 			}
@@ -130,7 +140,7 @@ public class ProjectControllerExecution {
 	 */
 	public Object checkProject(ProtocolVersion version, Database authDb,
 			User user, String subject) throws HttpException, DatabaseException {
-		if (subject != null && subject.length() != 0)
+		if (subject != null && !subject.isEmpty())
 			User.findAccessibleUser(version, subject, authDb, user);
 		return null;
 	}
@@ -177,7 +187,7 @@ public class ProjectControllerExecution {
 			User user, String projectCode, String subject, String compatEmail,
 			String asRole) throws HttpException, Exception {
 		User userToAdd;
-		if (compatEmail != null && compatEmail.length() != 0) {
+		if (compatEmail != null && !compatEmail.isEmpty()) {
 			userToAdd = User.findAccessibleUserByEmail(compatEmail, authDb,
 					user);
 		} else {
@@ -226,7 +236,7 @@ public class ProjectControllerExecution {
 			String asRole)
 			throws HttpException, Exception {
 		User removeUser;
-		if (compatEmail != null && compatEmail.length() != 0) {
+		if (compatEmail != null && !compatEmail.isEmpty()) {
 			removeUser = User.findAccessibleUserByEmail(compatEmail, authDb,
 					user);
 		} else {
@@ -239,7 +249,7 @@ public class ProjectControllerExecution {
 		else
 			project = findUserProject(projectCode, authDb, user);
 		Role asRoleEnum = null;
-		if (asRole != null && asRole.length() > 0) {
+		if (asRole != null && !asRole.isEmpty()) {
 			try {
 				asRoleEnum = TypeConversion.getEnum(asRole, Role.class);
 			} catch (ParseException ex) {
@@ -313,7 +323,7 @@ public class ProjectControllerExecution {
 		}
 		List<HttpFieldError> fieldErrors = new ArrayList<>();
 		Role role = null;
-		if (roleStr != null && roleStr.length() > 0) {
+		if (roleStr != null && !roleStr.isEmpty()) {
 			try {
 				role = TypeConversion.getEnum(roleStr, Role.class);
 			} catch (ParseException ex) {
@@ -706,11 +716,11 @@ public class ProjectControllerExecution {
 		List<HttpFieldError> fieldErrors = new ArrayList<>();
 		ParameterParser paramParser = new ParameterParser();
 		Object startObj = null;
-		if (isTimeTable && start != null && start.length() > 0) {
+		if (isTimeTable && start != null && !start.isEmpty()) {
 			try {
 				startObj = paramParser.parseSelectDateTime(isUtcTable, start);
 			} catch (ParseException ex) {
-				if (errorBuilder.length() > 0)
+				if (!errorBuilder.isEmpty())
 					errorBuilder.append("\n");
 				errorBuilder.append("Invalid value for parameter \"start\": " +
 						ex.getMessage());
@@ -738,11 +748,11 @@ public class ProjectControllerExecution {
 					"localTime", startTimeStr));
 		}
 		Object endObj = null;
-		if (isTimeTable && end != null && end.length() > 0) {
+		if (isTimeTable && end != null && !end.isEmpty()) {
 			try {
 				endObj = paramParser.parseSelectDateTime(isUtcTable, end);
 			} catch (ParseException ex) {
-				if (errorBuilder.length() > 0)
+				if (!errorBuilder.isEmpty())
 					errorBuilder.append("\n");
 				errorBuilder.append("Invalid value for parameter \"end\": " +
 						ex.getMessage());
@@ -787,7 +797,7 @@ public class ProjectControllerExecution {
 		Object filterObj = null;
 		Object sortObj = null;
 		Object limitObj = null;
-		if (content != null && content.length() > 0) {
+		if (content != null && !content.isEmpty()) {
 			Map<?,?> map;
 			try {
 				map = JsonMapper.parse(content, Map.class);

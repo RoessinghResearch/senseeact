@@ -6,11 +6,9 @@ import nl.rrd.senseeact.client.project.BaseProject;
 import nl.rrd.senseeact.client.project.ProjectRepository;
 
 /**
- * This class defines a project code. The endpoint GET /project/list returns
- * this class rather than just the project code. This way it is possible to
- * include further details as was done in old versions. The class {@link
- * BaseProject BaseProject} provides more details about a project. You can get
- * he {@link BaseProject BaseProject} with {@link
+ * This class defines a project code and name. The class {@link BaseProject
+ * BaseProject} provides more details about a project. You can get the {@link
+ * BaseProject BaseProject} with {@link
  * ProjectRepository#findProjectByCode(String)
  * ProjectRepository.findProjectByCode()}.
  * 
@@ -19,12 +17,14 @@ import nl.rrd.senseeact.client.project.ProjectRepository;
 @JsonIgnoreProperties(ignoreUnknown=true)
 public class Project extends JsonObject {
 	private String code;
+	private String name;
 
 	public Project() {
 	}
 
-	public Project(String code) {
+	public Project(String code, String name) {
 		this.code = code;
+		this.name = name;
 	}
 
 	/**
@@ -43,5 +43,23 @@ public class Project extends JsonObject {
 	 */
 	public void setCode(String code) {
 		this.code = code;
+	}
+
+	/**
+	 * Returns the project name that can be presented to the user.
+	 *
+	 * @return the project name
+	 */
+	public String getName() {
+		return name;
+	}
+
+	/**
+	 * Sets the project name that can be presented to the user.
+	 *
+	 * @param name the project name
+	 */
+	public void setName(String name) {
+		this.name = name;
 	}
 }

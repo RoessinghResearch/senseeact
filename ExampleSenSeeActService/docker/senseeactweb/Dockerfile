@@ -35,7 +35,7 @@ COPY --from=build /app/ htdocs${WEB_PATH}/
 RUN escapedWebPath=`echo $WEB_PATH | sed -e "s/\//\\\\\\\\\//"` && \
 	sed -i \
 	-e "s/var basePath = '.*';/var basePath = '${escapedWebPath}';/" \
-	-e "s/var servicePath = '.*';/var servicePath = '\/servlets\/senseeact\/v6.0.7';/" \
+	-e "s/var servicePath = '.*';/var servicePath = '\/servlets\/senseeact\/v6.0.8';/" \
 	htdocs${WEB_PATH}/index.html && \
 	sed -i \
 	-e "s/\$WEB_PATH/$escapedWebPath/g" \

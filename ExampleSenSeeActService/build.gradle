@@ -4,7 +4,7 @@ plugins {
 }
 
 group = 'nl.rrd'
-version = '6.0.7' // run updateVersion after changing this property
+version = '6.0.8' // run updateVersion after changing this property
 
 base {
 	archivesName = 'example-senseeact-service'
@@ -65,15 +65,15 @@ tasks.register('updateVersion') {
 			match: "version=.+",
 			replace: "version=${version}")
 		ant.replaceregexp(file: 'docker/senseeacttomcat/Dockerfile',
-			match: "rrd-senseeact-service-[0-9\\.]+\\.war",
-			replace: "rrd-senseeact-service-${version}.war")
+			match: "example-senseeact-service-[0-9\\.]+\\.war",
+			replace: "example-senseeact-service-${version}.war")
 		ant.replaceregexp(file: 'docker/senseeactweb/Dockerfile',
 			match: "(\\\\/servlets\\\\/senseeact\\\\/)v[0-9\\.]+'",
 			replace: "\\1v${version}'")
-		ant.replaceregexp(file: 'src/main/web/index.html',
+		ant.replaceregexp(file: '../SenSeeActService/src/main/web/index.html',
 			match: "var version = '[0-9\\.]+';",
 			replace: "var version = '${version}';")
-		ant.replaceregexp(file: 'src/main/web/index.html',
+		ant.replaceregexp(file: '../SenSeeActService/src/main/web/index.html',
 			match: "'/servlets/senseeact/v[0-9\\.]+'",
 			replace: "'/servlets/senseeact/v${version}'")
 	}

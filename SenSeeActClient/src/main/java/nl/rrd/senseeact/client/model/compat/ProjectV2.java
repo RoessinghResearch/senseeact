@@ -85,10 +85,4 @@ public class ProjectV2 extends JsonObject {
 	public void setSyncGroup(String syncGroup) {
 		this.syncGroup = syncGroup;
 	}
-
-	public Project toProject() {
-		Project project = new Project();
-		project.setCode(code);
-		return project;
-	}
 }

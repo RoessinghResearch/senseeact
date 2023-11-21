@@ -252,6 +252,10 @@ body {
 	}
 }
 
+.fill-space {
+	flex-grow: 1;
+}
+
 .tinted-background {
 	background-color: #f2e9dc;
 }
