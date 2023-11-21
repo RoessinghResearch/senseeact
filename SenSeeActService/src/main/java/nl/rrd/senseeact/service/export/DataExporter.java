@@ -134,7 +134,7 @@ public abstract class DataExporter {
 	}
 
 	/**
-	 * Returns the total number of steps. Together with "step" this indicated
+	 * Returns the total number of steps. Together with "step" this indicates
 	 * the progress. This is only valid if the status is {@link
 	 * DataExportStatus#RUNNING RUNNING}. If the total is 0, then the progress
 	 * is still unknown.
@@ -161,8 +161,7 @@ public abstract class DataExporter {
 	}
 
 	/**
-	 * Returns a list of log messages. This is only valid if the status is
-	 * {@link DataExportStatus#RUNNING RUNNING}.
+	 * Returns a list of log messages.
 	 *
 	 * @return the log messages
 	 */
