@@ -25,7 +25,7 @@ import java.util.Map;
 public class ProjectController {
 	private ProjectControllerExecution exec = new ProjectControllerExecution();
 
-	@RequestMapping(value="/list", method= RequestMethod.GET)
+	@RequestMapping(value="/list", method=RequestMethod.GET)
 	public List<?> list(
 			HttpServletRequest request,
 			HttpServletResponse response,

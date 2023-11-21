@@ -7,6 +7,7 @@ import nl.rrd.senseeact.dao.DatabaseConnection;
 import nl.rrd.senseeact.dao.DatabaseFactory;
 import nl.rrd.senseeact.dao.DatabaseTableDef;
 import nl.rrd.senseeact.dao.mysql.MySQLDatabaseFactory;
+import nl.rrd.senseeact.service.export.DataExporterFactory;
 import nl.rrd.senseeact.service.mail.EmailTemplateRepository;
 import nl.rrd.senseeact.service.sso.SSOTokenRepository;
 import nl.rrd.utils.AppComponents;
@@ -63,6 +64,8 @@ public abstract class ApplicationInit {
 		}
 		if (components.findComponent(MobileAppRepository.class) == null)
 			components.addComponent(createMobileAppRepository());
+		if (components.findComponent(DataExporterFactory.class) == null)
+			components.addComponent(createDataExporterFactory());
 		if (components.findComponent(TaskScheduler.class) == null)
 			components.addComponent(new DefaultTaskScheduler());
 		final Logger logger = AppComponents.getLogger(SenSeeActContext.LOGTAG);
@@ -174,6 +177,8 @@ public abstract class ApplicationInit {
 	createProjectUserAccessControlRepository();
 
 	protected abstract MobileAppRepository createMobileAppRepository();
+
+	protected abstract DataExporterFactory createDataExporterFactory();
 
 	public void onApplicationEvent(ContextClosedEvent event) {
 		PushNotificationService pushService = AppComponents.get(

@@ -9,6 +9,7 @@ import nl.rrd.senseeact.service.ApplicationInit;
 import nl.rrd.senseeact.service.Configuration;
 import nl.rrd.senseeact.service.OAuthTableRepository;
 import nl.rrd.senseeact.service.ProjectUserAccessControlRepository;
+import nl.rrd.senseeact.service.export.DataExporterFactory;
 import nl.rrd.senseeact.service.mail.EmailTemplateRepository;
 import nl.rrd.senseeact.service.sso.SSOTokenRepository;
 import nl.rrd.utils.exception.ParseException;
@@ -57,5 +58,10 @@ public class ExampleApplicationInit extends ApplicationInit {
 	@Override
 	protected MobileAppRepository createMobileAppRepository() {
 		return new ExampleMobileAppRepository();
+	}
+
+	@Override
+	protected DataExporterFactory createDataExporterFactory() {
+		return new ExampleDataExporterFactory();
 	}
 }
