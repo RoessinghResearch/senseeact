@@ -311,6 +311,8 @@ public class DataExporterManager {
 				exporters.remove(export.getId());
 			}
 		}
+		Logger logger = AppComponents.getLogger(getClass().getSimpleName());
+		logger.info("Status change " + getExportLog(export) + ": " + status);
 		new Thread(() -> onStatusChangeThread(export, exporter, status))
 				.start();
 	}
@@ -378,6 +380,9 @@ public class DataExporterManager {
 			if (closed || !exporters.containsKey(export.getId()))
 				return;
 		}
+		Logger logger = AppComponents.getLogger(getClass().getSimpleName());
+		logger.info("Update progress " + getExportLog(export) + ": " +
+				String.format("%s /%s: %s", step, total, statusMessage));
 		tryRunWithAuthDb(authDb -> {
 			export.setStep(step);
 			export.setTotal(total);
@@ -392,6 +397,8 @@ public class DataExporterManager {
 			if (closed || !exporters.containsKey(export.getId()))
 				return;
 		}
+		Logger logger = AppComponents.getLogger(getClass().getSimpleName());
+		logger.info("Log message " + getExportLog(export) + ": " + message);
 		tryRunWithAuthDb(authDb -> {
 			export.getLogMessageList().add(new DataExportLogMessage(time,
 					message));
