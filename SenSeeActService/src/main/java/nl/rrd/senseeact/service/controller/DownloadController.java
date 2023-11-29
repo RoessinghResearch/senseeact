@@ -86,6 +86,20 @@ public class DownloadController {
 				versionName, request, response);
 	}
 
+	@RequestMapping(value="/{exportId}", method=RequestMethod.DELETE)
+	public void deleteExport(
+			HttpServletRequest request,
+			HttpServletResponse response,
+			@PathVariable("version")
+			@Parameter(hidden = true)
+			String versionName,
+			@PathVariable("exportId")
+			String exportId) throws HttpException, Exception {
+		QueryRunner.runAuthQuery((version, authDb, user) ->
+				doDeleteExport(user, exportId),
+				versionName, request, response);
+	}
+
 	private List<Project> doGetProjects(ProtocolVersion version,
 			Database authDb, User user) throws HttpException, Exception {
 		List<String> codes = user.findProjects(authDb);
@@ -153,6 +167,12 @@ public class DownloadController {
 				FileUtils.copyStream(in, out, 0, null);
 			}
 		}
+		return null;
+	}
+
+	private Object doDeleteExport(User user, String exportId)
+			throws HttpException, Exception {
+		exporterManager.deleteExport(user, exportId);
 		return null;
 	}
 }
