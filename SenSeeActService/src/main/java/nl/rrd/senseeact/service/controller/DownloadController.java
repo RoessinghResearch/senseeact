@@ -146,6 +146,8 @@ public class DownloadController {
 		File zip = exporterManager.getExportZip(export);
 		response.setContentType("application/x-zip");
 		response.setContentLengthLong(zip.length());
+		response.setHeader("Content-Disposition", "attachment; filename=" +
+				zip.getName());
 		try (FileInputStream in = new FileInputStream(zip)) {
 			try (OutputStream out = response.getOutputStream()) {
 				FileUtils.copyStream(in, out, 0, null);
