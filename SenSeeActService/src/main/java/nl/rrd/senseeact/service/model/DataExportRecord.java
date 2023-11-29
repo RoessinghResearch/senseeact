@@ -18,18 +18,18 @@ public class DataExportRecord extends UTCSample {
 	@DatabaseField(value=DatabaseType.STRING)
 	private String status;
 	@DatabaseField(value=DatabaseType.INT)
-	private int step;
+	private int step = 0;
 	@DatabaseField(value=DatabaseType.INT)
-	private int total;
+	private int total = 0;
 	@DatabaseField(value=DatabaseType.TEXT)
-	private String statusMessage;
+	private String statusMessage = null;
 	@DatabaseField(value=DatabaseType.TEXT, json=true)
 	private String logMessages;
 
 	private List<DataExportLogMessage> logMessageList = new ArrayList<>();
 
 	@DatabaseField(value=DatabaseType.TEXT)
-	private String error;
+	private String error = null;
 
 	@DatabaseField(value=DatabaseType.TEXT, json=true)
 	private String initParams;
