@@ -1,6 +1,37 @@
+<link rel="stylesheet" type="text/css" href="../css/pages/me/download.css"></link>
 <div class="fill-space">
 	<div class="center" style="margin-top: 20px">
 		<h1 data-i18n="download_data"></h1>
+	</div>
+	<div class="form">
+		<h3 data-i18n="active_downloads" style="margin-top: 16px"></h2>
+
+		<div id="active-downloads-container" style="margin-top: 8px">
+			<div id="active-downloads-wait" class="wait-circle"></div>
+			<div id="active-downloads-empty" data-i18n="active_downloads_empty"></div>
+			<div id="active-downloads-list" class="bordered-list">
+				<div class="active-download-item">
+					<div class="active-download-item-left">
+						<div class="active-download-item-name">Default</div>
+						<div class="active-download-item-time">04-12-2023 15:30</div>
+					</div>
+					<div class="active-download-item-right">
+						<div class="active-download-item-progress"></div>
+						<button class="small" data-i18n="download"></button>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<h3 data-i18n="start_download" style="margin-top: 16px"></h2>
+
+		<div id="start-download-container" style="margin-top: 8px">
+			<div id="start-download-wait" class="wait-circle"></div>
+			<div id="start-download-empty" data-i18n="start_download_empty"></div>
+			<div id="start-download-list" class="bordered-list">
+				<div class="start-download-item">Default</div>
+			</div>
+		</div>
 	</div>
 </div>
 <div id="background-image"></div>

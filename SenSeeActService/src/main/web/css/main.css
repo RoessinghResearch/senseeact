@@ -294,6 +294,12 @@ body {
 	}
 }
 
+.bordered-list {
+	box-sizing: border-box;
+	border: 0.5px solid #757575;
+	border-radius: 14px;
+}
+
 .form-row {
 	display: flex;
 	margin-top: 8px;
@@ -351,6 +357,14 @@ h2 {
 	font-size: 24px;
 	margin: 0px;
 	text-transform: uppercase;
+}
+
+h3 {
+	color: #373844;
+	font-family: 'Oswald', sans-serif;
+	font-weight: 400;
+	font-size: 24px;
+	margin: 0px;
 }
 
 .caption {

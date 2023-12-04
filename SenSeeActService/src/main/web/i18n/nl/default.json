@@ -34,5 +34,10 @@
 	"my_senseeact": "Mijn SenSeeAct",
 	"first_name": "Voornaam",
 	"last_name": "Achternaam",
-	"download_data": "Data downloaden"
+	"download_data": "Data downloaden",
+	"download": "Downloaden",
+	"active_downloads": "Actieve downloads",
+	"active_downloads_empty": "U heeft geen actieve downloads.",
+	"start_download": "Download starten",
+	"start_download_empty": "U bent geen lid van een project waar u data kunt downloaden."
 }

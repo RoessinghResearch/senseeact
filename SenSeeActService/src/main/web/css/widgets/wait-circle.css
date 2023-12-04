@@ -1,0 +1,18 @@
+@keyframes animation-wait-cycle {
+	0% {
+		transform: rotate(0deg);
+	}
+	100% {
+		transform: rotate(360deg);
+	}
+}
+
+.wait-circle {
+	width: 32px;
+	height: 32px;
+	background-image: url('../../images/icon_loading.svg');
+	animation-name: animation-wait-cycle;
+	animation-timing-function: linear;
+	animation-duration: 1000ms;
+	animation-iteration-count: infinite;
+}

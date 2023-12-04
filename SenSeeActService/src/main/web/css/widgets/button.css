@@ -13,6 +13,13 @@ button {
 	cursor: pointer;
 }
 
+button.small {
+	height: 30px;
+	border-radius: 12px;
+	width: 114px;
+	font-size: 16px;
+}
+
 button:disabled {
 	border: 0.5px solid #afafaf;
 	background-color: #ececec;

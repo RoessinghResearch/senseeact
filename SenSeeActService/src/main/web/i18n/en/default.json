@@ -34,5 +34,10 @@
 	"my_senseeact": "My SenSeeAct",
 	"first_name": "First name",
 	"last_name": "Last name",
-	"download_data": "Download data"
+	"download_data": "Download data",
+	"download": "Download",
+	"active_downloads": "Active downloads",
+	"active_downloads_empty": "You have no active downloads.",
+	"start_download": "Start download",
+	"start_download_empty": "You are not a member of a project where you can download data."
 }

@@ -73,4 +73,24 @@ class SenSeeActClient {
 			contentType: 'application/json'
 		});
 	}
+
+	/**
+	 * Calls endpoint GET /download/projects
+	 */
+	getDownloadProjects() {
+		return $.ajax({
+			type: 'GET',
+			url: servicePath + '/download/projects'
+		});
+	}
+
+	/**
+	 * Calls endpoint GET /download/list
+	 */
+	getDownloadList() {
+		return $.ajax({
+			type: 'GET',
+			url: servicePath + '/download/list'
+		});
+	}
 }
