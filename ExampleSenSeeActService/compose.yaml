@@ -16,7 +16,7 @@ services:
             - 10001:8081
         restart: unless-stopped
     senseeactdb:
-        image: mariadb:10
+        image: mariadb:11
         volumes:
             - mysql-data:/var/lib/mysql
         environment:

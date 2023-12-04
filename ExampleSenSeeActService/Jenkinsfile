@@ -48,7 +48,7 @@ pipeline {
 						scp -r build/docker-compose jenkins@${SENSEEACT_PROD_HOST}:~ && \
 						docker save -o senseeact_docker_images.tar \
 						senseeacttomcat:$dockerTag senseeactweb:$dockerTag \
-						phpmyadmin:fpm-alpine mariadb:10 && \
+						phpmyadmin:fpm-alpine mariadb:11 && \
 						scp senseeact_docker_images.tar jenkins@${SENSEEACT_PROD_HOST}:~'
 				}
 				dir('git/senseeact/ExampleSenSeeActService') {

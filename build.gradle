@@ -4,6 +4,6 @@ allprojects {
 	}
 
 	tasks.register('genwrapper', Wrapper) {
-		gradleVersion = '8.4'
+		gradleVersion = '8.5'
 	}
 }
