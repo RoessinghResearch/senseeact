@@ -1,0 +1,48 @@
+.bordered-list {
+	box-sizing: border-box;
+	border: 0.5px solid #757575;
+	border-radius: 14px;
+}
+
+.bordered-list-item {
+	height: 36px;
+	padding: 0px 16px;
+	line-height: 36px;
+	font-family: 'Oswald', sans-serif;
+	font-size: 16px;
+	border-bottom: 0.5px solid #757575;
+	cursor: pointer;
+}
+
+.bordered-list-item:first-child {
+	border-top-left-radius: 14px;
+	border-top-right-radius: 14px;
+}
+
+.bordered-list-item:hover {
+	background: #f0f0f0;
+}
+
+.bordered-list-item:last-child {
+	border-bottom: 0;
+	border-bottom-left-radius: 14px;
+	border-bottom-right-radius: 14px;
+}
+
+@keyframes animation-bordered-list-item-click {
+	0% {
+		background: #f0f0f0;
+	}
+	50% {
+		background: #e0e0e0;
+	}
+	100% {
+		background: #f0f0f0;
+	}
+}
+
+.animate-bordered-list-item-click {
+	animation-name: animation-bordered-list-item-click;
+	animation-timing-function: ease;
+	animation-duration: 200ms;
+}

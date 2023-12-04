@@ -294,12 +294,6 @@ body {
 	}
 }
 
-.bordered-list {
-	box-sizing: border-box;
-	border: 0.5px solid #757575;
-	border-radius: 14px;
-}
-
 .form-row {
 	display: flex;
 	margin-top: 8px;

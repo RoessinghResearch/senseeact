@@ -93,4 +93,17 @@ class SenSeeActClient {
 			url: servicePath + '/download/list'
 		});
 	}
+
+	/**
+	 * Calls endpoint POST /download/start
+	 */
+	startDownload(project) {
+		let url = servicePath + '/download/start?project=' +
+			encodeURIComponent(project);
+		return $.ajax({
+			type: 'POST',
+			url: url,
+			mimeType: 'text/plain'
+		});
+	}
 }
