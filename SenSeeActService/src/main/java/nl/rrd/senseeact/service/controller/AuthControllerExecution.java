@@ -555,8 +555,6 @@ public class AuthControllerExecution {
 		ZonedDateTime now = DateTimeUtils.nowMs();
 		asUserEmail = asUserEmail.toLowerCase();
 		User asUser = User.findAccessibleUserByEmail(asUserEmail, authDb, user);
-		if (asUser.getUserid().equals(user.getUserid()))
-			throw new ForbiddenException("Cannot log in as yourself");
 		if (!asUser.isActive()) {
 			throw new ForbiddenException(String.format(
 					"Account of user \"%s\" has been deactivated",
