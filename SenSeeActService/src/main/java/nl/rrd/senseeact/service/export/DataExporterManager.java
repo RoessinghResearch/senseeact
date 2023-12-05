@@ -343,19 +343,19 @@ public class DataExporterManager {
 		File zipFile = getExportZip(export);
 		try (FileOutputStream out = new FileOutputStream(zipFile)) {
 			try (ZipOutputStream zip = new ZipOutputStream(out)) {
-				createZipFile(export, zip, out);
+				createZipFile(export, zip);
 			}
 		}
 	}
 
-	private void createZipFile(DataExportRecord export, ZipOutputStream zip,
-			FileOutputStream out) throws IOException {
+	private void createZipFile(DataExportRecord export, ZipOutputStream zip)
+			throws IOException {
 		File exportDir = getExportDir(export);
-		addToZip(exportDir, exportDir.getName(), zip, out);
+		addToZip(exportDir, exportDir.getName(), zip);
 	}
 
-	private void addToZip(File file, String path, ZipOutputStream zip,
-			OutputStream out) throws IOException {
+	private void addToZip(File file, String path, ZipOutputStream zip)
+			throws IOException {
 		if (file.isHidden())
 			return;
 		if (file.isDirectory()) {
@@ -363,12 +363,12 @@ public class DataExporterManager {
 			zip.closeEntry();
 			File[] children = file.listFiles();
 			for (File child : children) {
-				addToZip(child, path + "/" + child.getName(), zip, out);
+				addToZip(child, path + "/" + child.getName(), zip);
 			}
 		} else {
 			zip.putNextEntry(new ZipEntry(path));
 			try (FileInputStream in = new FileInputStream(file)) {
-				FileUtils.copyStream(in, out, 0, null);
+				FileUtils.copyStream(in, zip, 0, null);
 			}
 			zip.closeEntry();
 		}
