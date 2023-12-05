@@ -7,9 +7,13 @@ class DownloadPage {
 	 *       object with the following properties:
 	 *       - code
 	 *       - name
+	 * - _runningDownloadIntervalId: If there is a running download, this is
+	 *       set to the interval ID from setInterval(). Otherwise it's null.
 	 */
 
 	constructor() {
+		this._lastStartTime = null;
+		this._runningDownloadIntervalId = null;
 		var self = this;
 		checkLogin(function(data) {
 			self._onGetUserDone();
@@ -46,7 +50,7 @@ class DownloadPage {
 			return;
 		}
 		this._projects = projects;
-		this._updateActiveDownloads();
+		this._updateActiveDownloads(true);
 		let list = $('#start-download-list');
 		list.show();
 		var self = this;
@@ -79,7 +83,7 @@ class DownloadPage {
 			let client = new SenSeeActClient();
 			client.startDownload(project)
 				.done(function() {
-					self._updateActiveDownloads();
+					self._updateActiveDownloads(true);
 				})
 				.fail(function(xhr, status, error) {
 					self._onClientError();
@@ -88,7 +92,7 @@ class DownloadPage {
 		animator.onAnimatedClickHandlerCompleted(clickId, null);
 	}
 
-	_updateActiveDownloads() {
+	_updateActiveDownloads(showError = false) {
 		var self = this;
 		let client = new SenSeeActClient();
 		client.getDownloadList()
@@ -96,7 +100,8 @@ class DownloadPage {
 				self._onGetDownloadList(data);
 			})
 			.fail(function(xhr, status, error) {
-				self._onClientError();
+				if (showError)
+					self._onClientError();
 			});
 	}
 
@@ -109,10 +114,28 @@ class DownloadPage {
 		let listDiv = $('#active-downloads-list');
 		listDiv.show();
 		listDiv.empty();
+		let hasRunning = false;
 		for (let i = 0; i < list.length; i++) {
 			let item = list[i];
+			if (item.status != 'IDLE' && item.status != 'RUNNING' &&
+					item.status != 'COMPLETED') {
+				continue;
+			}
+			if (item.status == 'RUNNING')
+				hasRunning = true;
 			let itemDiv = this._createActiveDownloadItem(item);
 			listDiv.append(itemDiv);
+		}
+		var self = this;
+		if (hasRunning && this._runningDownloadIntervalId === null) {
+			this._runningDownloadIntervalId = setInterval(
+				function() {
+					self._updateActiveDownloads();
+				},
+				1000);
+		} else if (!hasRunning && this._runningDownloadIntervalId !== null) {
+			clearInterval(this._runningDownloadIntervalId);
+			this._runningDownloadIntervalId = null;
 		}
 	}
 
@@ -120,6 +143,10 @@ class DownloadPage {
 		showToast(i18next.t('unexpected_error'));
 	}
 
+	/**
+	 * Creates a widget for an active download item. The status should be
+	 * IDLE, RUNNING or COMPLETED.
+	 */
 	_createActiveDownloadItem(item) {
 		let project = this._findProjectForCode(item.project);
 		let time = moment(item.localTime);
@@ -143,6 +170,10 @@ class DownloadPage {
 		leftCol.append(timeDiv);
 		let progressDiv = $('<div></div>');
 		progressDiv.addClass('active-download-item-progress');
+		let progressBar = new ProgressBar(progressDiv)
+		progressBar.step = item.step;
+		progressBar.total = item.total;
+		progressBar.render();
 		rightCol.append(progressDiv);
 		let button = $('<a></a>');
 		button.addClass('button small');
@@ -150,6 +181,12 @@ class DownloadPage {
 		button.attr('href', url);
 		button.text(i18next.t('download'));
 		rightCol.append(button);
+		if (item.status == 'IDLE' || item.status == 'RUNNING') {
+			button.hide();
+		} else {
+			// COMPLETED
+			progressDiv.hide();
+		}
 		return itemDiv;
 	}
 

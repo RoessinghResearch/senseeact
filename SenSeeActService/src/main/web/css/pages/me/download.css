@@ -51,3 +51,7 @@
 .active-download-item-right a.button {
 	width: 100%;
 }
+
+.active-download-item-progress {
+	width: 100%;
+}
