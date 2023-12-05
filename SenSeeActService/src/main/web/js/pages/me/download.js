@@ -114,26 +114,26 @@ class DownloadPage {
 		let listDiv = $('#active-downloads-list');
 		listDiv.show();
 		listDiv.empty();
-		let hasRunning = false;
+		let hasIncomplete = false;
 		for (let i = 0; i < list.length; i++) {
 			let item = list[i];
 			if (item.status != 'IDLE' && item.status != 'RUNNING' &&
 					item.status != 'COMPLETED') {
 				continue;
 			}
-			if (item.status == 'RUNNING')
-				hasRunning = true;
+			if (item.status != 'COMPLETED')
+				hasIncomplete = true;
 			let itemDiv = this._createActiveDownloadItem(item);
 			listDiv.append(itemDiv);
 		}
 		var self = this;
-		if (hasRunning && this._runningDownloadIntervalId === null) {
+		if (hasIncomplete && this._runningDownloadIntervalId === null) {
 			this._runningDownloadIntervalId = setInterval(
 				function() {
 					self._updateActiveDownloads();
 				},
 				1000);
-		} else if (!hasRunning && this._runningDownloadIntervalId !== null) {
+		} else if (!hasIncomplete && this._runningDownloadIntervalId !== null) {
 			clearInterval(this._runningDownloadIntervalId);
 			this._runningDownloadIntervalId = null;
 		}
