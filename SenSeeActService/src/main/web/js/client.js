@@ -106,4 +106,16 @@ class SenSeeActClient {
 			mimeType: 'text/plain'
 		});
 	}
+
+	/**
+	 * Calls endpoint DELETE /download/{exportId}
+	 */
+	deleteDownload(exportId) {
+		let url = servicePath + '/download/' + exportId;
+		return $.ajax({
+			type: 'DELETE',
+			url: url,
+			mimeType: 'text/plain'
+		});
+	}
 }

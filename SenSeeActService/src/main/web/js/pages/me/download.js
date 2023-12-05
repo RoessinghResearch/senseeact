@@ -45,13 +45,16 @@ class DownloadPage {
 
 	_onGetDownloadProjects(projects) {
 		$('#start-download-wait').hide();
+		let emptyDiv = $('start-download-empty');
+		let list = $('#start-download-list');
 		if (projects.length == 0) {
-			$('start-download-empty').show();
+			emptyDiv.show();
+			list.hide();
 			return;
 		}
 		this._projects = projects;
 		this._updateActiveDownloads(true);
-		let list = $('#start-download-list');
+		emptyDiv.hide();
 		list.show();
 		var self = this;
 		for (let i = 0; i < projects.length; i++) {
@@ -107,11 +110,14 @@ class DownloadPage {
 
 	_onGetDownloadList(list) {
 		$('#active-downloads-wait').hide();
+		let emptyDiv = $('#active-downloads-empty');
+		let listDiv = $('#active-downloads-list');
 		if (list.length == 0) {
-			$('#active-downloads-empty').show();
+			emptyDiv.show();
+			listDiv.hide();
 			return;
 		}
-		let listDiv = $('#active-downloads-list');
+		emptyDiv.hide();
 		listDiv.show();
 		listDiv.empty();
 		let hasIncomplete = false;
@@ -139,10 +145,6 @@ class DownloadPage {
 		}
 	}
 
-	_onClientError() {
-		showToast(i18next.t('unexpected_error'));
-	}
-
 	/**
 	 * Creates a widget for an active download item. The status should be
 	 * IDLE, RUNNING or COMPLETED.
@@ -154,40 +156,68 @@ class DownloadPage {
 		let timeStr = time.format(dateTimeFormat);
 		let itemDiv = $('<div></div>');
 		itemDiv.addClass('active-download-item');
-		let leftCol = $('<div></div>');
-		leftCol.addClass('active-download-item-left');
-		itemDiv.append(leftCol);
-		let rightCol = $('<div></div>');
-		rightCol.addClass('active-download-item-right');
-		itemDiv.append(rightCol);
+
+		let col1 = $('<div></div>');
+		col1.addClass('active-download-item-col1');
+		itemDiv.append(col1);
+	
 		let nameDiv = $('<div></div>');
 		nameDiv.addClass('active-download-item-name');
 		nameDiv.text(project.name);
-		leftCol.append(nameDiv);
+		col1.append(nameDiv);
 		let timeDiv = $('<div></div>');
 		timeDiv.addClass('active-download-item-time');
 		timeDiv.text(timeStr);
-		leftCol.append(timeDiv);
+		col1.append(timeDiv);
+
+		let col2 = $('<div></div>');
+		col2.addClass('active-download-item-col2');
+		itemDiv.append(col2);
 		let progressDiv = $('<div></div>');
 		progressDiv.addClass('active-download-item-progress');
 		let progressBar = new ProgressBar(progressDiv)
 		progressBar.step = item.step;
 		progressBar.total = item.total;
 		progressBar.render();
-		rightCol.append(progressDiv);
+		col2.append(progressDiv);
 		let button = $('<a></a>');
 		button.addClass('button small');
 		let url = servicePath + '/download/' + item.id;
 		button.attr('href', url);
 		button.text(i18next.t('download'));
-		rightCol.append(button);
+		col2.append(button);
 		if (item.status == 'IDLE' || item.status == 'RUNNING') {
 			button.hide();
 		} else {
 			// COMPLETED
 			progressDiv.hide();
 		}
+
+		let col3 = $('<div></div>');
+		col3.addClass('active-download-item-col3');
+		itemDiv.append(col3);
+		let img = $('<div></div>')
+			.addClass('icon')
+			.css('mask-image', 'url(../images/icon_trash_can.svg)');
+		col3.append(img);
+		var self = this;
+		img.click(function() {
+			self._onDeleteDownloadClick(item);
+		});
+
 		return itemDiv;
+	}
+
+	_onDeleteDownloadClick(item) {
+		let client = new SenSeeActClient();
+		var self = this;
+		client.deleteDownload(item.id)
+			.done(function(data) {
+				self._updateActiveDownloads();
+			})
+			.fail(function(xhr, status, error) {
+				self._onClientError();
+			});
 	}
 
 	_findProjectForCode(code) {
@@ -197,6 +227,10 @@ class DownloadPage {
 				return project;
 		}
 		return null;
+	}
+
+	_onClientError() {
+		showToast(i18next.t('unexpected_error'));
 	}
 }
 
