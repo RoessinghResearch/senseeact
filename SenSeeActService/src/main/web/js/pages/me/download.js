@@ -3,6 +3,10 @@ class DownloadPage {
 	 * Member variables:
 	 * 
 	 * - _lastStartTime (moment)
+	 * - _projects (array): Result of GET /download/projects. Each item is an
+	 *       object with the following properties:
+	 *       - code
+	 *       - name
 	 */
 
 	constructor() {
@@ -14,7 +18,6 @@ class DownloadPage {
 
 	_onGetUserDone() {
 		this._createView();
-		this._updateActiveDownloads();
 		let client = new SenSeeActClient();
 		var self = this;
 		client.getDownloadProjects()
@@ -42,6 +45,8 @@ class DownloadPage {
 			$('start-download-empty').show();
 			return;
 		}
+		this._projects = projects;
+		this._updateActiveDownloads();
 		let list = $('#start-download-list');
 		list.show();
 		var self = this;
@@ -116,6 +121,10 @@ class DownloadPage {
 	}
 
 	_createActiveDownloadItem(item) {
+		let project = this._findProjectForCode(item.project);
+		let time = moment(item.localTime);
+		let dateTimeFormat = i18next.t('date_hour_minute_format');
+		let timeStr = time.format(dateTimeFormat);
 		let itemDiv = $('<div></div>');
 		itemDiv.addClass('active-download-item');
 		let leftCol = $('<div></div>');
@@ -126,20 +135,31 @@ class DownloadPage {
 		itemDiv.append(rightCol);
 		let nameDiv = $('<div></div>');
 		nameDiv.addClass('active-download-item-name');
-		nameDiv.text(item.project);
+		nameDiv.text(project.name);
 		leftCol.append(nameDiv);
 		let timeDiv = $('<div></div>');
 		timeDiv.addClass('active-download-item-time');
-		timeDiv.text(item.localTime);
+		timeDiv.text(timeStr);
 		leftCol.append(timeDiv);
 		let progressDiv = $('<div></div>');
 		progressDiv.addClass('active-download-item-progress');
 		rightCol.append(progressDiv);
-		let button = $('<button></button>');
-		button.addClass('small');
+		let button = $('<a></a>');
+		button.addClass('button small');
+		let url = servicePath + '/download/' + item.id;
+		button.attr('href', url);
 		button.text(i18next.t('download'));
 		rightCol.append(button);
 		return itemDiv;
+	}
+
+	_findProjectForCode(code) {
+		for (let i = 0; i < this._projects.length; i++) {
+			let project = this._projects[i];
+			if (project.code == code)
+				return project;
+		}
+		return null;
 	}
 }
 

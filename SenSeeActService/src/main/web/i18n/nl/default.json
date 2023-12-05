@@ -39,5 +39,6 @@
 	"active_downloads": "Actieve downloads",
 	"active_downloads_empty": "U heeft geen actieve downloads.",
 	"start_download": "Download starten",
-	"start_download_empty": "U bent geen lid van een project waar u data kunt downloaden."
+	"start_download_empty": "U bent geen lid van een project waar u data kunt downloaden.",
+	"date_hour_minute_format": "DD-MM-YYYY HH:mm"
 }

@@ -39,5 +39,6 @@
 	"active_downloads": "Active downloads",
 	"active_downloads_empty": "You have no active downloads.",
 	"start_download": "Start download",
-	"start_download_empty": "You are not a member of a project where you can download data."
+	"start_download_empty": "You are not a member of a project where you can download data.",
+	"date_hour_minute_format": "DD/MM/YYYY HH:mm"
 }

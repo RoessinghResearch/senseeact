@@ -13,3 +13,41 @@
 #start-download-list {
 	display: none;
 }
+
+.active-download-item {
+	display: flex;
+	border-bottom: 0.5px solid #757575;
+}
+
+.active-download-item:last-child {
+	border: 0;
+}
+
+.active-download-item-left {
+	flex-basis: 0;
+	flex-grow: 1;
+	box-sizing: border-box;
+	padding: 6px 16px 6px 16px;
+}
+
+.active-download-item-right {
+	display: flex;
+	align-items: center;
+	flex-basis: 156px;
+	box-sizing: border-box;
+	padding: 6px 16px 6px 0px;
+}
+
+.active-download-item-name {
+	font-family: 'Oswald', sans-serif;
+	font-size: 16px;
+}
+
+.active-download-item-time {
+	font-weight: 300;
+	font-size: 14px;
+}
+
+.active-download-item-right a.button {
+	width: 100%;
+}

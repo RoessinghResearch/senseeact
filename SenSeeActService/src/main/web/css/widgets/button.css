@@ -1,6 +1,7 @@
-button {
+button, a.button {
 	width: 224px;
 	height: 48px;
+	line-height: 48px;
 	border: 0;
 	border-radius: 24px;
 	background-color: #5298b2;
@@ -8,13 +9,15 @@ button {
 	text-align: center;
 	font-family: 'Oswald', sans-serif;
 	text-transform: uppercase;
+	text-decoration: none;
 	font-size: 20px;
 	color: white;
 	cursor: pointer;
 }
 
-button.small {
+button.small, a.button.small {
 	height: 30px;
+	line-height: 30px;
 	border-radius: 12px;
 	width: 114px;
 	font-size: 16px;
