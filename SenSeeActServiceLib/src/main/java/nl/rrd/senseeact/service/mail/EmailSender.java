@@ -122,7 +122,7 @@ public class EmailSender {
 		return result;
 	}
 
-	private static void send(SendInfo info) throws MailException {
+	private void send(SendInfo info) throws MailException {
 		Logger logger = AppComponents.getLogger(
 				EmailSender.class.getSimpleName());
 		logger.info("Send email (host: {}, from: {}, to: {})",
