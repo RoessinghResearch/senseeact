@@ -206,7 +206,7 @@ class DownloadPage {
 			.css('mask-image', 'url(../images/icon_trash_can.svg)');
 		col3.append(img);
 		var self = this;
-		img.click(function() {
+		img.on('click', function() {
 			self._onDeleteDownloadClick(item);
 		});
 

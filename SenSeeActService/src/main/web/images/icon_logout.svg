@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   id="svg4"
+   version="1.1"
+   viewBox="0 0 16384 16384"
+   width="512"
+   height="512">
+  <metadata
+     id="metadata10">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <defs
+     id="defs8" />
+  <!--!Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2023 Fonticons, Inc.-->
+  <path
+     style="opacity:1;fill:#000000;fill-opacity:1;stroke-width:32"
+     id="path2"
+     d="m 12092.8,3388.8 3929.6,3929.6 c 230.4,230.4 361.6,547.2 361.6,873.6 0,326.4 -131.2,643.2 -361.6,873.6 l -3929.6,3929.6 c -204.8,204.8 -480,316.8 -768,316.8 -598.4,0 -1084.8,-486.4 -1084.8,-1084.8 V 10240 H 6144 c -566.4,0 -1024,-457.6 -1024,-1024 V 7168 c 0,-566.4 457.6,-1024 1024,-1024 h 4096 V 4156.8 c 0,-598.4 486.4,-1084.8 1084.8,-1084.8 288,0 563.2,115.2 768,316.8 z M 5120,3072 H 3072 c -566.4,0 -1024,457.6 -1024,1024 v 8192 c 0,566.4 457.6,1024 1024,1024 h 2048 c 566.4,0 1024,457.6 1024,1024 0,566.4 -457.6,1024 -1024,1024 H 3072 C 1376,15360 0,13984 0,12288 V 4096 C 0,2400 1376,1024 3072,1024 h 2048 c 566.4,0 1024,457.6 1024,1024 0,566.4 -457.6,1024 -1024,1024 z" />
+</svg>

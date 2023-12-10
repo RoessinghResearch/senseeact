@@ -58,7 +58,8 @@ class ElementAnimator {
 	addAnimatedClickHandler(clickElem, animElem, animClass, asyncHandler,
 			callback) {
 		var self = this;
-		clickElem.click(function() {
+		clickElem.on('click', function(event) {
+			event.preventDefault();
 			self._onAnimatedClick(animElem, animClass, asyncHandler, callback);
 		});
 	}

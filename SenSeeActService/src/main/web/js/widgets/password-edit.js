@@ -29,7 +29,7 @@ class PasswordEdit {
 			.addClass('password-edit-eye')
 			.attr('src', basePath + '/images/eye.png');
 		var self = this;
-		img.click(function() {
+		img.on('click', function() {
 			self._onEyeClick();
 		});
 		imgContainer.append(img);
@@ -37,7 +37,7 @@ class PasswordEdit {
 			.addClass('password-edit-eye-slash')
 			.attr('src', basePath + '/images/eye_slash.png');
 		img.css('display', 'none');
-		img.click(function() {
+		img.on('click', function() {
 			self._onEyeSlashClick();
 		});
 		imgContainer.append(img);

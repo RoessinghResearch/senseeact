@@ -108,13 +108,13 @@
 
 @keyframes animation-menu-item-click {
 	0% {
-		background: white;
+		background: #f0f0f0;
 	}
 	50% {
 		background: #e6e6e6;
 	}
 	100% {
-		background: white;
+		background: #f0f0f0;
 	}
 }
 

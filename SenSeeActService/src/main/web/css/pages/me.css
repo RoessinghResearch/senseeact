@@ -36,3 +36,21 @@
 	height: 32px;
 	margin-right: 16px;
 }
+
+@keyframes animation-dashboard-widget-click {
+	0% {
+		background: #f8f8f8;
+	}
+	50% {
+		background: #e6e6e6;
+	}
+	100% {
+		background: #f8f8f8;
+	}
+}
+
+.animate-dashboard-widget-click {
+	animation-name: animation-dashboard-widget-click;
+	animation-timing-function: ease;
+	animation-duration: 200ms;
+}

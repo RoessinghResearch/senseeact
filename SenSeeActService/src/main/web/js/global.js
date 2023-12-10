@@ -113,7 +113,7 @@ function showToast(message) {
 	setTimeout(function() {
 		_onToastEnd(toastId);
 	}, 4000);
-	toastText.click(function() {
+	toastText.on('click', function() {
 		_onToastEnd(toastId);
 	})
 	animator.startAnimation(toast, 'animate-toast-fade-in');

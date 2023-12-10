@@ -32,7 +32,7 @@ class EditableTextValue {
 		let icon = $('<button></button>')
 			.addClass('icon icon-edit');
 		var self = this;
-		icon.click(function() {
+		icon.on('click', function() {
 			self._onEditClick();
 		});
 		viewDiv.append(icon);
@@ -50,14 +50,14 @@ class EditableTextValue {
 		icon = $('<button></button>')
 			.attr('type', 'button')
 			.addClass('icon icon-cancel');
-		icon.click(function() {
+		icon.on('click', function() {
 			self._onCancelClick();
 		});
 		editForm.append(icon);
 		icon = $('<button></button>')
 			.attr('type', 'submit')
 			.addClass('icon icon-confirm');
-		icon.click(function() {
+		icon.on('click', function() {
 			self._onConfirmClick();
 		});
 		editForm.append(icon);

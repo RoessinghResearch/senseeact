@@ -15,7 +15,6 @@ class MyAccountPage {
 	_onGetUserDone(data) {
 		this._user = data;
 		this._createView();
-		this._registerEvents();
 	}
 
 	_createView() {
@@ -48,54 +47,10 @@ class MyAccountPage {
 		}
 		lastNameValue.render();
 
-		let logoutButton = $('#logout-button');
-		this._logoutButton = logoutButton;
-
 		$(document.body).addClass('tinted-background');
 		let content = $('#content');
 		content.addClass('white-background');
 		content.css('visibility', 'visible');
-	}
-
-	_registerEvents() {
-		let logoutButton = this._logoutButton;
-		var self = this;
-		animator.addAnimatedClickHandler(logoutButton, logoutButton,
-			'animate-button-click',
-			function(clickId) {
-				self._onLogoutClick(clickId);
-			},
-			function(result) {
-				self._onLogoutCompleted(result);
-			}
-		);
-	}
-
-	_onLogoutClick(clickId) {
-		let client = new SenSeeActClient();
-		var self = this;
-		client.logout()
-			.done(function(result) {
-				self._onLogoutDone(clickId, result);
-			})
-			.fail(function(xhr, status, error) {
-				self._onLogoutFail(clickId, xhr, status, error);
-			});
-	}
-
-	_onLogoutDone(clickId, result) {
-		animator.onAnimatedClickHandlerCompleted(clickId, true);
-	}
-
-	_onLogoutFail(clickId, xhr, status, error) {
-		animator.onAnimatedClickHandlerCompleted(clickId, false);
-	}
-
-	_onLogoutCompleted(success) {
-		if (success)
-			window.location.href = basePath + '/';
-		else
-			showToast(i18next.t('unexpected_error'));
 	}
 
 	_onFirstNameEdit(value) {
