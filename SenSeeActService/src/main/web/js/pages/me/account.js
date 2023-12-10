@@ -25,6 +25,11 @@ class MyAccountPage {
 		let user = this._user;
 		var self = this;
 
+		let header = new PageBackHeader($('.page-back-header'));
+		header.title = i18next.t('my_account');
+		header.backUrl = basePath + '/me';
+		header.render();
+
 		let firstNameLabel = $('#first-name-label');
 		firstNameLabel.text(i18next.t('first_name') + ':');
 		let firstNameValue = new EditableTextValue($('#first-name-value'));

@@ -33,21 +33,3 @@ button:disabled {
 	color: #afafaf;
 	cursor: default;
 }
-
-@keyframes animation-button-click {
-	0% {
-		background: #62a9c3;
-	}
-	50% {
-		background: #227391;
-	}
-	100% {
-		background: #62a9c3;
-	}
-}
-
-.animate-button-click {
-	animation-name: animation-button-click;
-	animation-timing-function: ease;
-	animation-duration: 200ms;
-}

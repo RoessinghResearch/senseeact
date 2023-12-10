@@ -21,6 +21,10 @@ class MySenSeeActPage {
 		let background = new BackgroundImage($('#background-image'), true);
 		background.render();
 
+		let header = new PageBackHeader($('.page-back-header'));
+		header.title = i18next.t('my_senseeact');
+		header.render();
+
 		let dashboard = $('#dashboard');
 		dashboard.append(this._createDashboardWidget(
 			'images/icon_user.svg',

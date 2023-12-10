@@ -1,0 +1,34 @@
+.page-back-header {
+	margin-left: 20px;
+	margin-right: 20px;
+	margin-top: 20px;
+	height: 48px;
+}
+
+@media (min-width: 520px) {
+	.page-back-header {
+		width: 480px;
+		margin-left: auto;
+		margin-right: auto;
+	}
+}
+
+.page-back-header-back-bg {
+	position: absolute;
+	width: 32px;
+	height: 32px;
+	margin: 8px 0px;
+	background-color: #5298b2;
+	border-radius: 16px;
+	cursor: pointer;
+}
+
+.page-back-header-back-bg:hover {
+	background-color: #62a9c3;
+}
+
+.page-back-header-back-icon {
+	width: 32px;
+	height: 32px;
+	line-height: 48px;
+}

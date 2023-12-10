@@ -1,4 +1,4 @@
-class ResetPasswordCompletedPage {
+class WhiteBackgroundPage {
 	constructor() {
 		this._createView();
 	}
@@ -10,4 +10,4 @@ class ResetPasswordCompletedPage {
 	}
 }
 
-new ResetPasswordCompletedPage();
+new WhiteBackgroundPage();

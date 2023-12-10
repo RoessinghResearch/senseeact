@@ -37,6 +37,11 @@ class DownloadPage {
 		let background = new BackgroundImage($('#background-image'), true);
 		background.render();
 
+		let header = new PageBackHeader($('.page-back-header'));
+		header.title = i18next.t('download_data');
+		header.backUrl = basePath + '/me';
+		header.render();
+
 		$(document.body).addClass('tinted-background');
 		let content = $('#content');
 		content.addClass('white-background');
