@@ -50,7 +50,7 @@ class DownloadPage {
 
 	_onGetDownloadProjects(projects) {
 		$('#start-download-wait').hide();
-		let emptyDiv = $('start-download-empty');
+		let emptyDiv = $('#start-download-empty');
 		let list = $('#start-download-list');
 		this._projects = projects;
 		this._updateActiveDownloads(true);
