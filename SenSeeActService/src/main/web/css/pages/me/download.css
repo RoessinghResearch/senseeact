@@ -14,6 +14,10 @@
 	display: none;
 }
 
+#start-download-list .bordered-list-item {
+	text-transform: uppercase;
+}
+
 .active-download-item {
 	display: flex;
 	border-bottom: 0.5px solid #757575;
@@ -42,6 +46,7 @@
 .active-download-item-name {
 	font-family: 'Oswald', sans-serif;
 	font-size: 16px;
+	text-transform: uppercase;
 }
 
 .active-download-item-time {
