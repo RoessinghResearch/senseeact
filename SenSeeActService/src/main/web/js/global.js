@@ -36,6 +36,9 @@ function initPage() {
 	$('#menu').append(html);
 	menuController = new MenuController();
 	$('body').localize();
+	checkLogin(function() {
+		menuController.appendLogout();
+	}, false);
 }
 
 function findPageTemplate(pagePath) {
@@ -250,7 +253,7 @@ function uuidv4() {
 	});
 }
 
-function checkLogin(onSuccess) {
+function checkLogin(onSuccess, redirectOnFail = true) {
 	let path = '/me';
 	let absPath = getUrlPath(window.location.href);
 	if (absPath.startsWith(basePath))
@@ -261,7 +264,8 @@ function checkLogin(onSuccess) {
 			onSuccess(data);
 		})
 		.fail(function(jqXHR, textStatus, errorThrown) {
-			_onCheckLoginFail(jqXHR, path);
+			if (redirectOnFail)
+				_onCheckLoginFail(jqXHR, path);
 		});
 }
 

@@ -10,7 +10,14 @@ class MenuController {
 		$('#sidebar').append(item);
 	}
 
-	_createMenuItemDiv(title, url) {
+	appendLogout() {
+		let item = this._createLogoutItemDiv();
+		$('.menu-item-list').append(item);
+		item = this._createLogoutItemDiv();
+		$('#sidebar').append(item);
+	}
+
+	_createMenuItemDiv(title, url = null) {
 		let itemDiv = $('<a></a>');
 		itemDiv.addClass('menu-item');
 		if (url)
@@ -27,6 +34,21 @@ class MenuController {
 				}
 			);
 		}
+		return itemDiv;
+	}
+
+	_createLogoutItemDiv() {
+		let itemDiv = this._createMenuItemDiv(i18next.t('log_out'));
+		var self = this;
+		animator.addAnimatedClickHandler(itemDiv, itemDiv,
+			'animate-menu-item-click',
+			function(clickId) {
+				self._onLogoutClick(clickId);
+			},
+			function(result) {
+				self._onLogoutCompleted(result);
+			}
+		);
 		return itemDiv;
 	}
 
@@ -89,5 +111,32 @@ class MenuController {
 
 	_onMenuItemAccountClick() {
 		window.location.href = basePath + '/me';
+	}
+
+	_onLogoutClick(clickId) {
+		let client = new SenSeeActClient();
+		var self = this;
+		client.logout()
+			.done(function(result) {
+				self._onLogoutDone(clickId, result);
+			})
+			.fail(function(xhr, status, error) {
+				self._onLogoutFail(clickId, xhr, status, error);
+			});
+	}
+
+	_onLogoutDone(clickId, result) {
+		animator.onAnimatedClickHandlerCompleted(clickId, true);
+	}
+
+	_onLogoutFail(clickId, xhr, status, error) {
+		animator.onAnimatedClickHandlerCompleted(clickId, false);
+	}
+
+	_onLogoutCompleted(success) {
+		if (success)
+			window.location.href = basePath + '/';
+		else
+			showToast(i18next.t('unexpected_error'));
 	}
 };
