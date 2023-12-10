@@ -52,13 +52,13 @@ class DownloadPage {
 		$('#start-download-wait').hide();
 		let emptyDiv = $('start-download-empty');
 		let list = $('#start-download-list');
+		this._projects = projects;
+		this._updateActiveDownloads(true);
 		if (projects.length == 0) {
 			emptyDiv.show();
 			list.hide();
 			return;
 		}
-		this._projects = projects;
-		this._updateActiveDownloads(true);
 		emptyDiv.hide();
 		list.show();
 		var self = this;
