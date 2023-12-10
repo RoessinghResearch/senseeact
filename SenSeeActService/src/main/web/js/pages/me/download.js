@@ -116,9 +116,17 @@ class DownloadPage {
 
 	_onGetDownloadList(list) {
 		$('#active-downloads-wait').hide();
+		let filtered = [];
+		for (let i = 0; i < list.length; i++) {
+			let item = list[i];
+			if (item.status == 'IDLE' || item.status == 'RUNNING' ||
+					item.status == 'COMPLETED') {
+				filtered.push(item);
+			}
+		}
 		let emptyDiv = $('#active-downloads-empty');
 		let listDiv = $('#active-downloads-list');
-		if (list.length == 0) {
+		if (filtered.length == 0) {
 			emptyDiv.show();
 			listDiv.hide();
 			return;
@@ -127,12 +135,8 @@ class DownloadPage {
 		listDiv.show();
 		listDiv.empty();
 		let hasIncomplete = false;
-		for (let i = 0; i < list.length; i++) {
-			let item = list[i];
-			if (item.status != 'IDLE' && item.status != 'RUNNING' &&
-					item.status != 'COMPLETED') {
-				continue;
-			}
+		for (let i = 0; i < filtered.length; i++) {
+			let item = filtered[i];
 			if (item.status != 'COMPLETED')
 				hasIncomplete = true;
 			let itemDiv = this._createActiveDownloadItem(item);
