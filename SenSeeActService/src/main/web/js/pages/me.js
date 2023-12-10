@@ -49,6 +49,7 @@ class MySenSeeActPage {
 		);
 		dashboard.append(widget);
 
+		menuController.showSidebar();
 		$(document.body).addClass('tinted-background');
 		$('#content').css('visibility', 'visible');
 	}

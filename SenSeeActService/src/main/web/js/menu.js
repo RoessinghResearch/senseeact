@@ -1,9 +1,40 @@
 class MenuController {
 	constructor() {
-		this._registerEvents();
+		this._registerCloseEvent();
 	}
 
-	_registerEvents() {
+	appendMenuItem(title, url) {
+		let item = this._createMenuItemDiv(title, url);
+		$('.menu-item-list').append(item);
+		item = this._createMenuItemDiv(title, url);
+		$('#sidebar').append(item);
+	}
+
+	_createMenuItemDiv(title, url) {
+		let itemDiv = $('<a></a>');
+		itemDiv.addClass('menu-item');
+		if (url)
+			itemDiv.attr('href', url);
+		else
+			itemDiv.attr('href', '#');
+		itemDiv.text(title);
+		if (url) {
+			animator.addAnimatedClickHandler(itemDiv, itemDiv,
+				'animate-menu-item-click',
+				null,
+				function() {
+					window.location.href = url;
+				}
+			);
+		}
+		return itemDiv;
+	}
+
+	showSidebar() {
+		$('#sidebar-switch').css('display', 'flex');
+	}
+
+	_registerCloseEvent() {
 		let closeIcon = $('.menu-icon.close');
 		let background = $('#menu-background');
 		let menuDiv = $('#menu');
@@ -26,9 +57,6 @@ class MenuController {
 				self._onHideMenuCallback();
 			}
 		);
-		$('#menu .menu-item').each(function() {
-			self._registerItemEvents($(this));
-		});
 	}
 
 	_onHideMenuClick(clickId) {
@@ -45,17 +73,11 @@ class MenuController {
 	_registerItemEvents(item) {
 		var self = this;
 		animator.addAnimatedClickHandler(item, item, 'animate-menu-item-click',
-			function(clickId) {
-				self._onMenuItemClick(clickId);
-			},
+			null,
 			function() {
 				self._onMenuItemClickCallback(item);
 			}
 		);
-	}
-
-	_onMenuItemClick(clickId) {
-		animator.onAnimatedClickHandlerCompleted(clickId, null);
 	}
 
 	_onMenuItemClickCallback(item) {
@@ -68,6 +90,4 @@ class MenuController {
 	_onMenuItemAccountClick() {
 		window.location.href = basePath + '/me';
 	}
-}
-
-new MenuController();
+};

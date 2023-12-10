@@ -42,6 +42,7 @@ class DownloadPage {
 		header.backUrl = basePath + '/me';
 		header.render();
 
+		menuController.showSidebar();
 		$(document.body).addClass('tinted-background');
 		let content = $('#content');
 		content.addClass('white-background');

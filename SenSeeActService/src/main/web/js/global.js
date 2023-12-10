@@ -1,4 +1,5 @@
 var animator;
+var menuController;
 
 var i18nInitialized = false;
 var documentInitialized = false;
@@ -33,6 +34,7 @@ function initPage() {
 	$('#footer').append(html);
 	html = Handlebars.templates.menu(context);
 	$('#menu').append(html);
+	menuController = new MenuController();
 	$('body').localize();
 }
 
