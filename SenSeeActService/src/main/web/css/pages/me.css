@@ -1,0 +1,38 @@
+.dashboard-widget {
+	display: flex;
+	align-items: center;
+	background: white;
+	border-radius: 18px;
+	height: 64px;
+	box-shadow: 2px 2px 4px 0px #b0b0b0;
+	text-decoration: none;
+	margin-top: 12px;
+}
+
+.dashboard-widget:hover {
+	background: #f8f8f8;
+}
+
+.dashboard-widget-icon {
+	width: 32px;
+	height: 32px;
+	background-color: #373844;
+	mask-size: 32px;
+	-webkit-mask-size: 32px;
+	margin-left: 16px;
+}
+
+.dashboard-widget-title {
+	flex-grow: 1;
+	color: #373844;
+	font-family: 'Oswald', sans-serif;
+	font-weight: 400;
+	font-size: 20px;
+	margin: 0px 16px;
+}
+
+.dashboard-widget-go {
+	width: 32px;
+	height: 32px;
+	margin-right: 16px;
+}

@@ -13,7 +13,7 @@ class VerifyEmailFailedPage {
 		let background = new BackgroundImage($('#background-image'), true);
 		background.render();
 		$(document.body).addClass('tinted-background');
-		$('#root').css('visibility', 'visible');
+		$('#content').css('visibility', 'visible');
 	}
 }
 

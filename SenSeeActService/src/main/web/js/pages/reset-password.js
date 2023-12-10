@@ -54,7 +54,7 @@ class ResetPasswordPage {
 		button.prop('disabled', true);
 
 		$(document.body).addClass('tinted-background');
-		$('#root').show();
+		$('#content').show();
 		passwordEdit.textInput.focus();
 	}
 

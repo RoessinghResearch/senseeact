@@ -38,9 +38,9 @@ class DownloadPage {
 		background.render();
 
 		$(document.body).addClass('tinted-background');
-		let root = $('#root');
-		root.addClass('white-background');
-		root.css('visibility', 'visible');
+		let content = $('#content');
+		content.addClass('white-background');
+		content.css('visibility', 'visible');
 	}
 
 	_onGetDownloadProjects(projects) {

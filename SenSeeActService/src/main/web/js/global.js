@@ -26,9 +26,9 @@ function initPage() {
 	};
 	let html = Handlebars.templates.header(context);
 	$('#header').append(html);
-	template = findPageTemplate(pagePath);
+	let template = findPageTemplate(pagePath);
 	html = template(context);
-	$('#root').append(html);
+	$('#content').append(html);
 	html = Handlebars.templates.footer(context);
 	$('#footer').append(html);
 	html = Handlebars.templates.menu(context);

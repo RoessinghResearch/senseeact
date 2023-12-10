@@ -27,6 +27,7 @@ body {
 	width: 100%;
 	min-width: 320px;
 	height: 80px;
+	z-index: 2;
 }
 
 #header-content {
@@ -35,6 +36,23 @@ body {
 	padding-right: 20px;
 	font-size: 0px;
 	box-sizing: border-box;
+}
+
+#header-senseeact {
+	width: 42px;
+	height: 80px;
+}
+
+#header-by {
+	width: 20px;
+	height: 80px;
+	margin-left: 16px;
+}
+
+#header-rrd {
+	width: 161px;
+	height: 80px;
+	margin-left: 18px;
 }
 
 #header-menu {
@@ -89,6 +107,20 @@ body {
 	color: #f2e9dc;
 }
 
+@media (min-width: 960px) {
+	.header-icon {
+		display: block;
+	}
+
+	.header-title {
+		display: block;
+	}
+
+	.header-icon.menu {
+		display: none;
+	}
+}
+
 #menu .menu-icon.close {
 	background-color: #373844;
 	margin-top: 10px;
@@ -113,67 +145,12 @@ body {
 	cursor: pointer;
 }
 
+#menu .menu-item:hover {
+	background: #f0f0f0;
+}
+
 #menu .menu-item:last-child {
 	border-bottom: 1px solid #bfbfbf;
-}
-
-@media (min-width: 680px) {
-	#header-content {
-		width: 640px;
-		margin-left: auto;
-		margin-right: auto;
-		padding-left: 0px;
-		padding-right: 0px;
-	}
-
-	.header-icon {
-		display: block;
-	}
-
-	.header-title {
-		display: block;
-	}
-
-	.header-icon.menu {
-		display: none;
-	}
-}
-
-@media (min-width: 960px) {
-	#header-content {
-		width: 100%;
-		margin-left: 0px;
-		margin-right: 0px;
-		padding-left: 20px;
-		padding-right: 20px;
-	}
-}
-
-@media (min-width: 1240px) {
-	#header-content {
-		width: 1200px;
-		margin-left: auto;
-		margin-right: auto;
-		padding-left: 0px;
-		padding-right: 0px;
-	}
-}
-
-#header-senseeact {
-	width: 42px;
-	height: 80px;
-}
-
-#header-by {
-	width: 20px;
-	height: 80px;
-	margin-left: 16px;
-}
-
-#header-rrd {
-	width: 161px;
-	height: 80px;
-	margin-left: 18px;
 }
 
 #footer {
@@ -215,9 +192,47 @@ body {
 	width: 240px;
 	background-color: white;
 	box-shadow: 0px 0px 8px 1px #303030;
+	z-index: 3;
 }
 
 #root {
+	display: flex;
+	flex-grow: 1;
+}
+
+#sidebar-switch {
+	display: none;
+	flex-basis: 0px;
+}
+
+#sidebar {
+	display: none;
+}
+
+@media (min-width: 960px) {
+	#sidebar-switch {
+		flex-basis: 240px;
+		flex-shrink: 0;
+		flex-direction: column;
+	}
+
+	#sidebar {
+		display: block;
+		flex-grow: 1;
+		background: white;
+		box-shadow: 0px 0px 6px 0px #808080;
+		z-index: 1;
+	}
+}
+
+#content-root {
+	display: flex;
+	flex-direction: column;
+	flex-grow: 1;
+	overflow: hidden;
+}
+
+#content {
 	display: flex;
 	flex-direction: column;
 	flex-grow: 1;

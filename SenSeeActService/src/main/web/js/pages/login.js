@@ -39,7 +39,7 @@ class LoginPage {
 		button.prop('disabled', true);
 
 		$(document.body).addClass('tinted-background');
-		$('#root').css('visibility', 'visible');
+		$('#content').css('visibility', 'visible');
 		emailEdit.textInput.focus();
 	}
 

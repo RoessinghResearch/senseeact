@@ -3,118 +3,56 @@ class MySenSeeActPage {
 	 * Properties:
 	 * 
 	 * - _user (SenSeeAct user object)
-	 * - _logoutButton (jQuery element)
 	 */
+
 	constructor() {
 		var self = this;
 		checkLogin(function(data) {
 			self._onGetUserDone(data);
-		})
+		});
 	}
 
 	_onGetUserDone(data) {
 		this._user = data;
 		this._createView();
-		this._registerEvents();
 	}
 
 	_createView() {
 		let background = new BackgroundImage($('#background-image'), true);
 		background.render();
 
-		let user = this._user;
-		var self = this;
-
-		let firstNameLabel = $('#first-name-label');
-		firstNameLabel.text(i18next.t('first_name') + ':');
-		let firstNameValue = new EditableTextValue($('#first-name-value'));
-		firstNameValue.value = user.firstName;
-		firstNameValue.onEdit = function(value) {
-			return self._onFirstNameEdit(value);
-		}
-		firstNameValue.render();
-
-		let lastNameLabel = $('#last-name-label');
-		lastNameLabel.text(i18next.t('last_name') + ':');
-		let lastNameValue = new EditableTextValue($('#last-name-value'));
-		lastNameValue.value = user.lastName;
-		lastNameValue.onEdit = function(value) {
-			return self._onLastNameEdit(value);
-		}
-		lastNameValue.render();
-
-		let logoutButton = $('#logout-button');
-		this._logoutButton = logoutButton;
+		let dashboard = $('#dashboard');
+		dashboard.append(this._createDashboardWidget(
+			'images/icon_user.svg',
+			i18next.t('my_account'),
+			basePath + '/me/account'));
+		dashboard.append(this._createDashboardWidget(
+			'images/icon_download.svg',
+			i18next.t('download_data'),
+			basePath + '/me/download'));
 
 		$(document.body).addClass('tinted-background');
-		let root = $('#root');
-		root.addClass('white-background');
-		root.css('visibility', 'visible');
+		$('#content').css('visibility', 'visible');
 	}
 
-	_registerEvents() {
-		let logoutButton = this._logoutButton;
-		var self = this;
-		animator.addAnimatedClickHandler(logoutButton, logoutButton,
-			'animate-button-click',
-			function(clickId) {
-				self._onLogoutClick(clickId);
-			},
-			function(result) {
-				self._onLogoutCompleted(result);
-			}
-		);
-	}
-
-	_onLogoutClick(clickId) {
-		let client = new SenSeeActClient();
-		var self = this;
-		client.logout()
-			.done(function(result) {
-				self._onLogoutDone(clickId, result);
-			})
-			.fail(function(xhr, status, error) {
-				self._onLogoutFail(clickId, xhr, status, error);
-			});
-	}
-
-	_onLogoutDone(clickId, result) {
-		animator.onAnimatedClickHandlerCompleted(clickId, true);
-	}
-
-	_onLogoutFail(clickId, xhr, status, error) {
-		animator.onAnimatedClickHandlerCompleted(clickId, false);
-	}
-
-	_onLogoutCompleted(success) {
-		if (success)
-			window.location.href = basePath + '/';
-		else
-			showToast(i18next.t('unexpected_error'));
-	}
-
-	_onFirstNameEdit(value) {
-		return this._updateUser(function(user) {
-			user.firstName = value;
-		});
-	}
-
-	_onLastNameEdit(value) {
-		return this._updateUser(function(user) {
-			user.lastName = value;
-		});
-	}
-
-	_updateUser(updateUserFunction) {
-		let newUser = JSON.parse(JSON.stringify(this._user));
-		updateUserFunction(newUser);
-		let client = new SenSeeActClient();
-		let xhr = client.updateUser(null, newUser);
-		var self = this;
-		xhr.done(function() {
-			self._user = newUser;
-		});
-		return xhr;
+	_createDashboardWidget(icon, title, url) {
+		let link = $('<a></a>');
+		link.addClass('dashboard-widget');
+		link.attr('href', url);
+		let iconImg = $('<div></div>');
+		iconImg.addClass('dashboard-widget-icon');
+		iconImg.css('mask-image', "url('" + icon + "')");
+		iconImg.css('-webkit-mask-image', "url('" + icon + "')");
+		link.append(iconImg);
+		let titleDiv = $('<div></div>');
+		titleDiv.addClass('dashboard-widget-title');
+		titleDiv.text(title);
+		link.append(titleDiv);
+		let goImg = $('<img></img>');
+		goImg.addClass('dashboard-widget-go');
+		goImg.attr('src', 'images/icon_dashboard_go.svg');
+		link.append(goImg);
+		return link;
 	}
 }
 

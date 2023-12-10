@@ -80,7 +80,7 @@ class SignupPage {
 		button.prop('disabled', true);
 
 		$(document.body).addClass('tinted-background');
-		$('#root').css('visibility', 'visible');
+		$('#content').css('visibility', 'visible');
 		firstNameEdit.textInput.focus();
 	}
 

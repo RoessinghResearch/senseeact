@@ -7,7 +7,7 @@ class HomePage {
 		let background = new BackgroundImage($('#background-image'), false);
 		background.render();
 		$(document.body).addClass('white-background');
-		$('#root').css('visibility', 'visible');
+		$('#content').css('visibility', 'visible');
 	}
 }
 

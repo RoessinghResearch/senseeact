@@ -6,7 +6,7 @@ class ResetPasswordCompletedPage {
 	_createView() {
 		let background = new BackgroundImage($('#background-image'), false);
 		background.render();
-		$('#root').css('visibility', 'visible');
+		$('#content').css('visibility', 'visible');
 	}
 }
 
