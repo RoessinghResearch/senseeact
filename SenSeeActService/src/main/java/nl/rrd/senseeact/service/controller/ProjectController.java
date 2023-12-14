@@ -237,7 +237,7 @@ public class ProjectController {
 			@RequestParam(value="logid", required=false, defaultValue="")
 			String logId) throws HttpException, Exception {
 		Logger logger = AppComponents.getLogger(SenSeeActContext.LOGTAG);
-		if (logId != null && logId.length() == 0)
+		if (logId != null && logId.isEmpty())
 			logId = null;
 		if (logId != null) {
 			logger.info("Start getTableList {}, project {}", logId, project);

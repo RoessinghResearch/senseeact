@@ -628,6 +628,12 @@ public class ProjectControllerExecution {
 					"Table \"%s\" not found in project \"%s\"",
 					table, project.getCode()));
 		}
+		DatabaseCache cache = DatabaseCache.getInstance();
+		List<String> fields = cache.getTableFields(db, table);
+		if (!fields.contains("user")) {
+			throw new ForbiddenException(String.format(
+					"Table \"%s\" is not a user table", table));
+		}
 		ProjectUserAccess userAccess = User.findAccessibleProjectUser(
 				version, subject, project.getCode(), table, AccessMode.R,
 				authDb, user);
@@ -707,6 +713,9 @@ public class ProjectControllerExecution {
 					"Table \"%s\" not found in project \"%s\"",
 					table, project.getCode()));
 		}
+		List<String> fields = DatabaseFieldScanner.getDatabaseFieldNames(
+				tableDef.getDataClass());
+		boolean isUserTable = fields.contains("user");
 		boolean isTimeTable = Sample.class.isAssignableFrom(
 				tableDef.getDataClass());
 		boolean isUtcTable = UTCSample.class.isAssignableFrom(
@@ -784,13 +793,16 @@ public class ProjectControllerExecution {
 			error.setFieldErrors(fieldErrors);
 			throw new BadRequestException(error);
 		}
-		ProjectUserAccess userAccess = User.findAccessibleProjectUser(
-				version, subject, project.getCode(), table, AccessMode.R,
-				authDb, user);
-		userAccess.checkMatchesRange(startTime, endTime);
-		User subjectUser = userAccess.getUser();
-		andCriteria.add(0, new DatabaseCriteria.Equal("user",
-				subjectUser.getUserid()));
+		User subjectUser = null;
+		if (isUserTable) {
+			ProjectUserAccess userAccess = User.findAccessibleProjectUser(
+					version, subject, project.getCode(), table, AccessMode.R,
+					authDb, user);
+			userAccess.checkMatchesRange(startTime, endTime);
+			subjectUser = userAccess.getUser();
+			andCriteria.add(0, new DatabaseCriteria.Equal("user",
+					subjectUser.getUserid()));
+		}
 		String content = null;
 		if (request != null)
 			content = HttpContentReader.readString(request);
@@ -856,8 +868,11 @@ public class ProjectControllerExecution {
 				throw new BadRequestException(error);
 			}
 		}
-		DatabaseCriteria criteria = new DatabaseCriteria.And(
-				andCriteria.toArray(new DatabaseCriteria[0]));
+		DatabaseCriteria criteria = null;
+		if (!andCriteria.isEmpty()) {
+			criteria = new DatabaseCriteria.And(andCriteria.toArray(
+					new DatabaseCriteria[0]));
+		}
 		Class<?> dataClass = tableDef.getDataClass();
 		if (sort == null) {
 			String sortField;
@@ -964,6 +979,12 @@ public class ProjectControllerExecution {
 					"Table \"%s\" not found in project \"%s\"",
 					table, project.getCode()));
 		}
+		DatabaseCache cache = DatabaseCache.getInstance();
+		List<String> fields = cache.getTableFields(db, table);
+		if (!fields.contains("user")) {
+			throw new ForbiddenException(String.format(
+					"Table \"%s\" is not a user table", table));
+		}
 		ProjectUserAccess userAccess = User.findAccessibleProjectUser(version,
 				subject, project.getCode(), table, AccessMode.W, authDb, user);
 		User subjectUser = userAccess.getUser();
@@ -1012,6 +1033,18 @@ public class ProjectControllerExecution {
 			Database db, User user, BaseProject project, String table,
 			String subject, String start, String end,
 			HttpServletRequest request) throws HttpException, Exception {
+		DatabaseTableDef<?> tableDef = project.findTable(table);
+		if (tableDef == null) {
+			throw new NotFoundException(String.format(
+					"Table \"%s\" not found in project \"%s\"",
+					table, project.getCode()));
+		}
+		DatabaseCache cache = DatabaseCache.getInstance();
+		List<String> fields = cache.getTableFields(db, table);
+		if (!fields.contains("user")) {
+			throw new ForbiddenException(String.format(
+					"Table \"%s\" is not a user table", table));
+		}
 		TableSelectCriteria tableCriteria = getTableSelectCriteria(version,
 				authDb, user, project, table, subject, start, end, request,
 				Collections.singletonList("filter"));
@@ -1042,6 +1075,12 @@ public class ProjectControllerExecution {
 			throw new NotFoundException(String.format(
 					"Table \"%s\" not found in project \"%s\"",
 					table, project.getCode()));
+		}
+		DatabaseCache cache = DatabaseCache.getInstance();
+		List<String> fields = cache.getTableFields(db, table);
+		if (!fields.contains("user")) {
+			throw new ForbiddenException(String.format(
+					"Table \"%s\" is not a user table", table));
 		}
 		ProjectUserAccess userAccess = User.findAccessibleProjectUser(version,
 				subject, project.getCode(), table, AccessMode.W, authDb, user);
@@ -1081,6 +1120,12 @@ public class ProjectControllerExecution {
 					"Table \"%s\" not found in project \"%s\"",
 					table,
 					project.getCode()));
+		}
+		DatabaseCache cache = DatabaseCache.getInstance();
+		List<String> fields = cache.getTableFields(db, table);
+		if (!fields.contains("user")) {
+			throw new ForbiddenException(String.format(
+					"Table \"%s\" is not a user table", table));
 		}
 		User subjectUser = User.findAccessibleUser(version, subject, authDb,
 				user);

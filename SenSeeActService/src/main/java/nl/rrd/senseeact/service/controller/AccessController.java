@@ -10,9 +10,11 @@ import nl.rrd.senseeact.client.model.ProjectDataModule;
 import nl.rrd.senseeact.client.model.ProjectUserAccessRule;
 import nl.rrd.senseeact.service.QueryRunner;
 import nl.rrd.senseeact.service.exception.HttpException;
+import nl.rrd.senseeact.service.model.PermissionRecord;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/v{version}/access")
@@ -157,6 +159,88 @@ public class AccessController {
 				(version, authDb, currUser) ->
 				exec.removeSubject(version, authDb, currUser, user,
 						subject),
+				versionName, request, response);
+	}
+
+	@RequestMapping(value="/permission/list", method=RequestMethod.GET)
+	public List<Map<?,?>> getPermissions(
+			HttpServletRequest request,
+			HttpServletResponse response,
+			@PathVariable("version")
+			@Parameter(hidden=true)
+			String versionName,
+			@RequestParam(value="user", required=false, defaultValue="")
+			String subject) throws HttpException, Exception {
+		return QueryRunner.runAuthQuery((version, authDb, user) ->
+			exec.getPermissions(version, authDb, user, subject),
+			versionName, request, response
+		);
+	}
+
+	@RequestMapping(value="/permission", method=RequestMethod.POST)
+	@RequestBody(
+		content = {
+			@Content(
+				mediaType = "application/json",
+				schema = @Schema(type = "string")
+			)
+		}
+	)
+	public void grantPermission(
+			HttpServletRequest request,
+			HttpServletResponse response,
+			@PathVariable("version")
+			@Parameter(hidden=true)
+			String versionName,
+			@RequestParam(value="user")
+			String subject,
+			@RequestParam(value="permission")
+			String permission) throws HttpException, Exception {
+		QueryRunner.runAuthQuery((version, authDb, user) ->
+				exec.grantPermission(version, authDb, user, request, subject,
+						permission),
+				versionName, request, response);
+	}
+
+	@RequestMapping(value="/permission", method=RequestMethod.DELETE)
+	@RequestBody(
+		content = {
+			@Content(
+				mediaType = "application/json",
+				schema = @Schema(type = "string")
+			)
+		}
+	)
+	public void revokePermission(
+			HttpServletRequest request,
+			HttpServletResponse response,
+			@PathVariable("version")
+			@Parameter(hidden=true)
+			String versionName,
+			@RequestParam(value="user")
+			String subject,
+			@RequestParam(value="permission")
+			String permission) throws HttpException, Exception {
+		QueryRunner.runAuthQuery((version, authDb, user) ->
+				exec.revokePermission(version, authDb, user, request, subject,
+						permission),
+				versionName, request, response);
+	}
+
+	@RequestMapping(value="/permission/all", method=RequestMethod.DELETE)
+	public void revokePermissionAll(
+			HttpServletRequest request,
+			HttpServletResponse response,
+			@PathVariable("version")
+			@Parameter(hidden=true)
+			String versionName,
+			@RequestParam(value="user")
+			String subject,
+			@RequestParam(value="permission")
+			String permission) throws HttpException, Exception {
+		QueryRunner.runAuthQuery((version, authDb, user) ->
+				exec.revokePermissionAll(version, authDb, user, subject,
+						permission),
 				versionName, request, response);
 	}
 }

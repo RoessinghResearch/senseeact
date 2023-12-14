@@ -18,9 +18,6 @@ import java.util.*;
  * @author Dennis Hofs (RRD)
  */
 public class MySQLQueryRunner implements SQLQueryRunner {
-	private static final String LOGTAG =
-			MySQLQueryRunner.class.getSimpleName();
-
 	// log SQL queries with durations
 	private static boolean PROFILING_ENABLED = false;
 	// log only SQL queries that take longer than PROFILING_THRESHOLD
@@ -63,7 +60,8 @@ public class MySQLQueryRunner implements SQLQueryRunner {
 			stmt.execute();
 			long end = System.currentTimeMillis();
 			if (PROFILING_ENABLED && end - start > PROFILING_THRESHOLD) {
-				Logger logger = AppComponents.getLogger(LOGTAG);
+				Logger logger = AppComponents.getLogger(
+						getClass().getSimpleName());
 				String logSql = sql;
 				if (logSql.length() > MAX_LOG_LENGTH)
 					logSql = logSql.substring(0, MAX_LOG_LENGTH);
@@ -97,7 +95,8 @@ public class MySQLQueryRunner implements SQLQueryRunner {
 			ResultSet resultSet = stmt.executeQuery();
 			long end = System.currentTimeMillis();
 			if (PROFILING_ENABLED && end - start > PROFILING_THRESHOLD) {
-				Logger logger = AppComponents.getLogger(LOGTAG);
+				Logger logger = AppComponents.getLogger(
+						getClass().getSimpleName());
 				String log = "MySQL query: " + (end - start) + " ms: " + sql;
 				if (args != null)
 					log += ": " + Arrays.asList(args);

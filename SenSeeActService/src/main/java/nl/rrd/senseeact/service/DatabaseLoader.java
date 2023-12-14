@@ -175,6 +175,7 @@ public class DatabaseLoader {
 		result.add(new GroupTable());
 		result.add(new UserProjectTable());
 		result.add(new GroupMemberTable());
+		result.add(new PermissionTable());
 		result.add(new ProjectUserAccessTable());
 		result.add(new UserActiveChangeTable());
 		result.add(new SyncPushRegistrationTable());

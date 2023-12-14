@@ -1,5 +1,6 @@
 package nl.rrd.senseeact.service.controller;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import jakarta.servlet.http.HttpServletRequest;
 import nl.rrd.senseeact.client.exception.ErrorCode;
 import nl.rrd.senseeact.client.exception.HttpError;
@@ -9,9 +10,8 @@ import nl.rrd.senseeact.client.model.ProjectUserAccessRule;
 import nl.rrd.senseeact.client.model.Role;
 import nl.rrd.senseeact.client.project.BaseProject;
 import nl.rrd.senseeact.client.project.ProjectRepository;
-import nl.rrd.senseeact.dao.Database;
-import nl.rrd.senseeact.dao.DatabaseCriteria;
-import nl.rrd.senseeact.dao.DatabaseTableDef;
+import nl.rrd.senseeact.dao.*;
+import nl.rrd.senseeact.service.PermissionManager;
 import nl.rrd.senseeact.service.ProtocolVersion;
 import nl.rrd.senseeact.service.UserListenerRepository;
 import nl.rrd.senseeact.service.exception.BadRequestException;
@@ -25,6 +25,7 @@ import nl.rrd.utils.exception.ParseException;
 import nl.rrd.utils.io.FileUtils;
 import nl.rrd.utils.json.JsonMapper;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
@@ -306,5 +307,90 @@ public class AccessControllerExecution {
 		authDb.delete(new GroupTable(), criteria);
 		UserListenerRepository.getInstance().notifyUserRemovedAsSubject(
 				validateSubject.subjectUser, validateSubject.profUser);
+	}
+
+	public List<Map<?,?>> getPermissions(ProtocolVersion version,
+			Database authDb, User user, String subject) throws HttpException,
+			DatabaseException {
+		User subjectUser = User.findAccessibleUser(version, subject, authDb,
+				user);
+		PermissionManager permMgr = PermissionManager.getInstance();
+		List<PermissionRecord> records = permMgr.getPermissions(authDb,
+				subjectUser.getUserid());
+		DatabaseObjectMapper mapper = new DatabaseObjectMapper();
+		List<Map<?,?>> result = new ArrayList<>();
+		for (PermissionRecord record : records) {
+			result.add(mapper.objectToMap(record, true));
+		}
+		return result;
+	}
+
+	public Object grantPermission(ProtocolVersion version, Database authDb,
+			User user, HttpServletRequest request, String subject,
+			String permission) throws HttpException, DatabaseException,
+			IOException {
+		if (user.getRole() != Role.ADMIN)
+			throw new ForbiddenException();
+		User subjectUser = User.findAccessibleUser(version, subject, authDb,
+				user);
+		validatePermission(permission);
+		Map<String,Object> params = readPermissionParams(request);
+		PermissionManager permMgr = PermissionManager.getInstance();
+		permMgr.grant(authDb, subjectUser.getUserid(), permission, params);
+		return null;
+	}
+
+	public Object revokePermission(ProtocolVersion version, Database authDb,
+			User user, HttpServletRequest request, String subject,
+			String permission) throws HttpException, DatabaseException,
+			IOException {
+		if (user.getRole() != Role.ADMIN)
+			throw new ForbiddenException();
+		User subjectUser = User.findAccessibleUser(version, subject, authDb,
+				user);
+		validatePermission(permission);
+		Map<String,Object> params = readPermissionParams(request);
+		PermissionManager permMgr = PermissionManager.getInstance();
+		permMgr.revoke(authDb, subjectUser.getUserid(), permission, params);
+		return null;
+	}
+
+	public Object revokePermissionAll(ProtocolVersion version, Database authDb,
+			User user, String subject, String permission) throws HttpException,
+			DatabaseException {
+		if (user.getRole() != Role.ADMIN)
+			throw new ForbiddenException();
+		User subjectUser = User.findAccessibleUser(version, subject, authDb,
+				user);
+		validatePermission(permission);
+		PermissionManager permMgr = PermissionManager.getInstance();
+		permMgr.revokeAll(authDb, subjectUser.getUserid(), permission);
+		return null;
+	}
+
+	private void validatePermission(String permission)
+			throws BadRequestException {
+		if (!PermissionRecord.PERMISSIONS.contains(permission)) {
+			HttpFieldError error = new HttpFieldError("permission",
+					"Unknown permission: " + permission);
+			throw BadRequestException.withInvalidInput(error);
+		}
+	}
+
+	private Map<String,Object> readPermissionParams(HttpServletRequest request)
+			throws BadRequestException, IOException {
+		String json;
+		try (InputStream input = request.getInputStream()) {
+			json = FileUtils.readFileString(input);
+		}
+		if (json.trim().isEmpty())
+			return null;
+		try {
+			return JsonMapper.parse(json, new TypeReference<>() {});
+		} catch (ParseException ex) {
+			HttpError error = new HttpError(ErrorCode.INVALID_INPUT,
+					"Invalid permission parameters: " + ex.getMessage());
+			throw new BadRequestException(error);
+		}
 	}
 }
