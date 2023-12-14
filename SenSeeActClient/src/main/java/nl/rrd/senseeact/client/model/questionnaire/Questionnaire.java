@@ -198,7 +198,7 @@ public class Questionnaire {
 				throws ParseException {
 			if (questionHandler != null)
 				questionHandler.characters(ch, parents);
-			else if (ch.trim().length() > 0)
+			else if (!ch.trim().isEmpty())
 				throw new ParseException("Unexpected text content");
 		}
 

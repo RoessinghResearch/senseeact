@@ -135,7 +135,7 @@ public class EmojiQuestion extends Question {
 				throws ParseException {
 			if (extraAnswerHandler != null)
 				extraAnswerHandler.characters(ch, parents);
-			else if (ch.trim().length() > 0)
+			else if (!ch.trim().isEmpty())
 				throw new ParseException("Unexpected text content");
 		}
 

@@ -88,8 +88,7 @@ public abstract class Question {
 				return Collections.singletonList(dataId);
 			else
 				return Collections.emptyList();
-		} else if (condition instanceof QuestionCondition.If) {
-			QuestionCondition.If ifCond = (QuestionCondition.If)condition;
+		} else if (condition instanceof QuestionCondition.If ifCond) {
 			boolean matches;
 			try {
 				matches = ifCond.getExpression().evaluate(answerMap)
@@ -288,7 +287,7 @@ public abstract class Question {
 		private void parseCommonAttributes(Attributes atts)
 				throws ParseException {
 			String condStr = atts.getValue("condition");
-			if (condStr != null && condStr.trim().length() > 0)
+			if (condStr != null && !condStr.trim().isEmpty())
 				condition = parseCondition(condStr);
 		}
 
@@ -318,15 +317,13 @@ public abstract class Question {
 			Token token = tokenizer.readToken();
 			if (token == null)
 				throw new ParseException("Unexpected end of expression");
-			switch (token.getText()) {
-				case "foreach":
-					return parseForeachCondition(tokenizer, exprParser);
-				case "if":
-					return parseIfCondition(tokenizer, exprParser);
-				default:
+			return switch (token.getText()) {
+				case "foreach" -> parseForeachCondition(tokenizer, exprParser);
+				case "if" -> parseIfCondition(tokenizer, exprParser);
+				default ->
 					throw new ParseException("Invalid token: " +
 							token.getText());
-			}
+			};
 		}
 
 		private QuestionCondition.Foreach parseForeachCondition(

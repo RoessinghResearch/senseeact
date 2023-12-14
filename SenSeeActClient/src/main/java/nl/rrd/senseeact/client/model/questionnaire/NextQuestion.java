@@ -47,13 +47,13 @@ public class NextQuestion {
 			}
 		} catch (EvaluationException ex) {
 			throw new RuntimeException("Can't evaluate ID expression: " +
-					idExpr.toString() + ": " + ex.getMessage(), ex);
+					idExpr + ": " + ex.getMessage(), ex);
 		}
 	}
 
 	public static NextQuestion parse(String s) throws ParseException {
 		NextQuestion result = new NextQuestion();
-		if (s.toLowerCase().equals("none"))
+		if (s.equalsIgnoreCase("none"))
 			return result;
 		int sep = s.indexOf(':');
 		String prefix = null;
@@ -63,7 +63,7 @@ public class NextQuestion {
 		}
 		if (prefix == null) {
 			result.questionId = new StringExpression(s);
-		} else if (prefix.toLowerCase().equals("questionnaire")) {
+		} else if (prefix.equalsIgnoreCase("questionnaire")) {
 			result.questionnaireId = new StringExpression(s);
 		} else {
 			throw new ParseException("Unknown prefix: " + prefix);

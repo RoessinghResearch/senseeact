@@ -78,7 +78,7 @@ public class QuestionnaireNotificationData {
 		Map<String,Map<String,String>> stringMaps;
 		try {
 			stringMaps = JsonMapper.convert(map.get("stringMaps"),
-					new TypeReference<Map<String,Map<String,String>>>() {});
+					new TypeReference<>() {});
 		} catch (ParseException ex) {
 			throw new ParseException(
 					"Invalid value for property \"stringMaps\": " +

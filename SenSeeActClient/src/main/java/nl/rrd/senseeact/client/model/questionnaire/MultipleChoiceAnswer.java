@@ -64,7 +64,7 @@ public class MultipleChoiceAnswer {
 			result.value = value;
 			result.text = text;
 			String next = atts.getValue("next");
-			if (next != null && next.trim().length() > 0) {
+			if (next != null && !next.trim().isEmpty()) {
 				result.nextQuestion = NextQuestion.parse(next.trim());
 			}
 		}
@@ -77,7 +77,7 @@ public class MultipleChoiceAnswer {
 		@Override
 		public void characters(String ch, List<String> parents)
 				throws ParseException {
-			if (ch.trim().length() > 0)
+			if (!ch.trim().isEmpty())
 				throw new ParseException("Unexpected text content");
 		}
 

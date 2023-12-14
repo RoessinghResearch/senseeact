@@ -91,7 +91,7 @@ public class FreeTextQuestion extends Question {
 
 		@Override
 		public void characters(String ch, List<String> parents) throws ParseException {
-			if (ch.trim().length() > 0)
+			if (!ch.trim().isEmpty())
 				throw new ParseException("Unexpected text content");
 		}
 

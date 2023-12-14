@@ -130,7 +130,7 @@ public class LikertQuestion extends Question {
 				throws ParseException {
 			if (labelHandler != null)
 				labelHandler.characters(ch, parents);
-			else if (ch.trim().length() > 0)
+			else if (!ch.trim().isEmpty())
 				throw new ParseException("Unexpected text content");
 		}
 
