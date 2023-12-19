@@ -1,13 +1,23 @@
 class MenuController {
 	constructor() {
+		this._hasLogOut = false;
 		this._registerCloseEvent();
 	}
 
 	appendMenuItem(title, url) {
-		let item = this._createMenuItemDiv(title, url);
-		$('.menu-item-list').append(item);
-		item = this._createMenuItemDiv(title, url);
-		$('#sidebar').append(item);
+		let menu = $('.menu-item-list');
+		let sidebar = $('#sidebar');
+		let menuItem = this._createMenuItemDiv(title, url);
+		let sidebarItem = this._createMenuItemDiv(title, url);
+		if (this._hasLogOut) {
+			let logoutItem = menu.children(':last-child');
+			logoutItem.before(menuItem);
+			logoutItem = sidebar.children(':last-child');
+			logoutItem.before(sidebarItem);
+		} else {
+			menu.append(menuItem);
+			sidebar.append(sidebarItem);
+		}
 	}
 
 	appendLogout() {
@@ -15,6 +25,7 @@ class MenuController {
 		$('.menu-item-list').append(item);
 		item = this._createLogoutItemDiv();
 		$('#sidebar').append(item);
+		this._hasLogOut = true;
 	}
 
 	_createMenuItemDiv(title, url = null) {
