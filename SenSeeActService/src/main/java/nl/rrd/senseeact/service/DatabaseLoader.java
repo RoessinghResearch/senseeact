@@ -8,6 +8,8 @@ import nl.rrd.senseeact.client.project.ProjectRepository;
 import nl.rrd.senseeact.dao.*;
 import nl.rrd.senseeact.dao.listener.DatabaseActionListener;
 import nl.rrd.senseeact.dao.listener.DatabaseListenerRepository;
+import nl.rrd.senseeact.service.access.ProjectUserAccessControl;
+import nl.rrd.senseeact.service.access.ProjectUserAccessControlRepository;
 import nl.rrd.senseeact.service.controller.AuthControllerExecution;
 import nl.rrd.senseeact.service.exception.HttpException;
 import nl.rrd.senseeact.service.model.UserTable;

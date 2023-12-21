@@ -7,6 +7,7 @@ import nl.rrd.senseeact.dao.DatabaseConnection;
 import nl.rrd.senseeact.dao.DatabaseFactory;
 import nl.rrd.senseeact.dao.DatabaseTableDef;
 import nl.rrd.senseeact.dao.mysql.MySQLDatabaseFactory;
+import nl.rrd.senseeact.service.access.ProjectUserAccessControlRepository;
 import nl.rrd.senseeact.service.export.DataExporterFactory;
 import nl.rrd.senseeact.service.mail.EmailTemplateRepository;
 import nl.rrd.senseeact.service.sso.SSOTokenRepository;

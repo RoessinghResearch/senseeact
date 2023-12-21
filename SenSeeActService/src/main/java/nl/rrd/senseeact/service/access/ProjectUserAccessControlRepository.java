@@ -1,4 +1,4 @@
-package nl.rrd.senseeact.service;
+package nl.rrd.senseeact.service.access;
 
 import nl.rrd.utils.AppComponent;
 
@@ -10,5 +10,5 @@ public abstract class ProjectUserAccessControlRepository {
 		return getProjectMap().get(project);
 	}
 
-	public abstract Map<String,ProjectUserAccessControl> getProjectMap();
+	public abstract Map<String, ProjectUserAccessControl> getProjectMap();
 }

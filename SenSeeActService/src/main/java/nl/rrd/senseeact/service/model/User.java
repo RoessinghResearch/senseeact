@@ -1,6 +1,8 @@
 package nl.rrd.senseeact.service.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import nl.rrd.senseeact.service.access.ProjectUserAccessControl;
+import nl.rrd.senseeact.service.access.ProjectUserAccessControlRepository;
 import nl.rrd.utils.AppComponents;
 import nl.rrd.utils.exception.DatabaseException;
 import nl.rrd.senseeact.client.model.AccessMode;
@@ -10,8 +12,6 @@ import nl.rrd.senseeact.client.model.Role;
 import nl.rrd.senseeact.client.project.BaseProject;
 import nl.rrd.senseeact.client.project.ProjectRepository;
 import nl.rrd.senseeact.dao.*;
-import nl.rrd.senseeact.service.ProjectUserAccessControl;
-import nl.rrd.senseeact.service.ProjectUserAccessControlRepository;
 import nl.rrd.senseeact.service.ProtocolVersion;
 import nl.rrd.senseeact.service.exception.ForbiddenException;
 
@@ -263,7 +263,7 @@ public class User extends nl.rrd.senseeact.client.model.User {
 			Database authDb, User user) throws ForbiddenException,
 			DatabaseException {
 		User getUser;
-		if (subject == null || subject.length() == 0 ||
+		if (subject == null || subject.isEmpty() ||
 				subject.equals(user.getUserid())) {
 			getUser = user;
 		} else {
@@ -294,7 +294,7 @@ public class User extends nl.rrd.senseeact.client.model.User {
 	public static User findAccessibleUserByEmail(String email, Database authDb,
 			User user) throws ForbiddenException, DatabaseException {
 		User getUser;
-		if (email == null || email.length() == 0 ||
+		if (email == null || email.isEmpty() ||
 				email.toLowerCase().equals(user.getEmail())) {
 			getUser = user;
 		} else {
@@ -635,7 +635,7 @@ public class User extends nl.rrd.senseeact.client.model.User {
 			AccessMode requiredMode, Database authDb, User user)
 			throws ForbiddenException, DatabaseException {
 		User getUser;
-		if (subject == null || subject.length() == 0 ||
+		if (subject == null || subject.isEmpty() ||
 				subject.equals(user.getUserid())) {
 			getUser = user;
 		} else {
@@ -673,7 +673,7 @@ public class User extends nl.rrd.senseeact.client.model.User {
 			Database authDb, User user) throws ForbiddenException,
 			DatabaseException {
 		User getUser;
-		if (email == null || email.length() == 0 ||
+		if (email == null || email.isEmpty() ||
 				email.toLowerCase().equals(user.getEmail())) {
 			getUser = user;
 		} else {

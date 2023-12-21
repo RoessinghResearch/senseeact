@@ -1,9 +1,9 @@
-package nl.rrd.senseeact.service;
+package nl.rrd.senseeact.service.access;
 
-import nl.rrd.utils.exception.DatabaseException;
 import nl.rrd.senseeact.dao.Database;
 import nl.rrd.senseeact.dao.DatabaseTableDef;
 import nl.rrd.senseeact.service.model.User;
+import nl.rrd.utils.exception.DatabaseException;
 
 import java.util.List;
 
