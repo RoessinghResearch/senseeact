@@ -352,7 +352,7 @@ public class SenSeeActClient {
 	 * of the specified user has been deactivated.</li>
 	 * </ul></p>
 	 * 
-	 * @param user user ID of the user as whom you want to log in
+	 * @param user email address of the user as whom you want to log in
 	 * @return the authentication token
 	 * @throws SenSeeActClientException if the SenSeeAct service returns an
 	 * error response
