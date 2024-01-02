@@ -154,7 +154,7 @@ function clearAllCookies() {
  * - port: port number
  * - path: path string
  * - pathSegments: array of path segments (the path split by /, leading and
-	     trailing / removed)
+ *       trailing / removed)
  * - paramsString: parameter string after ?
  * - params: object with parameter name and values
  * - anchor: anchor string after #
