@@ -159,7 +159,7 @@ function clearAllCookies() {
  * - params: object with parameter name and values
  * - anchor: anchor string after #
  */
-function parseUrl(url) {
+function parseURL(url) {
 	let re = /^(http(s?)):\/\/([^:/]+)(:([0-9]+))?(\/[^?#]*)(\?([^#]*))?(\#(.*))?$/i;
 	let match = re.exec(url);
 	let parsed = {
