@@ -28,6 +28,10 @@ function initPage() {
 	let html = Handlebars.templates.header(context);
 	$('#header').append(html);
 	let template = findPageTemplate(pagePath);
+	if (!template) {
+		window.location.href = basePath + '/';
+		return;
+	}
 	html = template(context);
 	$('#content').append(html);
 	html = Handlebars.templates.footer(context);
@@ -42,12 +46,12 @@ function initPage() {
 }
 
 function findPageTemplate(pagePath) {
+	if (pagePath == '')
+		return findPageTemplate('home');
 	let language = i18next.resolvedLanguage;
 	let template = Handlebars.templates['pages_' + language + '/' + pagePath];
 	if (!template)
 		template = Handlebars.templates['pages/' + pagePath];
-	if (!template)
-		template = findPageTemplate('home');
 	return template;
 }
 
