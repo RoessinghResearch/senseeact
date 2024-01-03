@@ -5,14 +5,14 @@ class MySenSeeActPage {
 	 * - _user (SenSeeAct user object)
 	 */
 
-	constructor() {
+	start() {
 		var self = this;
 		checkLogin(function(data) {
-			self._onGetUserDone(data);
+			self.onGetUserDone(data);
 		});
 	}
 
-	_onGetUserDone(data) {
+	onGetUserDone(data) {
 		this._user = data;
 		this._createView();
 	}
@@ -113,5 +113,3 @@ class MySenSeeActPage {
 			showToast(i18next.t('unexpected_error'));
 	}
 }
-
-new MySenSeeActPage();

@@ -20,7 +20,12 @@ function onDocumentInitialized() {
 function initPage() {
 	animator = new ElementAnimator();
 	let url = parseURL(window.location.href);
-	let pagePath = url.path.substring(basePath.length).replace(/\/+/, '')
+	let pagePath = url.path.substring(basePath.length).replace(/^\/+/, '')
+	let trimmedPagePath = pagePath.replace(/\/+$/, '')
+	if (pagePath != trimmedPagePath) {
+		window.location.href = basePath + '/' + trimmedPagePath;
+		return;
+	}
 	let context = {
 		basePath: basePath,
 		servicePath: servicePath
