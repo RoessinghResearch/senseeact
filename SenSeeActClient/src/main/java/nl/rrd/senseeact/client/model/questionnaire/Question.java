@@ -7,10 +7,13 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import nl.rrd.utils.AppComponents;
-import nl.rrd.utils.exception.LineNumberParseException;
 import nl.rrd.utils.exception.ParseException;
-import nl.rrd.utils.expressions.*;
+import nl.rrd.utils.expressions.EvaluationException;
+import nl.rrd.utils.expressions.Expression;
+import nl.rrd.utils.expressions.StringExpression;
+import nl.rrd.utils.expressions.Value;
 import nl.rrd.utils.json.JsonMapper;
 import nl.rrd.utils.validation.MapReader;
 import nl.rrd.utils.xml.AbstractSimpleSAXHandler;
@@ -32,6 +35,8 @@ public abstract class Question {
 	public static final String TYPE_VAS = "vas";
 
 	private String type;
+	@JsonSerialize(using=StringExpression.PlainSerializer.class)
+	@JsonDeserialize(using=StringExpression.PlainDeserializer.class)
 	private StringExpression id;
 	private QuestionCondition condition = null;
 	private String title = null;
@@ -385,7 +390,7 @@ public abstract class Question {
 		public void characters(String ch, List<String> parents)
 				throws ParseException {
 			if (inCondition) {
-				condition = parseCondition(ch);
+				condition = QuestionCondition.parse(ch);
 			} else {
 				delegate.characters(ch, parents);
 			}
@@ -403,91 +408,7 @@ public abstract class Question {
 				throws ParseException {
 			String condStr = atts.getValue("condition");
 			if (condStr != null && !condStr.trim().isEmpty())
-				condition = parseCondition(condStr);
-		}
-
-		private QuestionCondition parseCondition(String condStr)
-				throws ParseException {
-			Tokenizer tokenizer = new Tokenizer(condStr);
-			ExpressionParser exprParser = new ExpressionParser(tokenizer);
-			try {
-				try {
-					return parseCondition(tokenizer, exprParser);
-				} catch (LineNumberParseException ex) {
-					throw new ParseException(
-							"Invalid value of attribute \"condition\": " +
-							condStr + ": " + ex.getMessage(), ex);
-				} finally {
-					exprParser.close();
-				}
-			} catch (IOException ex) {
-				throw new RuntimeException("I/O exception in string reader: " +
-						ex.getMessage(), ex);
-			}
-		}
-
-		private QuestionCondition parseCondition(Tokenizer tokenizer,
-				ExpressionParser exprParser) throws ParseException,
-				IOException {
-			Token token = tokenizer.readToken();
-			if (token == null)
-				throw new ParseException("Unexpected end of expression");
-			return switch (token.getText()) {
-				case "foreach" -> parseForeachCondition(tokenizer, exprParser);
-				case "if" -> parseIfCondition(tokenizer, exprParser);
-				default ->
-					throw new ParseException("Invalid token: " +
-							token.getText());
-			};
-		}
-
-		private QuestionCondition.Foreach parseForeachCondition(
-				Tokenizer tokenizer, ExpressionParser exprParser)
-				throws ParseException, IOException {
-			Token token = tokenizer.readToken();
-			if (token == null) {
-				throw new ParseException(
-						"Expected name, found end of expression");
-			}
-			if (token.getType() != Token.Type.NAME) {
-				throw new ParseException("Expected name, found: " +
-						token.getText());
-			}
-			String name = token.getValue().toString();
-			token = tokenizer.readToken();
-			if (token == null) {
-				throw new ParseException(
-						"Expected \"in\", found end of expression");
-			}
-			if (token.getType() != Token.Type.IN) {
-				throw new ParseException("Expected \"in\", found: " +
-						token.getText());
-			}
-			Expression list = exprParser.readExpression();
-			if (list == null) {
-				throw new ParseException(
-						"Expected list, found end of expression");
-			}
-			token = tokenizer.readToken();
-			if (token != null) {
-				throw new ParseException("Unexpected token after expression: " +
-						token.getText());
-			}
-			return new QuestionCondition.Foreach(name, list);
-		}
-
-		private QuestionCondition.If parseIfCondition(Tokenizer tokenizer,
-				ExpressionParser exprParser) throws ParseException,
-				IOException {
-			Expression expr = exprParser.readExpression();
-			if (expr == null)
-				throw new ParseException("Unexpected end of expression");
-			Token token = tokenizer.readToken();
-			if (token != null) {
-				throw new ParseException("Unexpected token after expression: " +
-						token.getText());
-			}
-			return new QuestionCondition.If(expr);
+				condition = QuestionCondition.parse(condStr);
 		}
 
 		@Override

@@ -1,18 +1,12 @@
 package nl.rrd.senseeact.client.model.questionnaire;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import org.xml.sax.Attributes;
-
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-
 import nl.rrd.utils.exception.ParseException;
 import nl.rrd.utils.xml.AbstractSimpleSAXHandler;
 import nl.rrd.utils.xml.SimpleSAXHandler;
+import org.xml.sax.Attributes;
+
+import java.util.*;
 
 @JsonIgnoreProperties(ignoreUnknown=true)
 public class Questionnaire {

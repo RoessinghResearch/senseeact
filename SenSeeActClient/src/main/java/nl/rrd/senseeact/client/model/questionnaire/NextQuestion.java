@@ -2,7 +2,10 @@ package nl.rrd.senseeact.client.model.questionnaire;
 
 import java.util.Map;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import nl.rrd.utils.exception.ParseException;
 import nl.rrd.utils.expressions.EvaluationException;
 import nl.rrd.utils.expressions.StringExpression;
@@ -10,16 +13,22 @@ import nl.rrd.utils.expressions.Value;
 
 @JsonIgnoreProperties(ignoreUnknown=true)
 public class NextQuestion {
+	@JsonSerialize(using=StringExpression.PlainSerializer.class)
+	@JsonDeserialize(using=StringExpression.PlainDeserializer.class)
 	private StringExpression questionnaireId = null;
+	@JsonSerialize(using=StringExpression.PlainSerializer.class)
+	@JsonDeserialize(using=StringExpression.PlainDeserializer.class)
 	private StringExpression questionId = null;
 
 	private NextQuestion() {
 	}
 
+	@JsonIgnore
 	public boolean isNone() {
 		return questionnaireId == null && questionId == null;
 	}
 
+	@JsonIgnore
 	public boolean isQuestionnaire() {
 		return questionnaireId != null;
 	}
@@ -28,6 +37,7 @@ public class NextQuestion {
 		return evaluateIdExpr(questionnaireId, vars);
 	}
 
+	@JsonIgnore
 	public boolean isQuestion() {
 		return questionId != null;
 	}
