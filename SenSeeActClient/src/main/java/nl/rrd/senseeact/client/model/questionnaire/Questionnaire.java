@@ -1,5 +1,7 @@
 package nl.rrd.senseeact.client.model.questionnaire;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.xml.sax.Attributes;
 
 import java.util.ArrayList;
@@ -12,10 +14,12 @@ import nl.rrd.utils.exception.ParseException;
 import nl.rrd.utils.xml.AbstractSimpleSAXHandler;
 import nl.rrd.utils.xml.SimpleSAXHandler;
 
+@JsonIgnoreProperties(ignoreUnknown=true)
 public class Questionnaire {
 	private String id;
 	private boolean randomOrder = false;
-	private List<Question> questionTemplates = new ArrayList<>();
+	private List<Question> questions = new ArrayList<>();
+
 	private Random random = new Random();
 
 	public String getId() {
@@ -34,16 +38,16 @@ public class Questionnaire {
 		this.randomOrder = randomOrder;
 	}
 
-	public List<Question> getQuestionTemplates() {
-		return questionTemplates;
+	public List<Question> getQuestions() {
+		return questions;
 	}
 
-	public void setQuestionTemplates(List<Question> questionTemplates) {
-		this.questionTemplates = questionTemplates;
+	public void setQuestions(List<Question> questions) {
+		this.questions = questions;
 	}
 
-	public void addQuestionTemplate(Question question) {
-		questionTemplates.add(question);
+	public void addQuestion(Question question) {
+		questions.add(question);
 	}
 
 	public Question findCurrentQuestion(String questionId,
@@ -52,13 +56,13 @@ public class Questionnaire {
 		if (index == -1)
 			return null;
 		else
-			return questionTemplates.get(index);
+			return questions.get(index);
 	}
 
 	private int findCurrentQuestionIndex(String questionId,
 			Map<String,Object> answerMap) {
-		for (int i = 0; i < questionTemplates.size(); i++) {
-			Question question = questionTemplates.get(i);
+		for (int i = 0; i < questions.size(); i++) {
+			Question question = questions.get(i);
 			if (question.getDataIds(answerMap).contains(questionId))
 				return i;
 		}
@@ -73,7 +77,7 @@ public class Questionnaire {
 	}
 
 	private String findOrderedStartQuestionId() {
-		for (Question question : questionTemplates) {
+		for (Question question : questions) {
 			List<String> dataIds = question.getDataIds(null);
 			if (!dataIds.isEmpty())
 				return dataIds.get(0);
@@ -83,7 +87,7 @@ public class Questionnaire {
 
 	private String findRandomStartQuestionId() {
 		List<String> candidates = new ArrayList<>();
-		for (Question question : questionTemplates) {
+		for (Question question : questions) {
 			String dataId = question.getCurrentDataId(null);
 			if (dataId != null && !candidates.contains(dataId))
 				candidates.add(dataId);
@@ -111,8 +115,8 @@ public class Questionnaire {
 				qnData.getAnswerMap());
 		if (index == -1)
 			return null;
-		while (index < questionTemplates.size()) {
-			Question question = questionTemplates.get(index);
+		while (index < questions.size()) {
+			Question question = questions.get(index);
 			String dataId = question.getCurrentDataId(newAnswerMap);
 			if (dataId != null)
 				return dataId;
@@ -123,7 +127,7 @@ public class Questionnaire {
 
 	private String findRandomNextQuestionId(Map<String,Object> newAnswerMap) {
 		List<String> candidates = new ArrayList<>();
-		for (Question question : questionTemplates) {
+		for (Question question : questions) {
 			String dataId = question.getCurrentDataId(newAnswerMap);
 			if (dataId != null &&
 					!newAnswerMap.containsKey(dataId) &&
@@ -143,8 +147,8 @@ public class Questionnaire {
 				qnData.getAnswerMap());
 		newAnswerMap.put(questionId, currAnswerData);
 		int index = findCurrentQuestionIndex(nextId, newAnswerMap);
-		while (index < questionTemplates.size()) {
-			Question question = questionTemplates.get(index);
+		while (index < questions.size()) {
+			Question question = questions.get(index);
 			String dataId = question.getCurrentDataId(newAnswerMap);
 			if (dataId != null)
 				return dataId;
@@ -188,7 +192,7 @@ public class Questionnaire {
 			if (questionHandler != null)
 				questionHandler.endElement(name, parents);
 			if (parents.size() == rootLevel + 1) {
-				result.addQuestionTemplate(questionHandler.getObject());
+				result.addQuestion(questionHandler.getObject());
 				questionHandler = null;
 			}
 		}

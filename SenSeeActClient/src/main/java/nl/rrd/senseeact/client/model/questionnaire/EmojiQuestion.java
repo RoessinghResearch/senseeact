@@ -1,45 +1,25 @@
 package nl.rrd.senseeact.client.model.questionnaire;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import nl.rrd.utils.exception.ParseException;
+import nl.rrd.utils.expressions.StringExpression;
+import nl.rrd.utils.xml.AbstractSimpleSAXHandler;
+import nl.rrd.utils.xml.SimpleSAXHandler;
 import org.xml.sax.Attributes;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import nl.rrd.utils.exception.ParseException;
-import nl.rrd.utils.expressions.StringExpression;
-import nl.rrd.utils.xml.AbstractSimpleSAXHandler;
-import nl.rrd.utils.xml.SimpleSAXHandler;
-
+@JsonIgnoreProperties(ignoreUnknown=true)
+@JsonDeserialize(using=JsonDeserializer.None.class)
 public class EmojiQuestion extends Question {
-	private StringExpression id;
-	private String title = null;
-	private String question;
 	private int optionCount = 3;
 	private List<MultipleChoiceAnswer> extraAnswers = new ArrayList<>();
 
-	@Override
-	public StringExpression getId() {
-		return id;
-	}
-
-	public void setId(StringExpression id) {
-		this.id = id;
-	}
-
-	public String getTitle() {
-		return title;
-	}
-
-	public void setTitle(String title) {
-		this.title = title;
-	}
-
-	public String getQuestion() {
-		return question;
-	}
-
-	public void setQuestion(String question) {
-		this.question = question;
+	public EmojiQuestion() {
+		super(TYPE_EMOJI);
 	}
 
 	/**
@@ -107,14 +87,14 @@ public class EmojiQuestion extends Question {
 			result = new EmojiQuestion();
 			String idExpr = readAttribute(atts, "id", 1, null);
 			try {
-				result.id = new StringExpression(idExpr);
+				result.setId(new StringExpression(idExpr));
 			} catch (ParseException ex) {
 				throw new ParseException("Invalid value of attribute \"id\": " +
 						idExpr + ": " + ex.getMessage(), ex);
 			}
 			if (atts.getValue("title") != null)
-				result.title = readAttribute(atts, "title", 1, null);
-			result.question = readAttribute(atts, "question", 1, null);
+				result.setTitle(readAttribute(atts, "title", 1, null));
+			result.setQuestion(readAttribute(atts, "question", 1, null));
 			if (atts.getValue("option_count") != null)
 				result.optionCount = readIntAttribute(atts, "option_count");
 		}

@@ -1,30 +1,55 @@
 package nl.rrd.senseeact.client.model.questionnaire;
 
+import com.fasterxml.jackson.core.JacksonException;
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import nl.rrd.utils.AppComponents;
+import nl.rrd.utils.exception.LineNumberParseException;
+import nl.rrd.utils.exception.ParseException;
+import nl.rrd.utils.expressions.*;
+import nl.rrd.utils.json.JsonMapper;
+import nl.rrd.utils.validation.MapReader;
+import nl.rrd.utils.xml.AbstractSimpleSAXHandler;
+import nl.rrd.utils.xml.SimpleSAXHandler;
 import org.slf4j.Logger;
 import org.xml.sax.Attributes;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
-import nl.rrd.utils.AppComponents;
-import nl.rrd.utils.exception.LineNumberParseException;
-import nl.rrd.utils.exception.ParseException;
-import nl.rrd.utils.expressions.EvaluationException;
-import nl.rrd.utils.expressions.Expression;
-import nl.rrd.utils.expressions.ExpressionParser;
-import nl.rrd.utils.expressions.StringExpression;
-import nl.rrd.utils.expressions.Token;
-import nl.rrd.utils.expressions.Tokenizer;
-import nl.rrd.utils.expressions.Value;
-import nl.rrd.utils.xml.AbstractSimpleSAXHandler;
-import nl.rrd.utils.xml.SimpleSAXHandler;
-
+@JsonDeserialize(using=Question.QuestionDeserializer.class)
 public abstract class Question {
+	public static final String TYPE_EMOJI = "emoji";
+	public static final String TYPE_FIXED_TEXT = "fixed_text";
+	public static final String TYPE_FREE_TEXT = "free_text";
+	public static final String TYPE_LIKERT = "likert";
+	public static final String TYPE_MULTIPLE_CHOICE = "multiple_choice";
+	public static final String TYPE_SET_SELECTION = "set_selection";
+	public static final String TYPE_VAS = "vas";
+
+	private String type;
+	private StringExpression id;
 	private QuestionCondition condition = null;
+	private String title = null;
+	private String question;
+
+	public Question(String type) {
+		this.type = type;
+	}
+
+	/**
+	 * Returns the question type. This should be one of the TYPE_* constants
+	 * defined in this class.
+	 *
+	 * @return the question type
+	 */
+	public String getType() {
+		return type;
+	}
 
 	/**
 	 * Returns the ID of this question as a string expression, which may
@@ -33,7 +58,20 @@ public abstract class Question {
 	 *
 	 * @return the ID
 	 */
-	public abstract StringExpression getId();
+	public StringExpression getId() {
+		return id;
+	}
+
+	/**
+	 * Sets the ID of this question as a string expression, which may contain
+	 * variables. Depending on the condition, this can be evaluated to zero or
+	 * more data IDs with {@link #getDataIds(Map) getDataIds()}.
+	 *
+	 * @param id the ID
+	 */
+	public void setId(StringExpression id) {
+		this.id = id;
+	}
 
 	/**
 	 * Returns the condition for this question. If no condition applies, then
@@ -43,6 +81,48 @@ public abstract class Question {
 	 */
 	public QuestionCondition getCondition() {
 		return condition;
+	}
+
+	/**
+	 * Returns the resource ID for the title of this question. This is shown as
+	 * a header above the actual question. It can be null. The resource string
+	 * can contain simple HTML formatting and variables.
+	 *
+	 * @return the resource ID for the title or null
+	 */
+	public String getTitle() {
+		return title;
+	}
+
+	/**
+	 * Sets the resource ID for the title of this question. This is shown as a
+	 * header above the actual question. It can be null. The resource string can
+	 * contain simple HTML formatting and variables.
+	 *
+	 * @param title the resource ID for the title or null
+	 */
+	public void setTitle(String title) {
+		this.title = title;
+	}
+
+	/**
+	 * Returns the resource ID for the question text. The resource string can
+	 * contain simple HTML formatting and variables.
+	 *
+	 * @return the resource ID for the question text
+	 */
+	public String getQuestion() {
+		return question;
+	}
+
+	/**
+	 * Sets the resource ID for the question text.The resource string can
+	 * contain simple HTML formatting and variables.
+	 *
+	 * @param question the resource ID for the question text
+	 */
+	public void setQuestion(String question) {
+		this.question = question;
 	}
 
 	/**
@@ -199,6 +279,41 @@ public abstract class Question {
 			itemVars.putAll(answerMap);
 		itemVars.put(cond.getName(), item);
 		return getDataId(itemVars);
+	}
+
+	public static class QuestionDeserializer
+			extends JsonDeserializer<Question> {
+		@Override
+		public Question deserialize(JsonParser jsonParser,
+				DeserializationContext deserializationContext)
+				throws IOException, JacksonException {
+			Map<String,Object> map = jsonParser.readValueAs(
+					new TypeReference<>() {});
+			MapReader mapReader = new MapReader(map);
+			Class<? extends Question> questionClass;
+			try {
+				String type = mapReader.readString("type");
+				questionClass = getQuestionClassForType(type);
+				return JsonMapper.convert(map, questionClass);
+			} catch (ParseException ex) {
+				throw new JsonParseException(jsonParser, ex.getMessage(), ex);
+			}
+		}
+
+		private Class<? extends Question> getQuestionClassForType(String type)
+				throws ParseException {
+			return switch (type) {
+				case TYPE_EMOJI -> EmojiQuestion.class;
+				case TYPE_FIXED_TEXT -> FixedTextQuestion.class;
+				case TYPE_FREE_TEXT -> FreeTextQuestion.class;
+				case TYPE_LIKERT -> LikertQuestion.class;
+				case TYPE_MULTIPLE_CHOICE -> MultipleChoiceQuestion.class;
+				case TYPE_SET_SELECTION -> SetSelectionQuestion.class;
+				case TYPE_VAS -> VASQuestion.class;
+				default -> throw new ParseException("Unknown question type: " +
+						type);
+			};
+		}
 	}
 
 	public static SimpleSAXHandler<? extends Question> getXMLHandler() {

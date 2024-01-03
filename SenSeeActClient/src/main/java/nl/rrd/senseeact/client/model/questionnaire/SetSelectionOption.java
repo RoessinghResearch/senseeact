@@ -1,5 +1,8 @@
 package nl.rrd.senseeact.client.model.questionnaire;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import org.xml.sax.Attributes;
 
 import java.util.List;
@@ -8,6 +11,7 @@ import nl.rrd.utils.exception.ParseException;
 import nl.rrd.utils.xml.AbstractSimpleSAXHandler;
 import nl.rrd.utils.xml.SimpleSAXHandler;
 
+@JsonIgnoreProperties(ignoreUnknown=true)
 public class SetSelectionOption {
 	private String value;
 	private String text;

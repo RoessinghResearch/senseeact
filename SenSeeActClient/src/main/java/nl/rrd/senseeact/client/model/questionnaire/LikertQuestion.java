@@ -1,5 +1,8 @@
 package nl.rrd.senseeact.client.model.questionnaire;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import org.xml.sax.Attributes;
 
 import java.util.ArrayList;
@@ -10,37 +13,15 @@ import nl.rrd.utils.expressions.StringExpression;
 import nl.rrd.utils.xml.AbstractSimpleSAXHandler;
 import nl.rrd.utils.xml.SimpleSAXHandler;
 
+@JsonIgnoreProperties(ignoreUnknown=true)
+@JsonDeserialize(using=JsonDeserializer.None.class)
 public class LikertQuestion extends Question {
-	private StringExpression id;
-	private String title = null;
-	private String question;
 	private int startValue;
 	private int endValue;
 	private List<ScaleLabel> labels = new ArrayList<>();
 
-	@Override
-	public StringExpression getId() {
-		return id;
-	}
-
-	public void setId(StringExpression id) {
-		this.id = id;
-	}
-
-	public String getTitle() {
-		return title;
-	}
-
-	public void setTitle(String title) {
-		this.title = title;
-	}
-
-	public String getQuestion() {
-		return question;
-	}
-
-	public void setQuestion(String question) {
-		this.question = question;
+	public LikertQuestion() {
+		super(TYPE_LIKERT);
 	}
 
 	public int getStartValue() {
@@ -102,14 +83,14 @@ public class LikertQuestion extends Question {
 			result = new LikertQuestion();
 			String idExpr = readAttribute(atts, "id", 1, null);
 			try {
-				result.id = new StringExpression(idExpr);
+				result.setId(new StringExpression(idExpr));
 			} catch (ParseException ex) {
 				throw new ParseException("Invalid value of attribute \"id\": " +
 						idExpr + ": " + ex.getMessage(), ex);
 			}
 			if (atts.getValue("title") != null)
-				result.title = readAttribute(atts, "title", 1, null);
-			result.question = readAttribute(atts, "question", 1, null);
+				result.setTitle(readAttribute(atts, "title", 1, null));
+			result.setQuestion(readAttribute(atts, "question", 1, null));
 			result.startValue = readIntAttribute(atts, "start_value");
 			result.endValue = readIntAttribute(atts, "end_value");
 		}

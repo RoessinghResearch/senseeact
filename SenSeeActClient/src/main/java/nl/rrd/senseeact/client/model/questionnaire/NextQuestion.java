@@ -2,11 +2,13 @@ package nl.rrd.senseeact.client.model.questionnaire;
 
 import java.util.Map;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import nl.rrd.utils.exception.ParseException;
 import nl.rrd.utils.expressions.EvaluationException;
 import nl.rrd.utils.expressions.StringExpression;
 import nl.rrd.utils.expressions.Value;
 
+@JsonIgnoreProperties(ignoreUnknown=true)
 public class NextQuestion {
 	private StringExpression questionnaireId = null;
 	private StringExpression questionId = null;

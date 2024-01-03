@@ -1,5 +1,8 @@
 package nl.rrd.senseeact.client.model.questionnaire;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import org.xml.sax.Attributes;
 
 import java.util.List;
@@ -9,34 +12,11 @@ import nl.rrd.utils.expressions.StringExpression;
 import nl.rrd.utils.xml.AbstractSimpleSAXHandler;
 import nl.rrd.utils.xml.SimpleSAXHandler;
 
+@JsonIgnoreProperties(ignoreUnknown=true)
+@JsonDeserialize(using=JsonDeserializer.None.class)
 public class FixedTextQuestion extends Question {
-	private StringExpression id;
-	private String title;
-	private String text;
-
-	@Override
-	public StringExpression getId() {
-		return id;
-	}
-
-	public void setId(StringExpression id) {
-		this.id = id;
-	}
-
-	public String getTitle() {
-		return title;
-	}
-
-	public void setTitle(String title) {
-		this.title = title;
-	}
-
-	public String getText() {
-		return text;
-	}
-
-	public void setText(String text) {
-		this.text = text;
+	public FixedTextQuestion() {
+		super(TYPE_FIXED_TEXT);
 	}
 
 	public static SimpleSAXHandler<FixedTextQuestion> getXMLHandler() {
@@ -63,14 +43,14 @@ public class FixedTextQuestion extends Question {
 			result = new FixedTextQuestion();
 			String idExpr = readAttribute(atts, "id", 1, null);
 			try {
-				result.id = new StringExpression(idExpr);
+				result.setId(new StringExpression(idExpr));
 			} catch (ParseException ex) {
 				throw new ParseException("Invalid value of attribute \"id\": " +
 						idExpr + ": " + ex.getMessage(), ex);
 			}
 			if (atts.getValue("title") != null)
-				result.title = readAttribute(atts, "title", 1, null);
-			result.text = readAttribute(atts, "text", 1, null);
+				result.setTitle(readAttribute(atts, "title", 1, null));
+			result.setQuestion(readAttribute(atts, "text", 1, null));
 		}
 
 		@Override
