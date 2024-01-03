@@ -3,7 +3,13 @@ class MySenSeeActPage {
 	 * Properties:
 	 * 
 	 * - _user (SenSeeAct user object)
+	 * - _logoutWidget
 	 */
+
+	constructor() {
+		this._user = null;
+		this._logoutWidget = null;
+	}
 
 	start() {
 		var self = this;
@@ -26,17 +32,18 @@ class MySenSeeActPage {
 		header.render();
 
 		let dashboard = $('#dashboard');
-		dashboard.append(this._createDashboardWidget(
+		dashboard.append(this.createDashboardWidget(
 			'images/icon_user.svg',
 			i18next.t('my_account'),
 			basePath + '/me/account'));
-		dashboard.append(this._createDashboardWidget(
+		dashboard.append(this.createDashboardWidget(
 			'images/icon_download.svg',
 			i18next.t('download_data'),
 			basePath + '/me/download'));
-		let widget = this._createDashboardWidget(
+		let widget = this.createDashboardWidget(
 			'images/icon_logout.svg',
 			i18next.t('log_out'), null);
+		this._logoutWidget = widget;
 		var self = this;
 		animator.addAnimatedClickHandler(widget, widget,
 			'animate-dashboard-widget-click',
@@ -54,7 +61,7 @@ class MySenSeeActPage {
 		$('#content').css('visibility', 'visible');
 	}
 
-	_createDashboardWidget(icon, title, url) {
+	createDashboardWidget(icon, title, url) {
 		let link = $('<a></a>');
 		link.addClass('dashboard-widget');
 		if (url)
@@ -84,6 +91,15 @@ class MySenSeeActPage {
 			);
 		}
 		return link;
+	}
+
+	addDashboardWidget(widget) {
+		if (this._logoutWidget) {
+			this._logoutWidget.before(widget);
+		} else {
+			let dashboard = $('#dashboard');
+			dashboard.append(widget);
+		}
 	}
 
 	_onLogoutClick(clickId) {
