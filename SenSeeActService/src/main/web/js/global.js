@@ -60,8 +60,32 @@ function findPageTemplate(pagePath) {
 	return template;
 }
 
-function loadJS(name) {
+/**
+ * Loads one or more JavaScript files. If you load multiple files, they will be
+ * loaded asynchronously in sequence.
+ * 
+ * Params:
+ * - names: string with one name or array with multiple names. Each name should
+ *       be the relative path to the JavaScript file from the "js" directory,
+ *       without the ".js" extension.
+ */
+function loadJS(names) {
+	let name;
+	let rest = [];
+	if (Array.isArray(names)) {
+		if (names.length == 0)
+			return;
+		name = names[0];
+		rest = names.slice(1);
+	} else {
+		name = names;
+	}
 	let script = document.createElement('script');
+	if (rest.length > 0) {
+		script.onload = function() {
+			loadJS(rest);
+		};
+	}
 	script.src = basePath + '/js/' + name + '.js?v=' + version;
 	document.head.appendChild(script);
 }
