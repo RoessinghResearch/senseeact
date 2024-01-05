@@ -15,7 +15,7 @@ const ELEMENT_ANIMATOR_CLICK_HANDLER_WAIT = 2000;
 class ElementAnimator {
 	/**
 	 * Member variables:
-	 * - _currentClick: object with three properties:
+	 * - _currentClick: object with these properties:
 	 *     - id: UUID
 	 *     - time: moment object with the click time
 	 *     - animationCompleted: boolean
@@ -62,55 +62,6 @@ class ElementAnimator {
 			event.preventDefault();
 			self._onAnimatedClick(animElem, animClass, asyncHandler, callback);
 		});
-	}
-
-	/**
-	 * This method is a convenient wrapper around addAnimatedClickHandler() for
-	 * AJAX calls. Instead of asyncHandler(clickId) it takes
-	 * ajaxFunction(successFunction, errorFunction), and instead of
-	 * callback(result) it takes successFunction(response) and
-	 * errorFunction(xhr, status, error).
-	 *
-	 * - clickElem: the element that receives the click
-	 * - animElem: the element that should be animated
-	 * - animClass: the animation class or null
-	 * - ajaxFunction: function with this signature:
-	 *     ajaxFunction(successFunction, errorFunction)
-	 * - successFunction: function with this signature (may be null):
-	 *     successFunction(response)
-	 * - errorFunction: function with this signature (may be null):
-	 *     errorFunction(xhr, status, error)
-	 */
-	addAnimatedAjaxClickHandler(clickElem, animElem, animClass, ajaxFunction,
-			successFunction, errorFunction = null) {
-		var self = this;
-		let asyncHandler = function(clickId) {
-			let wrappedSuccessFunction = function(response) {
-				let callbackResult = {
-					success: true,
-					response: response
-				};
-				self.onAnimatedClickHandlerCompleted(clickId, callbackResult);
-			};
-			let wrappedErrorFunction = function(xhr, status, error) {
-				let callbackResult = {
-					success: false,
-					xhr: xhr,
-					status: status,
-					error: error
-				};
-				self.onAnimatedClickHandlerCompleted(clickId, callbackResult);
-			}
-			ajaxFunction(wrappedSuccessFunction, wrappedErrorFunction);
-		};
-		let wrappedCallback = function(result) {
-			if (result.success && successFunction)
-				successFunction(result.response);
-			else if (!result.success && errorFunction)
-				errorFunction(result.xhr, result.status, result.error);
-		};
-		this.addAnimatedClickHandler(clickElem, animElem, animClass,
-			asyncHandler, wrappedCallback);
 	}
 	
 	clearAnimatedClickHandler(clickElem) {
