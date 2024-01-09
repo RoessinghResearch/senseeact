@@ -175,7 +175,7 @@ a.menu-item:hover {
 	white-space: nowrap;
 }
 
-#menu-background {
+#content-root-overlay, #menu-background {
 	display: none;
 	position: absolute;
 	left: 0;
