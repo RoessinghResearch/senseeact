@@ -65,6 +65,7 @@ class MenuController {
 
 	showSidebar() {
 		$('#sidebar-switch').css('display', 'flex');
+		$('#toast').addClass('sidebar-visible');
 	}
 
 	_registerCloseEvent() {
