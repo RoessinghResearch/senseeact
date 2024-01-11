@@ -17,7 +17,7 @@ class ElementAnimator {
 	 * Member variables:
 	 * - _currentClick: object with these properties:
 	 *     - id: UUID
-	 *     - time: moment object with the click time
+	 *     - time: luxon.DateTime object with the click time
 	 *     - animationCompleted: boolean
 	 *     - asyncHandlerCompleted: boolean
 	 *     - asyncHandlerResult: result of async handler, set when handler is
@@ -99,11 +99,12 @@ class ElementAnimator {
 	 *     onAnimatedClickHandlerCompleted())
 	 */
 	_onAnimatedClick(elem, animClass, asyncHandler, callback) {
-		let time = moment();
+		let time = luxon.DateTime.now();
 		if (this._currentClick) {
-			let endTime = moment(this._currentClick.time);
-			endTime.add(ELEMENT_ANIMATOR_CLICK_HANDLER_WAIT, 'ms');
-			if (time.isBefore(endTime))
+			let endTime = this._currentClick.time.plus({
+				milliseconds: ELEMENT_ANIMATOR_CLICK_HANDLER_WAIT
+			});
+			if (time < endTime)
 				return;
 		}
 		var clickId = uuidv4();

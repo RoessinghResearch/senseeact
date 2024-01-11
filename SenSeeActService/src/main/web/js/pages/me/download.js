@@ -2,7 +2,7 @@ class DownloadPage {
 	/**
 	 * Member variables:
 	 * 
-	 * - _lastStartTime (moment)
+	 * - _lastStartTime (luxon.DateTime)
 	 * - _projects (array): Result of GET /download/projects. Each item is an
 	 *       object with the following properties:
 	 *       - code
@@ -81,12 +81,12 @@ class DownloadPage {
 	_onProjectClick(clickId, project) {
 		// check for delay of at least 1 second since last download start, to
 		// avoid two downloads at double click
-		let now = moment();
+		let now = luxon.DateTime.now();
 		let minTime = null;
 		if (this._lastStartTime != null) {
-			minTime = moment(this._lastStartTime).add(1, 's');
+			minTime = this._lastStartTime.plus({ seconds: 1 });
 		}
-		if (minTime == null || !now.isBefore(minTime)) {
+		if (minTime == null || now >= minTime) {
 			this._lastStartTime = now;
 			var self = this;
 			let client = new SenSeeActClient();
@@ -161,9 +161,9 @@ class DownloadPage {
 	 */
 	_createActiveDownloadItem(item) {
 		let project = this._findProjectForCode(item.project);
-		let time = moment(item.localTime);
+		let time = luxon.DateTime.fromISO(item.localTime);
 		let dateTimeFormat = i18next.t('date_hour_minute_format');
-		let timeStr = time.format(dateTimeFormat);
+		let timeStr = time.toFormat(dateTimeFormat);
 		let itemDiv = $('<div></div>');
 		itemDiv.addClass('active-download-item');
 
