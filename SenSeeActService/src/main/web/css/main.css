@@ -27,7 +27,7 @@ body {
 	width: 100%;
 	min-width: 320px;
 	height: 80px;
-	z-index: 2;
+	z-index: 5;
 }
 
 #header-content {
@@ -185,6 +185,14 @@ a.menu-item:hover {
 	opacity: 0.5;
 }
 
+#main-root-overlay {
+	z-index: 5;
+}
+
+#menu-background {
+	z-index: 10;
+}
+
 #menu {
 	position: fixed;
 	display: none;
@@ -194,7 +202,7 @@ a.menu-item:hover {
 	width: 240px;
 	background-color: white;
 	box-shadow: 0px 0px 8px 1px #303030;
-	z-index: 3;
+	z-index: 11;
 }
 
 #root {
@@ -223,7 +231,7 @@ a.menu-item:hover {
 		flex-grow: 1;
 		background: white;
 		box-shadow: 0px 0px 6px 0px #808080;
-		z-index: 1;
+		z-index: 5;
 	}
 }
 
@@ -255,7 +263,7 @@ a.menu-item:hover {
 	right: 0px;
 	bottom: 84px;
 	box-sizing: border-box;
-	z-index: 10;
+	z-index: 20;
 }
 
 @media (min-width: 960px) {
