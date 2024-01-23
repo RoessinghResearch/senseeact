@@ -50,8 +50,9 @@ public class PushNotificationService {
 						.setCredentials(GoogleCredentials.getApplicationDefault())
 						.build();
 			} catch (IOException ex) {
-				throw new RuntimeException("Failed to read Google credentials: " +
+				logger.error("Failed to read Google credentials: " +
 						ex.getMessage(), ex);
+				return;
 			}
 			FirebaseApp.initializeApp(options);
 		}
