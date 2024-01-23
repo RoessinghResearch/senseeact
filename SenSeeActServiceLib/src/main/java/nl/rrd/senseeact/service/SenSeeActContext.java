@@ -21,7 +21,7 @@ public class SenSeeActContext {
 	 */
 	public static String getBaseUrl() {
 		BaseConfiguration config = AppComponents.get(BaseConfiguration.class);
-		return config.get(BaseConfiguration.BASE_URL);
+		return config.getBaseUrl();
 	}
 	
 	/**

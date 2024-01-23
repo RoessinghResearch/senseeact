@@ -12,6 +12,8 @@ import nl.rrd.utils.AppComponent;
  */
 @AppComponent
 public class Configuration extends BaseConfiguration {
+	public static final String BASE_URL = "baseUrl";
+
 	public static final String MYSQL_HOST = "mysqlHost";
 	public static final String MYSQL_PORT = "mysqlPort";
 	public static final String MYSQL_ROOT_PASSWORD = "mysqlRootPassword";
@@ -30,6 +32,11 @@ public class Configuration extends BaseConfiguration {
 	public static final String MAIL_FROM = "mailFrom";
 	
 	public static final String WEB_URL = "webUrl";
+
+	@Override
+	public String getBaseUrl() {
+		return get(BASE_URL);
+	}
 
 	public EmailConfiguration toEmailConfig() {
 		return EmailConfiguration.parse(

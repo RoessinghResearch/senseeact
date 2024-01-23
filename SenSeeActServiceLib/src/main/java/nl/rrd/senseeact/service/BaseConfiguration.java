@@ -16,9 +16,8 @@ import java.util.Properties;
  * @author Dennis Hofs (RRD)
  */
 @AppComponent
-public class BaseConfiguration {
+public abstract class BaseConfiguration {
 	public static final String VERSION = "version";
-	public static final String BASE_URL = "baseUrl";
 	public static final String DATA_DIR = "dataDir";
 
 	private Map<String,String> properties = new HashMap<>();
@@ -40,6 +39,8 @@ public class BaseConfiguration {
 			properties.put(name, props.getProperty(name));
 		}
 	}
+
+	public abstract String getBaseUrl();
 
 	public String get(String key) {
 		return get(key, null);
