@@ -2,6 +2,7 @@ package nl.rrd.senseeact.dao.mariadb;
 
 import org.slf4j.Logger;
 
+import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -121,9 +122,13 @@ public class MariaDBDatabaseConnection extends DatabaseConnection {
 		String url = "jdbc:mariadb://" + host + ":" + port + "/";
 		if (database != null)
 			url += database;
-		url += "?user=" + URLEncoder.encode(user, "UTF-8") +
-				"&password=" + URLEncoder.encode(password, "UTF-8") +
-				"&useSSL=false";
+		try {
+			url += "?user=" + URLEncoder.encode(user, "UTF-8") +
+					"&password=" + URLEncoder.encode(password, "UTF-8") +
+					"&useSSL=false";
+		} catch (UnsupportedEncodingException ex) {
+			throw new RuntimeException(ex.getMessage(), ex);
+		}
 		try {
 			openConn = new OpenConnection(database,
 					DriverManager.getConnection(url));
