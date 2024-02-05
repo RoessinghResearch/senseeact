@@ -4,6 +4,8 @@ allprojects {
 	}
 
 	tasks.register('genwrapper', Wrapper) {
-		gradleVersion = '8.5'
+		gradleVersion = '8.6'
+		// validateDistributionUrl is required since Gradle 8.6
+		validateDistributionUrl = true
 	}
 }
