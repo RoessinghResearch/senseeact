@@ -17,8 +17,12 @@ java {
 
 dependencies {
 	api project(':SenSeeActServiceLib')
-	api 'com.google.zxing:core:3.5.2'
-	api 'com.google.zxing:javase:3.5.2'
+	api 'com.google.zxing:core:3.5.3'
+	api 'com.google.zxing:javase:3.5.3'
+}
+
+tasks.withType(JavaCompile) {
+	options.deprecation = true
 }
 
 test {

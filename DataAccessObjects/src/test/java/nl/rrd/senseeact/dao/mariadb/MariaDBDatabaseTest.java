@@ -1,4 +1,4 @@
-package nl.rrd.senseeact.dao.mysql;
+package nl.rrd.senseeact.dao.mariadb;
 
 import nl.rrd.senseeact.dao.DatabaseConnection;
 import nl.rrd.senseeact.dao.DatabaseTest;
@@ -6,7 +6,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-public class MySQLDatabaseTest {
+public class MariaDBDatabaseTest {
 	private DatabaseConnection dbConn = null;
 	private DatabaseTest dbTest = null;
 
@@ -22,7 +22,7 @@ public class MySQLDatabaseTest {
 		String user = System.getProperty("testMysqlUser");
 		String password = System.getProperty("testMysqlPassword");
 		String dbName = System.getProperty("testMysqlDatabase");
-		MySQLDatabaseFactory dbFactory = new MySQLDatabaseFactory();
+		MariaDBDatabaseFactory dbFactory = new MariaDBDatabaseFactory();
 		dbFactory.setHost(host);
 		dbFactory.setPort(port);
 		dbFactory.setUser(user);

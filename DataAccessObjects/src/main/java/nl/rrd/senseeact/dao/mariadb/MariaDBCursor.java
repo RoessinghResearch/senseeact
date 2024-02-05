@@ -1,4 +1,4 @@
-package nl.rrd.senseeact.dao.mysql;
+package nl.rrd.senseeact.dao.mariadb;
 
 import nl.rrd.utils.exception.DatabaseException;
 import nl.rrd.senseeact.dao.sql.SQLCursor;
@@ -8,21 +8,21 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 /**
- * Implementation of {@link SQLCursor SQLCursor} for MySQL.
+ * Implementation of {@link SQLCursor SQLCursor} for MariaDB.
  *
  * @author Dennis Hofs (RRD)
  */
-public class MySQLCursor implements SQLCursor {
+public class MariaDBCursor implements SQLCursor {
 	private Statement statement;
 	private ResultSet resultSet;
 
 	/**
-	 * Constructs a new MySQL cursor.
+	 * Constructs a new MariaDB cursor.
 	 *
 	 * @param statement the statement from which the result set was obtained
 	 * @param resultSet the result set
 	 */
-	public MySQLCursor(Statement statement, ResultSet resultSet) {
+	public MariaDBCursor(Statement statement, ResultSet resultSet) {
 		this.statement = statement;
 		this.resultSet = resultSet;
 	}

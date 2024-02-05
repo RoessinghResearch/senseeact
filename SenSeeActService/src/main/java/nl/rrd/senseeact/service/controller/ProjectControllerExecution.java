@@ -41,7 +41,8 @@ import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.net.MalformedURLException;
-import java.net.URL;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
@@ -1396,8 +1397,8 @@ public class ProjectControllerExecution {
 		}
 		if (callbackUrl != null && !callbackUrl.isEmpty()) {
 			try {
-				callbackUrl = new URL(callbackUrl).toString();
-			} catch (MalformedURLException ex) {
+				callbackUrl = new URI(callbackUrl).toURL().toString();
+			} catch (URISyntaxException | MalformedURLException ex) {
 				throw BadRequestException.withInvalidInput(new HttpFieldError(
 						"callbackUrl", "Invalid value: " + callbackUrl));
 			}

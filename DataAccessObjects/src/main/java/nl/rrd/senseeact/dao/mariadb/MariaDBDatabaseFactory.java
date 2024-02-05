@@ -1,4 +1,4 @@
-package nl.rrd.senseeact.dao.mysql;
+package nl.rrd.senseeact.dao.mariadb;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -8,11 +8,11 @@ import nl.rrd.senseeact.dao.DatabaseFactory;
 import nl.rrd.utils.AppComponent;
 
 /**
- * Database factory for MySQL. It has the following attributes:
+ * Database factory for MariaDB. It has the following attributes:
  *
  * <p><ul>
- * <li>host: host name of the MySQL server (default: localhost)</li>
- * <li>port: port number of the MySQL server (default: 3306)</li>
+ * <li>host: host name of the MariaDB server (default: localhost)</li>
+ * <li>port: port number of the MariaDB server (default: 3306)</li>
  * <li>user: the user name</li>
  * <li>password: the password</li>
  * </ul></p>
@@ -22,31 +22,31 @@ import nl.rrd.utils.AppComponent;
  * @author Dennis Hofs (RRD)
  */
 @AppComponent
-public class MySQLDatabaseFactory extends DatabaseFactory {
+public class MariaDBDatabaseFactory extends DatabaseFactory {
 	private String host = "localhost";
 	private int port = 3306;
 	private String user = null;
 	private String password = null;
 
-	public MySQLDatabaseFactory() {
+	public MariaDBDatabaseFactory() {
 		try {
-			Class.forName("com.mysql.cj.jdbc.Driver").getConstructor()
+			Class.forName("org.mariadb.jdbc.Driver").getConstructor()
 					.newInstance();
 		} catch (ClassNotFoundException ex) {
 			throw new RuntimeException(
-					"MySQL driver not found on the classpath: " +
+					"MariaDB driver not found on the classpath: " +
 					ex.getMessage(), ex);
 		} catch (NoSuchMethodException ex) {
-			throw new RuntimeException("Can't instantiate MySQL driver: " +
+			throw new RuntimeException("Can't instantiate MariaDB driver: " +
 					ex.getMessage(), ex);
 		} catch (InvocationTargetException ex) {
-			throw new RuntimeException("Can't instantiate MySQL driver: " +
+			throw new RuntimeException("Can't instantiate MariaDB driver: " +
 					ex.getCause().getMessage(), ex.getCause());
 		} catch (IllegalAccessException ex) {
-			throw new RuntimeException("Can't instantiate MySQL driver: " +
+			throw new RuntimeException("Can't instantiate MariaDB driver: " +
 					ex.getMessage(), ex);
 		} catch (InstantiationException ex) {
-			throw new RuntimeException("Can't instantiate MySQL driver: " +
+			throw new RuntimeException("Can't instantiate MariaDB driver: " +
 					ex.getMessage(), ex);
 		}
 	}
@@ -85,6 +85,6 @@ public class MySQLDatabaseFactory extends DatabaseFactory {
 
 	@Override
 	protected DatabaseConnection doConnect() throws IOException {
-		return new MySQLDatabaseConnection(host, port, user, password);
+		return new MariaDBDatabaseConnection(host, port, user, password);
 	}
 }

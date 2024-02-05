@@ -8,11 +8,11 @@ import nl.rrd.utils.exception.DatabaseException;
 
 /**
  * Interface for classes that can run basic SQL queries (for example SQLite or
- * MySQL). You can run raw SQL queries with {@link #execSQL(String) execSQL()}
+ * MariaDB). You can run raw SQL queries with {@link #execSQL(String) execSQL()}
  * and {@link #rawQuery(String, String[]) rawQuery()}, but you should use the
  * more specific methods when possible. The choice of methods were inspired by
  * the Android SQLite API, and methods where the actual SQL query is different
- * in SQLite than in MySQL.
+ * in SQLite than in MariaDB.
  *
  * @author Dennis Hofs (RRD)
  */

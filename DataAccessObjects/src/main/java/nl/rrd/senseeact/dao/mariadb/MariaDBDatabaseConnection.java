@@ -1,8 +1,7 @@
-package nl.rrd.senseeact.dao.mysql;
+package nl.rrd.senseeact.dao.mariadb;
 
 import org.slf4j.Logger;
 
-import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -20,11 +19,11 @@ import nl.rrd.utils.AppComponents;
 import nl.rrd.utils.exception.DatabaseException;
 
 /**
- * Implementation of {@link DatabaseConnection DatabaseConnection} for MySQL.
+ * Implementation of {@link DatabaseConnection DatabaseConnection} for MariaDB.
  *
  * @author Dennis Hofs (RRD)
  */
-public class MySQLDatabaseConnection extends DatabaseConnection {
+public class MariaDBDatabaseConnection extends DatabaseConnection {
 	private static final int CHECK_VALID_TIMEOUT = 300; // seconds
 
 	private static final Object LOCK = new Object();
@@ -42,12 +41,12 @@ public class MySQLDatabaseConnection extends DatabaseConnection {
 	/**
 	 * Constructs a new connection.
 	 *
-	 * @param host the host name of the MySQL server
-	 * @param port the port number of the MySQL server (default: 3306)
+	 * @param host the host name of the MariaDB server
+	 * @param port the port number of the MariaDB server (default: 3306)
 	 * @param user the user name
 	 * @param password the password
 	 */
-	public MySQLDatabaseConnection(String host, int port, String user,
+	public MariaDBDatabaseConnection(String host, int port, String user,
 			String password) {
 		this.host = host;
 		this.port = port;
@@ -58,7 +57,7 @@ public class MySQLDatabaseConnection extends DatabaseConnection {
 	@Override
 	protected boolean databaseExists(String name) throws DatabaseException {
 		Connection conn = openConnection(null);
-		MySQLQueryRunner queryRunner = new MySQLQueryRunner(conn);
+		MariaDBQueryRunner queryRunner = new MariaDBQueryRunner(conn);
 		SQLCursor cursor = queryRunner.rawQuery("SHOW DATABASES", null);
 		try {
 			boolean hasMore = cursor.moveToNext();
@@ -77,7 +76,7 @@ public class MySQLDatabaseConnection extends DatabaseConnection {
 	@Override
 	protected Database createDatabase(String name) throws DatabaseException {
 		Connection conn = openConnection(null);
-		MySQLQueryRunner queryRunner = new MySQLQueryRunner(conn);
+		MariaDBQueryRunner queryRunner = new MariaDBQueryRunner(conn);
 		queryRunner.execSQL("CREATE DATABASE `" + name +
 				"` CHARACTER SET = utf8 COLLATE = utf8_general_ci");
 		return getDatabase(name);
@@ -86,11 +85,11 @@ public class MySQLDatabaseConnection extends DatabaseConnection {
 	@Override
 	protected Database doGetDatabase(String name) throws DatabaseException {
 		Connection conn = openConnection(name);
-		return new MySQLDatabase(name, conn);
+		return new MariaDBDatabase(name, conn);
 	}
 
 	/**
-	 * Connects to the MySQL server. If a database is specified, it will be
+	 * Connects to the MariaDB server. If a database is specified, it will be
 	 * selected.
 	 *
 	 * @param database the database or null
@@ -119,25 +118,21 @@ public class MySQLDatabaseConnection extends DatabaseConnection {
 				closeOpenConnection(openConn);
 			}
 		}
-		String url = "jdbc:mysql://" + host + ":" + port + "/";
+		String url = "jdbc:mariadb://" + host + ":" + port + "/";
 		if (database != null)
 			url += database;
-		try {
-			url += "?user=" + URLEncoder.encode(user, "UTF-8") +
-					"&password=" + URLEncoder.encode(password, "UTF-8") +
-					"&useSSL=false";
-		} catch (UnsupportedEncodingException ex) {
-			throw new RuntimeException(ex.getMessage(), ex);
-		}
+		url += "?user=" + URLEncoder.encode(user, "UTF-8") +
+				"&password=" + URLEncoder.encode(password, "UTF-8") +
+				"&useSSL=false";
 		try {
 			openConn = new OpenConnection(database,
 					DriverManager.getConnection(url));
 			openConn = tryAddNewConnection(openConn);
 		} catch (SQLException ex) {
-			throw new DatabaseException("MySQL connection failed: " +
+			throw new DatabaseException("MariaDB connection failed: " +
 					ex.getMessage(), ex);
 		}
-		MySQLQueryRunner queryRunner = new MySQLQueryRunner(
+		MariaDBQueryRunner queryRunner = new MariaDBQueryRunner(
 				openConn.connection);
 		queryRunner.execSQL("SET NAMES 'utf8mb4'");
 		return openConn.connection;
@@ -146,7 +141,7 @@ public class MySQLDatabaseConnection extends DatabaseConnection {
 	@Override
 	protected void doDropDatabase(String name) throws DatabaseException {
 		Connection conn = openConnection(null);
-		SQLQueryRunner queryRunner = new MySQLQueryRunner(conn);
+		SQLQueryRunner queryRunner = new MariaDBQueryRunner(conn);
 		queryRunner.execSQL("DROP DATABASE IF EXISTS `" + name + "`");
 	}
 
@@ -194,7 +189,7 @@ public class MySQLDatabaseConnection extends DatabaseConnection {
 		try {
 			conn.close();
 		} catch (SQLException ex) {
-			logger.error("Can't close MySQL connection: " + ex.getMessage(),
+			logger.error("Can't close MariaDB connection: " + ex.getMessage(),
 					ex);
 		}
 	}
@@ -208,7 +203,7 @@ public class MySQLDatabaseConnection extends DatabaseConnection {
 		}
 		connList.add(openConn);
 		Logger logger = AppComponents.getLogger(getClass().getSimpleName());
-		logger.info("Opened MySQL connection for database " +
+		logger.info("Opened MariaDB connection for database " +
 				openConn.database + "; open connections: " +
 				logOpenDatabases());
 	}
@@ -223,7 +218,7 @@ public class MySQLDatabaseConnection extends DatabaseConnection {
 				globalOpenConns.remove(openConn.database);
 		}
 		Logger logger = AppComponents.getLogger(getClass().getSimpleName());
-		logger.info("Closed MySQL connection for database " +
+		logger.info("Closed MariaDB connection for database " +
 				openConn.database + "; open connections: " +
 				logOpenDatabases());
 	}

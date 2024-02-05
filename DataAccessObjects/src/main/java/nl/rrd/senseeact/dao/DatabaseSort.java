@@ -10,7 +10,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
  * 
  * <p>Note that string comparisons are sensitive to case and diacritics. This
  * is normal in MongoDB and SQLite, but different than the default in
- * MySQL.</p>
+ * MariaDB.</p>
  * 
  * @author Dennis Hofs (RRD)
  */
@@ -28,7 +28,7 @@ public class DatabaseSort {
 	/**
 	 * Constructs a new instance. Note that string comparisons are sensitive to
 	 * case and diacritics. This is normal in MongoDB and SQLite, but different
-	 * than the default in MySQL.
+	 * than the default in MariaDB.
 	 * 
 	 * @param column the column name
 	 * @param ascending true if the column should be sorted in ascending order,

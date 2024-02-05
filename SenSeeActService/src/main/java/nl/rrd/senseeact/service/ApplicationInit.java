@@ -6,7 +6,7 @@ import nl.rrd.senseeact.client.project.ProjectRepository;
 import nl.rrd.senseeact.dao.DatabaseConnection;
 import nl.rrd.senseeact.dao.DatabaseFactory;
 import nl.rrd.senseeact.dao.DatabaseTableDef;
-import nl.rrd.senseeact.dao.mysql.MySQLDatabaseFactory;
+import nl.rrd.senseeact.dao.mariadb.MariaDBDatabaseFactory;
 import nl.rrd.senseeact.service.access.ProjectUserAccessControlRepository;
 import nl.rrd.senseeact.service.export.DataExporterFactory;
 import nl.rrd.senseeact.service.mail.EmailTemplateRepository;
@@ -140,10 +140,10 @@ public abstract class ApplicationInit {
 	protected abstract DatabaseFactory createDatabaseFactory()
 			throws ParseException;
 
-	protected DatabaseFactory createMySQLDatabaseFactory()
+	protected DatabaseFactory createMariaDBDatabaseFactory()
 			throws ParseException {
 		Configuration config = AppComponents.get(Configuration.class);
-		MySQLDatabaseFactory dbFactory = new MySQLDatabaseFactory();
+		MariaDBDatabaseFactory dbFactory = new MariaDBDatabaseFactory();
 		String host = config.get(Configuration.MYSQL_HOST);
 		if (host != null)
 			dbFactory.setHost(host);

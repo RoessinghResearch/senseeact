@@ -1,4 +1,4 @@
-package nl.rrd.senseeact.dao.mysql;
+package nl.rrd.senseeact.dao.mariadb;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,28 +10,30 @@ import nl.rrd.senseeact.dao.sql.SQLCursor;
 import nl.rrd.senseeact.dao.sql.SQLQueryRunner;
 
 /**
- * This class wraps around a {@link MySQLDatabase MySQLDatabase} and provides
- * functions to run raw queries instead of using the {@link Database Database}
- * class. This can be used for any MySQL database, including those that don't
- * contain the special metadata tables for the {@link Database Database} class.
+ * This class wraps around a {@link MariaDBDatabase MariaDBDatabase} and
+ * provides functions to run raw queries instead of using the {@link Database
+ * Database} class. This can be used for any MariaDB database, including those
+ * that don't contain the special metadata tables for the {@link Database
+ * Database} class.
  * 
- * <p>When you get a {@link MySQLDatabaseConnection MySQLDatabaseConnection},
- * call {@link DatabaseConnection#getDatabase(String) getDatabase()} on it, cast
- * the result to a {@link MySQLDatabase MySQLDatabase} and pass it to the
- * constructor of this class.</p>
+ * <p>When you get a {@link MariaDBDatabaseConnection
+ * MariaDBDatabaseConnection}, call {@link
+ * DatabaseConnection#getDatabase(String) getDatabase()} on it, cast the result
+ * to a {@link MariaDBDatabase MariaDBDatabase} and pass it to the constructor
+ * of this class.</p>
  * 
  * @author Dennis Hofs (RRD)
  */
-public class MySQLRaw {
-	private MySQLDatabase database;
+public class MariaDBRaw {
+	private MariaDBDatabase database;
 	private SQLQueryRunner queryRunner;
 	
 	/**
 	 * Constructs a new instance.
 	 * 
-	 * @param database the MySQL database
+	 * @param database the MariaDB database
 	 */
-	public MySQLRaw(MySQLDatabase database) {
+	public MariaDBRaw(MariaDBDatabase database) {
 		this.database = database;
 		this.queryRunner = database.getQueryRunner();
 	}
@@ -41,7 +43,7 @@ public class MySQLRaw {
 	 * 
 	 * @return the database
 	 */
-	public MySQLDatabase getDatabase() {
+	public MariaDBDatabase getDatabase() {
 		return database;
 	}
 	

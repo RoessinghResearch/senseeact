@@ -19,6 +19,10 @@ dependencies {
 	api project(':DataAccessObjects')
 }
 
+tasks.withType(JavaCompile) {
+	options.deprecation = true
+}
+
 javadoc {
 	doFirst() {
 		source = sourceSets.main.allJava +

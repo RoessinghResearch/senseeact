@@ -17,9 +17,13 @@ java {
 
 dependencies {
 	api project (':RRDUtils')
-	api 'mysql:mysql-connector-java:8.0.33'
+	api 'org.mariadb.jdbc:mariadb-java-client:3.3.2'
 	testImplementation 'junit:junit:4.13.2'
-	testImplementation 'org.slf4j:slf4j-simple:2.0.10'
+	testImplementation 'org.slf4j:slf4j-simple:2.0.11'
+}
+
+tasks.withType(JavaCompile) {
+	options.deprecation = true
 }
 
 test {

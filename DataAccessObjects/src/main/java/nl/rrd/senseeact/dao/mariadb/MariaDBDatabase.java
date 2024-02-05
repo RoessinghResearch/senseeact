@@ -1,4 +1,4 @@
-package nl.rrd.senseeact.dao.mysql;
+package nl.rrd.senseeact.dao.mariadb;
 
 import nl.rrd.utils.exception.DatabaseException;
 import nl.rrd.senseeact.dao.DatabaseIndex;
@@ -11,20 +11,20 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Implementation of {@link SQLDatabase SQLDatabase} for MySQL.
+ * Implementation of {@link SQLDatabase SQLDatabase} for MariaDB.
  *
  * @author Dennis Hofs (RRD)
  */
-public class MySQLDatabase extends SQLDatabase {
+public class MariaDBDatabase extends SQLDatabase {
 
 	/**
 	 * Constructs a new instance.
 	 *
 	 * @param name the database name
-	 * @param conn the MySQL connection
+	 * @param conn the MariaDB connection
 	 */
-	public MySQLDatabase(String name, Connection conn) {
-		super(name, new MySQLQueryRunner(conn));
+	public MariaDBDatabase(String name, Connection conn) {
+		super(name, new MariaDBQueryRunner(conn));
 	}
 
 	@Override
@@ -34,34 +34,20 @@ public class MySQLDatabase extends SQLDatabase {
 
 	@Override
 	protected String getColumnSqlType(DatabaseType type) {
-		switch (type) {
-			case BYTE:
-				return "TINYINT";
-			case SHORT:
-				return "SMALLINT";
-			case INT:
-				return "INTEGER";
-			case LONG:
-				return "BIGINT";
-			case FLOAT:
-				return "FLOAT";
-			case DOUBLE:
-				return "DOUBLE";
-			case STRING:
-				return "VARCHAR(255)";
-			case TEXT:
-				return "LONGTEXT";
-			case DATE:
-				return "DATE";
-			case TIME:
-				return "TIME";
-			case DATETIME:
-				return "DATETIME";
-			case ISOTIME:
-				return "VARCHAR(255)";
-			default:
-				return null;
-		}
+		return switch (type) {
+			case BYTE -> "TINYINT";
+			case SHORT -> "SMALLINT";
+			case INT -> "INTEGER";
+			case LONG -> "BIGINT";
+			case FLOAT -> "FLOAT";
+			case DOUBLE -> "DOUBLE";
+			case STRING -> "VARCHAR(255)";
+			case TEXT -> "LONGTEXT";
+			case DATE -> "DATE";
+			case TIME -> "TIME";
+			case DATETIME -> "DATETIME";
+			case ISOTIME -> "VARCHAR(255)";
+		};
 	}
 
 	@Override

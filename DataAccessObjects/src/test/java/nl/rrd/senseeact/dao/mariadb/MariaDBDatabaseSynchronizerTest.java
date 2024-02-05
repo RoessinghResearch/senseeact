@@ -1,4 +1,4 @@
-package nl.rrd.senseeact.dao.mysql;
+package nl.rrd.senseeact.dao.mariadb;
 
 import org.junit.After;
 import org.junit.Before;
@@ -7,7 +7,7 @@ import org.junit.Test;
 import nl.rrd.senseeact.dao.DatabaseConnection;
 import nl.rrd.senseeact.dao.sync.DatabaseSynchronizerTest;
 
-public class MySQLDatabaseSynchronizerTest {
+public class MariaDBDatabaseSynchronizerTest {
 	private DatabaseConnection serverDbConn = null;
 	private DatabaseConnection client1DbConn = null;
 	private DatabaseConnection client2DbConn = null;
@@ -25,7 +25,7 @@ public class MySQLDatabaseSynchronizerTest {
 		String user = System.getProperty("testMysqlUser");
 		String password = System.getProperty("testMysqlPassword");
 		String dbName = System.getProperty("testMysqlDatabase");
-		MySQLDatabaseFactory dbFactory = new MySQLDatabaseFactory();
+		MariaDBDatabaseFactory dbFactory = new MariaDBDatabaseFactory();
 		dbFactory.setSyncEnabled(true);
 		dbFactory.setHost(host);
 		dbFactory.setPort(port);

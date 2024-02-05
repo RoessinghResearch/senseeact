@@ -29,7 +29,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * 
  * <p>Note that string comparisons are sensitive to case and diacritics. This
  * is normal in MongoDB and SQLite, but different than the default in
- * MySQL.</p>
+ * MariaDB.</p>
  * 
  * <p><b>Logical operators</b></p>
  * 
@@ -91,7 +91,7 @@ public abstract class DatabaseCriteria {
 		/**
 		 * Note that string comparisons are sensitive to case and diacritics.
 		 * This is normal in MongoDB and SQLite, but different than the default
-		 * in MySQL.
+		 * in MariaDB.
 		 * 
 		 * @param column the column name
 		 * @param value the value
@@ -156,7 +156,7 @@ public abstract class DatabaseCriteria {
 		/**
 		 * Note that string comparisons are sensitive to case and diacritics.
 		 * This is normal in MongoDB and SQLite, but different than the default
-		 * in MySQL.
+		 * in MariaDB.
 		 * 
 		 * @param column the column name
 		 * @param value the value
@@ -221,7 +221,7 @@ public abstract class DatabaseCriteria {
 		/**
 		 * Note that string comparisons are sensitive to case and diacritics.
 		 * This is normal in MongoDB and SQLite, but different than the default
-		 * in MySQL.
+		 * in MariaDB.
 		 * 
 		 * @param column the column name
 		 * @param value the value
@@ -286,7 +286,7 @@ public abstract class DatabaseCriteria {
 		/**
 		 * Note that string comparisons are sensitive to case and diacritics.
 		 * This is normal in MongoDB and SQLite, but different than the default
-		 * in MySQL.
+		 * in MariaDB.
 		 * 
 		 * @param column the column name
 		 * @param value the value
@@ -351,7 +351,7 @@ public abstract class DatabaseCriteria {
 		/**
 		 * Note that string comparisons are sensitive to case and diacritics.
 		 * This is normal in MongoDB and SQLite, but different than the default
-		 * in MySQL.
+		 * in MariaDB.
 		 * 
 		 * @param column the column name
 		 * @param value the value
@@ -416,7 +416,7 @@ public abstract class DatabaseCriteria {
 		/**
 		 * Note that string comparisons are sensitive to case and diacritics.
 		 * This is normal in MongoDB and SQLite, but different than the default
-		 * in MySQL.
+		 * in MariaDB.
 		 * 
 		 * @param column the column name
 		 * @param value the value
@@ -574,9 +574,9 @@ public abstract class DatabaseCriteria {
 			if (getClass() != obj.getClass())
 				return false;
 			Or other = (Or)obj;
-			Set<DatabaseCriteria> thisOps = new HashSet<DatabaseCriteria>(
+			Set<DatabaseCriteria> thisOps = new HashSet<>(
 					Arrays.asList(operands));
-			Set<DatabaseCriteria> otherOps = new HashSet<DatabaseCriteria>(
+			Set<DatabaseCriteria> otherOps = new HashSet<>(
 					Arrays.asList(other.operands));
 			if (!thisOps.equals(otherOps))
 				return false;

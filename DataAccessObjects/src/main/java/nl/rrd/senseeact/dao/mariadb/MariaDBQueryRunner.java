@@ -1,4 +1,4 @@
-package nl.rrd.senseeact.dao.mysql;
+package nl.rrd.senseeact.dao.mariadb;
 
 import nl.rrd.utils.AppComponents;
 import nl.rrd.utils.exception.DatabaseException;
@@ -17,7 +17,7 @@ import java.util.*;
  *
  * @author Dennis Hofs (RRD)
  */
-public class MySQLQueryRunner implements SQLQueryRunner {
+public class MariaDBQueryRunner implements SQLQueryRunner {
 	// log SQL queries with durations
 	private static boolean PROFILING_ENABLED = false;
 	// log only SQL queries that take longer than PROFILING_THRESHOLD
@@ -31,7 +31,7 @@ public class MySQLQueryRunner implements SQLQueryRunner {
 	 *
 	 * @param conn the MySQL connection
 	 */
-	public MySQLQueryRunner(Connection conn) {
+	public MariaDBQueryRunner(Connection conn) {
 		this.conn = conn;
 	}
 
@@ -102,7 +102,7 @@ public class MySQLQueryRunner implements SQLQueryRunner {
 					log += ": " + Arrays.asList(args);
 				logger.info(log);
 			}
-			return new MySQLCursor(stmt, resultSet);
+			return new MariaDBCursor(stmt, resultSet);
 		} catch (SQLException ex) {
 			try {
 				if (stmt != null)

@@ -182,11 +182,10 @@ public class User extends AbstractDatabaseObject {
 
 	@Override
 	public void copyFrom(DatabaseObject other) {
-		if (!(other instanceof User)) {
+		if (!(other instanceof User otherUser)) {
 			super.copyFrom(other);
 			return;
 		}
-		User otherUser = (User)other;
 		id = otherUser.id;
 		userid = otherUser.userid;
 		email = otherUser.email;
@@ -1015,10 +1014,11 @@ public class User extends AbstractDatabaseObject {
 			return Locale.getDefault();
 		String language = m.group(1);
 		String country = m.group(3);
-		if (country == null)
-			return new Locale(language);
-		else
-			return new Locale(language, country.toUpperCase());
+		Locale.Builder builder = new Locale.Builder();
+		builder.setLanguage(language);
+		if (country != null)
+			builder.setRegion(country.toUpperCase());
+		return builder.build();
 	}
 
 	/**
