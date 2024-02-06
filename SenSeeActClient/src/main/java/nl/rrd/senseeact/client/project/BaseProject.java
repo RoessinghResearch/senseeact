@@ -91,7 +91,7 @@ public abstract class BaseProject {
 	/**
 	 * Returns the sensors that are used in this project.
 	 *
-	 * @return the sensors (can be empty or null)
+	 * @return the sensors (can be empty)
 	 */
 	public abstract List<BaseSensor> getSensors();
 	
