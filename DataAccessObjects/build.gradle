@@ -17,9 +17,9 @@ java {
 
 dependencies {
 	api project (':RRDUtils')
-	api 'org.mariadb.jdbc:mariadb-java-client:3.3.2'
+	api 'org.mariadb.jdbc:mariadb-java-client:3.3.3'
 	testImplementation 'junit:junit:4.13.2'
-	testImplementation 'org.slf4j:slf4j-simple:2.0.11'
+	testImplementation 'org.slf4j:slf4j-simple:2.0.12'
 }
 
 tasks.withType(JavaCompile) {

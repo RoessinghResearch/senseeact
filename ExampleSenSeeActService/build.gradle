@@ -23,9 +23,9 @@ dependencies {
 	implementation project(':SenSeeActService')
 	implementation project(':ExampleSenSeeActClient')
 	testImplementation 'junit:junit:4.13.2'
-	runtimeOnly 'ch.qos.logback:logback-classic:1.4.14'
-	testRuntimeOnly 'org.slf4j:slf4j-simple:2.0.10'
-	providedRuntime 'org.springframework.boot:spring-boot-starter-tomcat:3.2.1'
+	runtimeOnly 'ch.qos.logback:logback-classic:1.5.2'
+	testRuntimeOnly 'org.slf4j:slf4j-simple:2.0.12'
+	providedRuntime 'org.springframework.boot:spring-boot-starter-tomcat:3.2.3'
 }
 
 configurations.testRuntimeOnly.exclude group: 'ch.qos.logback', module: 'logback-classic'
