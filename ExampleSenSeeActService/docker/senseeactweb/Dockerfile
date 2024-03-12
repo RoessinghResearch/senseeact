@@ -32,10 +32,9 @@ ARG WEB_PATH
 WORKDIR /usr/local/apache2
 COPY senseeact/ExampleSenSeeActService/docker/senseeactweb/*.conf conf/extra/
 COPY --from=build /app/ htdocs${WEB_PATH}/
-RUN escapedWebPath=`echo $WEB_PATH | sed -e "s/\//\\\\\\\\\//g"` && \
-	sed -i \
-	-e "s/var basePath = '.*';/var basePath = '${escapedWebPath}';/" \
-	-e "s/var servicePath = '.*';/var servicePath = '\/servlets\/senseeact\/v6.0.8';/" \
+RUN sed -i \
+	-e "s|var basePath = '.*';|var basePath = '${WEB_PATH}';|" \
+	-e "s|var servicePath = '.*';|var servicePath = '/servlets/senseeact/v6.0.8';|" \
 	htdocs${WEB_PATH}/index.html && \
 	sed -i \
 	-e "s/\$WEB_PATH/$escapedWebPath/g" \
