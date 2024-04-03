@@ -19,7 +19,7 @@ public class TokenExpirationDeserializer extends JsonDeserializer<Integer> {
 			return Integer.parseInt(s);
 		} catch (NumberFormatException ex) {
 			throw new JsonParseException(p, "Invalid int value: " + s,
-					p.getCurrentLocation(), ex);
+					p.currentLocation(), ex);
 		}
 	}
 }
