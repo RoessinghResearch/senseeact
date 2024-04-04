@@ -1,4 +1,5 @@
 RewriteEngine on
+RewriteRule "^.well-known/.*$" - [L]
 RewriteRule "^css/.*$" - [L]
 RewriteRule "^i18n/.*$" - [L]
 RewriteRule "^images/.*$" - [L]
