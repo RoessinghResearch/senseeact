@@ -9,16 +9,17 @@ import nl.rrd.senseeact.service.model.User;
 import nl.rrd.senseeact.service.model.UserCache;
 
 /**
- * This validator is used for tokens that grant complete access to data
- * within a project (the "tokenProject"). It checks the following
+ * This validator is used for tokens that grant complete access within a
+ * project (the "tokenProject") or any project. It checks the following
  * constraints:
  *
  * <p><ul>
  * <li>A user with the specified user ID or email address exists</li>
  * <li>The user is not an admin.</li>
- * <li>If the endpoint is related to a project, then the requested project
- * must equal the token project.</li>
- * <li>The user must be a member of the specified project.</li>
+ * <li>If the endpoint is related to a project and the token project is set,
+ * then the requested project must equal the token project.</li>
+ * <li>If a token project is set, the user must be a member of the specified
+ * project.</li>
  * </ul></p>
  *
  * @author Dennis Hofs (RRD)
@@ -27,6 +28,14 @@ public class SSOProjectUserValidator implements SSOUserValidator {
 	private String tokenProject;
 	private String requestedProject;
 
+	/**
+	 * Constructs a new validator.
+	 *
+	 * @param tokenProject the token project or null (if the token is valid for
+	 * any project)
+	 * @param requestedProject the requested project or null (if the request is
+	 * not related to a project)
+	 */
 	public SSOProjectUserValidator(String tokenProject,
 			String requestedProject) {
 		this.tokenProject = tokenProject;
@@ -37,7 +46,7 @@ public class SSOProjectUserValidator implements SSOUserValidator {
 	public User findAuthenticatedUser(ProtocolVersion version,
 			HttpServletResponse response, Database authDb, String subject)
 			throws HttpException, Exception {
-		if (requestedProject != null &&
+		if (tokenProject != null && requestedProject != null &&
 				!requestedProject.equals(tokenProject)) {
 			return null;
 		}
@@ -53,10 +62,14 @@ public class SSOProjectUserValidator implements SSOUserValidator {
 			return null;
 		if (user.getRole() == Role.ADMIN)
 			return null;
-		if (user.getRole() == Role.PROFESSIONAL && requestedProject == null)
+		if (user.getRole() == Role.PROFESSIONAL && (tokenProject == null ||
+				requestedProject == null)) {
 			return null;
-		if (!user.findProjects(authDb).contains(tokenProject))
+		}
+		if (tokenProject != null && !user.findProjects(authDb).contains(
+				tokenProject)) {
 			return null;
+		}
 		return user;
 	}
 }

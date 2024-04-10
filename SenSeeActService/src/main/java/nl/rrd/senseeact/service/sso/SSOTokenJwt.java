@@ -32,23 +32,58 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * This class can validate SSO JWT tokens in a specific request header. Tokens
+ * will be validated using a public key or set of public keys. If you add
+ * multiple public keys, then the token is valid if it can be validated with
+ * one of the public keys.
+ *
+ * @author Dennis Hofs (RRD)
+ */
 public class SSOTokenJwt extends SSOToken {
 	private static final int MAX_TOKEN_VALID_MARGIN = 10; // minutes
 
 	private String tokenHeader;
 	private List<String> publicKeys = new ArrayList<>();
 
+	/**
+	 * Constructs a new instance. If SSO tokens for this instance should only be
+	 * valid for a specific project, then you should specify the project code.
+	 * If you set the project code to null, the tokens will be valid for any
+	 * project.
+	 *
+	 * <p>After calling this constructor, you should call {@link
+	 * #addPublicKey(String) addPublicKey()} to add one or more public keys.</p>
+	 *
+	 * @param project the project code or null
+	 * @param tokenHeader the token header name
+	 */
 	public SSOTokenJwt(String project, String tokenHeader) {
 		super(project);
 		this.tokenHeader = tokenHeader;
 	}
 
+	/**
+	 * Constructs a new instance. If SSO tokens for this instance should only be
+	 * valid for a specific project, then you should specify the project code.
+	 * If you set the project code to null, the tokens will be valid for any
+	 * project.
+	 *
+	 * @param project the project code or null
+	 * @param tokenHeader the token header name
+	 * @param publicKey the public key
+	 */
 	public SSOTokenJwt(String project, String tokenHeader, String publicKey) {
 		super(project);
 		this.tokenHeader = tokenHeader;
 		this.publicKeys.add(publicKey);
 	}
 
+	/**
+	 * Adds a public key.
+	 *
+	 * @param publicKey the public key
+	 */
 	public void addPublicKey(String publicKey) {
 		this.publicKeys.add(publicKey);
 	}
@@ -75,21 +110,6 @@ public class SSOTokenJwt extends SSOToken {
 		return claims.getSubject();
 	}
 
-	/**
-	 * Validates a JWT token from a trusted third party as specified in request
-	 * header X-*-Auth-Token. If it's empty or invalid, it will throw an
-	 * UnauthorizedException. Otherwise it will return the user object for the
-	 * authenticated user.
-	 *
-	 * @param version the protocol version
-	 * @param authDb the authentication database
-	 * @param request the request
-	 * @param project the code of the project that the user wants to access,
-	 * or null
-	 * @return the authenticated user
-	 * @throws HttpException if the token is empty or invalid
-	 * @throws Exception if any unexpected error occurs
-	 */
 	@Override
 	public ValidateTokenResult validateToken(ProtocolVersion version,
 			HttpServletRequest request, HttpServletResponse response,
@@ -135,6 +155,15 @@ public class SSOTokenJwt extends SSOToken {
 		return new ValidateTokenResult(user, null);
 	}
 
+	/**
+	 * Tries to parse the token string and validate it with one of the public
+	 * keys.
+	 *
+	 * @param token the token string
+	 * @return the token details
+	 * @throws UnauthorizedException if the token is invalid or there are no
+	 * public keys defined
+	 */
 	private JWTClaimsSet parseToken(String token) throws UnauthorizedException {
 		if (publicKeys.isEmpty())
 			throw new RuntimeException("No public keys found");
@@ -150,6 +179,15 @@ public class SSOTokenJwt extends SSOToken {
 		throw exception;
 	}
 
+	/**
+	 * Tries to parse the token string and validate it with the specified public
+	 * key.
+	 *
+	 * @param token the token string
+	 * @param publicKey the public key
+	 * @return the token details
+	 * @throws UnauthorizedException if the token is invalid
+	 */
 	private JWTClaimsSet parseTokenForKey(String token, String publicKey)
 			throws UnauthorizedException {
 		Logger logger = AppComponents.getLogger(
