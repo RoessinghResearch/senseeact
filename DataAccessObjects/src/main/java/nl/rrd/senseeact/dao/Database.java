@@ -1255,24 +1255,21 @@ public abstract class Database {
 	private String findSelectUser(DatabaseCriteria criteria) {
 		if (criteria == null)
 			return null;
-		if (criteria instanceof DatabaseCriteria.And) {
-			DatabaseCriteria.And and = (DatabaseCriteria.And)criteria;
+		if (criteria instanceof DatabaseCriteria.And and) {
 			for (DatabaseCriteria op : and.getOperands()) {
 				String user = findSelectUser(op);
 				if (user != null)
 					return user;
 			}
 			return null;
-		} else if (criteria instanceof DatabaseCriteria.Or) {
-			DatabaseCriteria.Or or = (DatabaseCriteria.Or)criteria;
+		} else if (criteria instanceof DatabaseCriteria.Or or) {
 			for (DatabaseCriteria op : or.getOperands()) {
 				String user = findSelectUser(op);
 				if (user != null)
 					return user;
 			}
 			return null;
-		} else if (criteria instanceof DatabaseCriteria.Equal) {
-			DatabaseCriteria.Equal equal = (DatabaseCriteria.Equal)criteria;
+		} else if (criteria instanceof DatabaseCriteria.Equal equal) {
 			if (!equal.getColumn().equals("user") || equal.getValue() == null)
 				return null;
 			String user = equal.getValue().toString();
@@ -1297,8 +1294,7 @@ public abstract class Database {
 			String user) {
 		if (criteria == null)
 			return null;
-		if (criteria instanceof DatabaseCriteria.And) {
-			DatabaseCriteria.And and = (DatabaseCriteria.And)criteria;
+		if (criteria instanceof DatabaseCriteria.And and) {
 			List<DatabaseCriteria> newOps = new ArrayList<>();
 			for (DatabaseCriteria op : and.getOperands()) {
 				DatabaseCriteria newOp = removeUserCriteria(op, user);
@@ -1311,8 +1307,7 @@ public abstract class Database {
 				return newOps.get(0);
 			return new DatabaseCriteria.And(newOps.toArray(
 					new DatabaseCriteria[0]));
-		} else if (criteria instanceof DatabaseCriteria.Or) {
-			DatabaseCriteria.Or or = (DatabaseCriteria.Or)criteria;
+		} else if (criteria instanceof DatabaseCriteria.Or or) {
 			List<DatabaseCriteria> newOps = new ArrayList<>();
 			for (DatabaseCriteria op : or.getOperands()) {
 				DatabaseCriteria newOp = removeUserCriteria(op, user);
@@ -1326,8 +1321,7 @@ public abstract class Database {
 				return newOps.get(0);
 			return new DatabaseCriteria.Or(newOps.toArray(
 					new DatabaseCriteria[0]));
-		} else if (criteria instanceof DatabaseCriteria.Equal) {
-			DatabaseCriteria.Equal equal = (DatabaseCriteria.Equal)criteria;
+		} else if (criteria instanceof DatabaseCriteria.Equal equal) {
 			if (equal.getColumn().equals("user") &&
 					user.equals(equal.getValue())) {
 				return null;
@@ -1712,8 +1706,10 @@ public abstract class Database {
 	 */
 	public void purgeUser(String user) throws DatabaseException {
 		List<String> tables = selectTables();
+		DatabaseCache cache = DatabaseCache.getInstance();
 		for (String table : tables) {
-			if (!table.startsWith("_")) {
+			List<String> fields = cache.getTableFields(this, table);
+			if (!table.startsWith("_") && fields.contains("user")) {
 				purgeUserTable(table, user, true);
 			}
 		}
@@ -2164,10 +2160,9 @@ public abstract class Database {
 			return;
 		}
 		Object sampleLocalTimeObj = record.get("localTime");
-		if (!(sampleLocalTimeObj instanceof String)) {
+		if (!(sampleLocalTimeObj instanceof String sampleLocalTimeStr)) {
 			return;
 		}
-		String sampleLocalTimeStr = (String)sampleLocalTimeObj;
 		DateTimeFormatter parser = DateTimeFormatter.ofPattern(
 				"yyyy-MM-dd'T'HH:mm:ss.SSS");
 		LocalDateTime sampleLocalTime;

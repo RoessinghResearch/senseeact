@@ -17,6 +17,14 @@ public class MultipleChoiceAnswer {
 	private String text;
 	private NextQuestion nextQuestion = null;
 
+	public MultipleChoiceAnswer() {
+	}
+
+	public MultipleChoiceAnswer(String value, String text) {
+		this.value = value;
+		this.text = text;
+	}
+
 	public String getValue() {
 		return value;
 	}

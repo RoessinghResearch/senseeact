@@ -45,6 +45,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.*;
 
@@ -629,27 +630,37 @@ public class ProjectControllerExecution {
 					"Table \"%s\" not found in project \"%s\"",
 					table, project.getCode()));
 		}
+		DatabaseObject record;
 		DatabaseCache cache = DatabaseCache.getInstance();
 		List<String> fields = cache.getTableFields(db, table);
-		if (!fields.contains("user")) {
-			throw new ForbiddenException(String.format(
-					"Table \"%s\" is not a user table", table));
+		if (fields.contains("user")) {
+			ProjectUserAccess userAccess = User.findAccessibleProjectUser(
+					version, subject, project.getCode(), table, AccessMode.R,
+					authDb, user);
+			User subjectUser = userAccess.getUser();
+			DatabaseCriteria criteria = new DatabaseCriteria.And(
+					new DatabaseCriteria.Equal("user", subjectUser.getUserid()),
+					new DatabaseCriteria.Equal("id", recordId));
+			record = db.selectOne(tableDef, criteria, null);
+			if (record == null) {
+				throw new NotFoundException(String.format(
+						"Record with ID \"%s\" not found for project %s, table %s, user %s",
+						recordId, project.getCode(), table,
+						subjectUser.getUserid(version)));
+			}
+			userAccess.checkMatchesRange(record);
+		} else {
+			checkPermissionWriteResourceTable(authDb, user, project.getCode(),
+					table);
+			DatabaseCriteria criteria = new DatabaseCriteria.Equal(
+					"id", recordId);
+			record = db.selectOne(tableDef, criteria, null);
+			if (record == null) {
+				throw new NotFoundException(String.format(
+						"Record with ID \"%s\" not found for project %s, table %s",
+						recordId, project.getCode(), table));
+			}
 		}
-		ProjectUserAccess userAccess = User.findAccessibleProjectUser(
-				version, subject, project.getCode(), table, AccessMode.R,
-				authDb, user);
-		User subjectUser = userAccess.getUser();
-		DatabaseCriteria criteria = new DatabaseCriteria.And(
-				new DatabaseCriteria.Equal("user", subjectUser.getUserid()),
-				new DatabaseCriteria.Equal("id", recordId));
-		DatabaseObject record = db.selectOne(tableDef, criteria, null);
-		if (record == null) {
-			throw new NotFoundException(String.format(
-					"Record with ID \"%s\" not found for project %s, table %s, user %s",
-					recordId, project.getCode(), table,
-					subjectUser.getUserid(version)));
-		}
-		userAccess.checkMatchesRange(record);
 		DatabaseObjectMapper mapper = new DatabaseObjectMapper();
 		return mapper.objectToMap(record, true);
 	}
@@ -803,6 +814,9 @@ public class ProjectControllerExecution {
 			subjectUser = userAccess.getUser();
 			andCriteria.add(0, new DatabaseCriteria.Equal("user",
 					subjectUser.getUserid()));
+		} else {
+			checkPermissionWriteResourceTable(authDb, user, project.getCode(),
+					table);
 		}
 		String content = null;
 		if (request != null)
@@ -921,16 +935,19 @@ public class ProjectControllerExecution {
 					"Table \"%s\" not found in project \"%s\"",
 					table, project.getCode()));
 		}
+		User subjectUser = null;
 		DatabaseCache cache = DatabaseCache.getInstance();
 		List<String> fields = cache.getTableFields(db, table);
-		if (!fields.contains("user")) {
-			throw new ForbiddenException(String.format(
-					"Table \"%s\" is not a user table", table));
+		if (fields.contains("user")) {
+			ProjectUserAccess userAccess = User.findAccessibleProjectUser(
+					version, subject, project.getCode(), table, AccessMode.W,
+					authDb, user);
+			userAccess.checkMatchesRange(null, null);
+			subjectUser = userAccess.getUser();
+		} else {
+			checkPermissionWriteResourceTable(authDb, user, project.getCode(),
+					table);
 		}
-		ProjectUserAccess userAccess = User.findAccessibleProjectUser(version,
-				subject, project.getCode(), table, AccessMode.W, authDb, user);
-		userAccess.checkMatchesRange(null, null);
-		User subjectUser = userAccess.getUser();
 		List<String> idList = new ArrayList<>();
 		InputStream input = request.getInputStream();
 		JsonObjectStreamReader jsonReader = null;
@@ -939,7 +956,7 @@ public class ProjectControllerExecution {
 			jsonReader.readToken(JsonAtomicToken.Type.START_LIST);
 			while (jsonReader.getToken().getType() !=
 					JsonAtomicToken.Type.END_LIST) {
-				insertRecordBatch(version, jsonReader, db, tableDef,
+				insertRecordBatch(version, user, jsonReader, db, tableDef,
 						subjectUser, idList);
 			}
 			return idList;
@@ -953,6 +970,18 @@ public class ProjectControllerExecution {
 			else
 				input.close();
 		}
+	}
+
+	private static void checkPermissionWriteResourceTable(Database authDb,
+			User user, String project, String table) throws HttpException,
+			DatabaseException {
+		PermissionManager permMgr = PermissionManager.getInstance();
+		Map<String,Object> permParams = new LinkedHashMap<>();
+		permParams.put("project", project);
+		permParams.put("table", table);
+		permMgr.checkPermission(authDb, user.getUserid(),
+				PermissionRecord.PERMISSION_WRITE_RESOURCE_TABLE,
+				permParams);
 	}
 
 	/**
@@ -980,34 +1009,47 @@ public class ProjectControllerExecution {
 					"Table \"%s\" not found in project \"%s\"",
 					table, project.getCode()));
 		}
+		ProjectUserAccess userAccess = null;
+		User subjectUser = null;
+		DatabaseObject record;
 		DatabaseCache cache = DatabaseCache.getInstance();
 		List<String> fields = cache.getTableFields(db, table);
-		if (!fields.contains("user")) {
-			throw new ForbiddenException(String.format(
-					"Table \"%s\" is not a user table", table));
+		if (fields.contains("user")) {
+			userAccess = User.findAccessibleProjectUser(version, subject,
+					project.getCode(), table, AccessMode.W, authDb, user);
+			subjectUser = userAccess.getUser();
+			DatabaseCriteria criteria = new DatabaseCriteria.And(
+					new DatabaseCriteria.Equal("user", subjectUser.getUserid()),
+					new DatabaseCriteria.Equal("id", recordId));
+			record = db.selectOne(tableDef, criteria, null);
+			if (record == null) {
+				throw new NotFoundException(String.format(
+						"Record with ID \"%s\" not found for project %s, table %s, user %s",
+						recordId, project.getCode(), table,
+						subjectUser.getUserid(version)));
+			}
+			userAccess.checkMatchesRange(record);
+		} else {
+			checkPermissionWriteResourceTable(authDb, user, project.getCode(),
+					table);
+			DatabaseCriteria criteria = new DatabaseCriteria.Equal(
+					"id", recordId);
+			record = db.selectOne(tableDef, criteria, null);
+			if (record == null) {
+				throw new NotFoundException(String.format(
+						"Record with ID \"%s\" not found for project %s, table %s",
+						recordId, project.getCode(), table));
+			}
 		}
-		ProjectUserAccess userAccess = User.findAccessibleProjectUser(version,
-				subject, project.getCode(), table, AccessMode.W, authDb, user);
-		User subjectUser = userAccess.getUser();
-		DatabaseCriteria criteria = new DatabaseCriteria.And(
-				new DatabaseCriteria.Equal("user", subjectUser.getUserid()),
-				new DatabaseCriteria.Equal("id", recordId));
-		DatabaseObject record = db.selectOne(tableDef, criteria, null);
-		if (record == null) {
-			throw new NotFoundException(String.format(
-					"Record with ID \"%s\" not found for project %s, table %s, user %s",
-					recordId, project.getCode(), table,
-					subjectUser.getUserid(version)));
-		}
-		userAccess.checkMatchesRange(record);
 		Map<?,?> recordMap;
 		try (InputStream input = request.getInputStream()) {
 			ObjectMapper mapper = new ObjectMapper();
 			recordMap = mapper.readValue(input, Map.class);
 		}
-		DatabaseObject updatedRecord = createUpdateRecord(version, recordMap,
-				tableDef, recordId, subjectUser);
-		userAccess.checkMatchesRange(updatedRecord);
+		DatabaseObject updatedRecord = createUpdateRecord(version, user,
+				recordMap, tableDef, recordId, subjectUser);
+		if (userAccess != null)
+			userAccess.checkMatchesRange(updatedRecord);
 		db.update(table, updatedRecord);
 		return null;
 	}
@@ -1040,12 +1082,6 @@ public class ProjectControllerExecution {
 					"Table \"%s\" not found in project \"%s\"",
 					table, project.getCode()));
 		}
-		DatabaseCache cache = DatabaseCache.getInstance();
-		List<String> fields = cache.getTableFields(db, table);
-		if (!fields.contains("user")) {
-			throw new ForbiddenException(String.format(
-					"Table \"%s\" is not a user table", table));
-		}
 		TableSelectCriteria tableCriteria = getTableSelectCriteria(version,
 				authDb, user, project, table, subject, start, end, request,
 				Collections.singletonList("filter"));
@@ -1077,23 +1113,29 @@ public class ProjectControllerExecution {
 					"Table \"%s\" not found in project \"%s\"",
 					table, project.getCode()));
 		}
+		DatabaseCriteria criteria;
 		DatabaseCache cache = DatabaseCache.getInstance();
 		List<String> fields = cache.getTableFields(db, table);
-		if (!fields.contains("user")) {
-			throw new ForbiddenException(String.format(
-					"Table \"%s\" is not a user table", table));
+		if (fields.contains("user")) {
+			ProjectUserAccess userAccess = User.findAccessibleProjectUser(version,
+					subject, project.getCode(), table, AccessMode.W, authDb, user);
+			User subjectUser = userAccess.getUser();
+			criteria = new DatabaseCriteria.And(
+					new DatabaseCriteria.Equal("user", subjectUser.getUserid()),
+					new DatabaseCriteria.Equal("id", recordId)
+			);
+			DatabaseObject record = db.selectOne(tableDef, criteria, null);
+			if (record == null)
+				return null;
+			userAccess.checkMatchesRange(record);
+		} else {
+			checkPermissionWriteResourceTable(authDb, user, project.getCode(),
+					table);
+			criteria = new DatabaseCriteria.Equal("id", recordId);
+			DatabaseObject record = db.selectOne(tableDef, criteria, null);
+			if (record == null)
+				return null;
 		}
-		ProjectUserAccess userAccess = User.findAccessibleProjectUser(version,
-				subject, project.getCode(), table, AccessMode.W, authDb, user);
-		User subjectUser = userAccess.getUser();
-		DatabaseCriteria criteria = new DatabaseCriteria.And(
-				new DatabaseCriteria.Equal("user", subjectUser.getUserid()),
-				new DatabaseCriteria.Equal("id", recordId)
-		);
-		DatabaseObject record = db.selectOne(tableDef, criteria, null);
-		if (record == null)
-			return null;
-		userAccess.checkMatchesRange(record);
 		db.delete(tableDef, criteria);
 		return null;
 	}
@@ -1177,23 +1219,25 @@ public class ProjectControllerExecution {
 	/**
 	 * Reads a batch of record maps from the JSON reader, validates the maps
 	 * and converts them to database objects (see {@link
-	 * #createInsertRecord(ProtocolVersion, Map, DatabaseTableDef, User)
+	 * #createInsertRecord(ProtocolVersion, User, Map, DatabaseTableDef, User)
 	 * createInsertRecord()}, and inserts them into the database. The record IDs
 	 * will be added to the specified idList.
 	 *
 	 * @param version the protocol version
+	 * @param user the calling user
 	 * @param jsonReader the JSON reader, positioned at the start of a record
 	 * map
 	 * @param db the project database
 	 * @param table the table
-	 * @param subjectUser the subject user that the records should belong to
+	 * @param subjectUser the subject user that the records should belong to, or
+	 * null if the table is not a user table
 	 * @param idList list with record IDs
 	 * @throws JsonParseException if the JSON input is invalid
 	 * @throws HttpException if a parsed record map is invalid
 	 * @throws DatabaseException if a database error occurs
 	 * @throws IOException if a reading error occurs
 	 */
-	private void insertRecordBatch(ProtocolVersion version,
+	private void insertRecordBatch(ProtocolVersion version, User user,
 			JsonObjectStreamReader jsonReader, Database db,
 			DatabaseTableDef<?> table, User subjectUser, List<String> idList)
 			throws JsonParseException, HttpException, DatabaseException,
@@ -1211,7 +1255,8 @@ public class ProjectControllerExecution {
 		List<DatabaseObject> records = new ArrayList<>();
 		while (!recordMaps.isEmpty()) {
 			Map<?,?> map = recordMaps.remove(0);
-			records.add(createInsertRecord(version, map, table, subjectUser));
+			records.add(createInsertRecord(version, user, map, table,
+					subjectUser));
 		}
 		db.insert(table.getName(), records);
 		for (DatabaseObject record : records) {
@@ -1221,11 +1266,12 @@ public class ProjectControllerExecution {
 
 	/**
 	 * Validates a record map inserted by a user and returns a database object
-	 * for the specified table. This method ensures that the field "user" is
-	 * set. If the data class of the table is a {@link Sample Sample}, it also
-	 * ensures that "localTime" is set. If the data class is a {@link UTCSample
-	 * UTCSample}, it also ensures that "utcTime" and "timezone" are set.
-	 * Furthermore it sets the ID field to null.
+	 * for the specified table. If the table is a user table, this method
+	 * ensures that the field "user" is set. If the data class of the table is a
+	 * {@link Sample Sample}, it also ensures that "localTime" is set. If the
+	 * data class is a {@link UTCSample UTCSample}, it also ensures that
+	 * "utcTime" and "timezone" are set. Furthermore it sets the ID field to
+	 * null.
 	 *
 	 * <p>For tables with {@link LocalTimeSample LocalTimeSample}, the user must
 	 * have set "localTime". For tables with {@link UTCSample UTCSample}, the
@@ -1233,27 +1279,30 @@ public class ProjectControllerExecution {
 	 * these fields that were set, this method validates the values.</p>
 	 *
 	 * @param version the protocol version
+	 * @param user the calling user
 	 * @param recordMap the inserted record map
 	 * @param table the table to which the record should be written
-	 * @param subjectUser the subject user that the record should belong to
+	 * @param subjectUser the subject user that the record should belong to,
+	 * or null if the table is not a user table
 	 * @return the database object
 	 * @throws HttpException if the record map has invalid input
 	 */
 	private DatabaseObject createInsertRecord(ProtocolVersion version,
-			Map<?,?> recordMap, DatabaseTableDef<?> table, User subjectUser)
-			throws HttpException {
-		DatabaseObject result = createWriteDatabaseObject(version, subjectUser,
-				recordMap, table);
+			User user, Map<?,?> recordMap, DatabaseTableDef<?> table,
+			User subjectUser) throws HttpException {
+		DatabaseObject result = createWriteDatabaseObject(version, user,
+				subjectUser, recordMap, table);
 		result.setId(null);
 		return result;
 	}
 
 	/**
 	 * Validates a record map updated by a user and returns a database object
-	 * for the specified table. This method ensures that the field "user" is
-	 * set. If the data class of the table is a {@link Sample Sample}, it also
-	 * ensures that "localTime" is set. If the data class is a {@link UTCSample
-	 * UTCSample}, it also ensures that "utcTime" and "timezone" are set.
+	 * for the specified table. If the table is a user table, this method
+	 * ensures that the field "user" is set. If the data class of the table is a
+	 * {@link Sample Sample}, it also ensures that "localTime" is set. If the
+	 * data class is a {@link UTCSample UTCSample}, it also ensures that
+	 * "utcTime" and "timezone" are set.
 	 *
 	 * <p>If the "id" and "user" were already in the record map, this method
 	 * validates that they have not changed.</p>
@@ -1263,18 +1312,21 @@ public class ProjectControllerExecution {
 	 * user must have set "timezone", and "localTime" or "utcTime". For any of
 	 * these fields that were set, this method validates the values.</p>
 	 *
+	 * @param version the protocol version
+	 * @param user the calling user
 	 * @param recordMap the updated record map
 	 * @param table the table to which the record should be written
-	 * @param subjectUser the subject user that the record should belong to
+	 * @param subjectUser the subject user that the record should belong to,
+	 * or null if the table is not a user table
 	 * @param recordId the record ID that is updated
 	 * @return the record
 	 * @throws HttpException if the record map has invalid input
 	 */
 	private DatabaseObject createUpdateRecord(ProtocolVersion version,
-			Map<?,?> recordMap, DatabaseTableDef<?> table, String recordId,
-			User subjectUser) throws HttpException {
-		DatabaseObject record = createWriteDatabaseObject(version, subjectUser,
-				recordMap, table);
+			User user, Map<?,?> recordMap, DatabaseTableDef<?> table,
+			String recordId, User subjectUser) throws HttpException {
+		DatabaseObject record = createWriteDatabaseObject(version, user,
+				subjectUser, recordMap, table);
 		if (record.getId() != null && !record.getId().equals(recordId)) {
 			String msg = "Changing record ID not allowed";
 			HttpError error = new HttpError(ErrorCode.INVALID_INPUT, msg);
@@ -1288,25 +1340,29 @@ public class ProjectControllerExecution {
 	 * Converts the specified map from a JSON object to a DatabaseObject for
 	 * the specified table. This method is called when a record is inserted or
 	 * updated. It calls the DatabaseObjectMapper and verifies the data types.
-	 * It validate the "user" field. If the "user" field is specified, it should
-	 * match the specified subject user. If the field is empty, this method will
-	 * set the user ID of the subject user. Then it validates the time fields
-	 * using {@link
-	 * CommonCrudController#validateWriteRecordTime(nl.rrd.senseeact.client.model.User, DatabaseObject, Map)
-	 * CommonCrudController.validateWriteRecordTime()}.
+	 *
+	 * <p>If the table is a user table, then this method validate the "user"
+	 * field. If the "user" field is specified, it should match the specified
+	 * subject user. If the field is empty, this method will set the user ID of
+	 * the subject user.</p>
+	 *
+	 * <p>Then it validates the time fields using {@link
+	 * CommonCrudController#validateWriteRecordTime(ZoneId, DatabaseObject, Map)
+	 * CommonCrudController.validateWriteRecordTime()}.</p>
 	 *
 	 * <p>If the mapping or user and time validation fails, this method throws a
 	 * BadRequestException.</p>
 	 *
 	 * @param version the protocol version
-	 * @param subject the subject user
+	 * @param user the calling user
+	 * @param subject the subject user, or null if the table is not a user table
 	 * @param map the map
 	 * @param table the database table
 	 * @return the database object
 	 * @throws HttpException if the mapping fails
 	 */
 	private <T extends DatabaseObject> T createWriteDatabaseObject(
-			ProtocolVersion version, User subject, Map<?,?> map,
+			ProtocolVersion version, User user, User subject, Map<?,?> map,
 			DatabaseTableDef<T> table) throws HttpException {
 		DatabaseObjectMapper mapper = new DatabaseObjectMapper();
 		T result;
@@ -1324,32 +1380,37 @@ public class ProjectControllerExecution {
 			error.addFieldError(new HttpFieldError(ex.getField(), fieldMsg));
 			throw new BadRequestException(error);
 		}
-		String subjectName = (String)PropertyReader.readProperty(result,
-				"user");
-		if (subjectName == null) {
-			PropertyWriter.writeProperty(result, "user", subject.getUserid());
-			CommonCrudController.validateWriteRecordTime(subject, result, map);
-			return result;
-		}
-		if (version.ordinal() >= ProtocolVersion.V6_0_0.ordinal()) {
-			if (!subjectName.equals(subject.getUserid())) {
-				String msg = String.format(
-						"Record user \"%s\" does not match query subject \"%s\"",
-						subjectName, subject.getUserid()) + ": " + result;
-				HttpError error = new HttpError(ErrorCode.INVALID_INPUT, msg);
-				throw new BadRequestException(error);
+		if (subject != null) {
+			String subjectName = (String)PropertyReader.readProperty(result,
+					"user");
+			if (subjectName == null) {
+				PropertyWriter.writeProperty(result, "user",
+						subject.getUserid());
+			} else if (version.ordinal() >= ProtocolVersion.V6_0_0.ordinal()) {
+				if (!subjectName.equals(subject.getUserid())) {
+					String msg = String.format(
+							"Record user \"%s\" does not match query subject \"%s\"",
+							subjectName, subject.getUserid()) + ": " + result;
+					HttpError error = new HttpError(ErrorCode.INVALID_INPUT,
+							msg);
+					throw new BadRequestException(error);
+				}
+			} else {
+				if (!subjectName.toLowerCase().equals(subject.getEmail())) {
+					String msg = String.format(
+							"Record user \"%s\" does not match query subject \"%s\"",
+							subjectName, subject.getEmail()) + ": " + result;
+					HttpError error = new HttpError(ErrorCode.INVALID_INPUT,
+							msg);
+					throw new BadRequestException(error);
+				}
+				PropertyWriter.writeProperty(result, "user",
+						subject.getUserid());
 			}
-		} else {
-			if (!subjectName.toLowerCase().equals(subject.getEmail())) {
-				String msg = String.format(
-						"Record user \"%s\" does not match query subject \"%s\"",
-						subjectName, subject.getEmail()) + ": " + result;
-				HttpError error = new HttpError(ErrorCode.INVALID_INPUT, msg);
-				throw new BadRequestException(error);
-			}
-			PropertyWriter.writeProperty(result, "user", subject.getUserid());
 		}
-		CommonCrudController.validateWriteRecordTime(subject, result, map);
+		ZoneId defaultTz = subject != null ? subject.toTimeZone() :
+				user.toTimeZone();
+		CommonCrudController.validateWriteRecordTime(defaultTz, result, map);
 		return result;
 	}
 

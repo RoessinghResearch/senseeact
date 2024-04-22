@@ -89,6 +89,16 @@ public abstract class Question {
 	}
 
 	/**
+	 * Sets the condition for this question. If no condition applies, then this
+	 * should be null (default).
+	 *
+	 * @param condition the condition or null
+	 */
+	public void setCondition(QuestionCondition condition) {
+		this.condition = condition;
+	}
+
+	/**
 	 * Returns the resource ID for the title of this question. This is shown as
 	 * a header above the actual question. It can be null. The resource string
 	 * can contain simple HTML formatting and variables.

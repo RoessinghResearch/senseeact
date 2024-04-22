@@ -1,15 +1,14 @@
 package nl.rrd.senseeact.service.controller;
 
-import nl.rrd.utils.datetime.DateTimeUtils;
 import nl.rrd.senseeact.client.exception.ErrorCode;
 import nl.rrd.senseeact.client.exception.HttpError;
-import nl.rrd.senseeact.client.model.User;
 import nl.rrd.senseeact.client.model.sample.LocalTimeSample;
 import nl.rrd.senseeact.client.model.sample.Sample;
 import nl.rrd.senseeact.client.model.sample.UTCSample;
 import nl.rrd.senseeact.dao.DatabaseObject;
 import nl.rrd.senseeact.service.exception.BadRequestException;
 import nl.rrd.senseeact.service.exception.HttpException;
+import nl.rrd.utils.datetime.DateTimeUtils;
 
 import java.time.*;
 import java.time.format.DateTimeFormatter;
@@ -24,18 +23,18 @@ public class CommonCrudController {
 	 * it also ensures that "utcTime" and "timezone" are set. For any of these
 	 * fields that were set, this method validates the values.
 	 *
-	 * @param subject the subject user
+	 * @param defaultTz the default time zone if no time zone is specified in
+	 * the record. This could be the time zone of the record user (if any) or
+	 * the calling user.
 	 * @param record the record
 	 * @param map the original data map contained field utcTime
 	 * @throws HttpException if the sample has invalid values
 	 */
-	public static void validateWriteRecordTime(User subject,
+	public static void validateWriteRecordTime(ZoneId defaultTz,
 			DatabaseObject record, Map<?,?> map) throws HttpException {
-		ZoneId subjectTz = subject.toTimeZone();
-		ZonedDateTime now = DateTimeUtils.nowMs(subjectTz);
+		ZonedDateTime now = DateTimeUtils.nowMs(defaultTz);
 		boolean hasUtcTime = map.containsKey("utcTime");
-		if (record instanceof LocalTimeSample) {
-			LocalTimeSample sample = (LocalTimeSample)record;
+		if (record instanceof LocalTimeSample sample) {
 			if (sample.getLocalTime() != null) {
 				DateTimeFormatter parser = Sample.LOCAL_TIME_FORMAT;
 				try {
@@ -49,9 +48,8 @@ public class CommonCrudController {
 			} else {
 				sample.updateLocalDateTime(now.toLocalDateTime());
 			}
-		} else if (record instanceof UTCSample) {
-			UTCSample sample = (UTCSample)record;
-			ZoneId tz = subjectTz;
+		} else if (record instanceof UTCSample sample) {
+			ZoneId tz = defaultTz;
 			if (sample.getTimezone() != null) {
 				try {
 					tz = ZoneId.of(sample.getTimezone());
