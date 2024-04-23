@@ -16,6 +16,7 @@
 **/bin/
 **/build/
 **/node_modules/
+senseeact/DataAccessObjects/gradle.properties
 senseeact/ExampleSenSeeActService/docker/
 !senseeact/ExampleSenSeeActService/docker/senseeacttomcat/
 senseeact/ExampleSenSeeActService/src/main/web/
