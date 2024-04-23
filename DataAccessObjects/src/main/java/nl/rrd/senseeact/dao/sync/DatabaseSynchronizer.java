@@ -1153,18 +1153,21 @@ public class DatabaseSynchronizer {
 	 */
 	private BaseDatabaseObject selectRecord(Database database, String table,
 			String user, String id) throws DatabaseException {
-		List<? extends BaseDatabaseObject> objects;
+		Class<? extends BaseDatabaseObject> clazz;
+		if (isUserTable(database, table))
+			clazz = UserDatabaseObject.class;
+		else
+			clazz = BaseDatabaseObject.class;
+		DatabaseCriteria criteria;
 		if (user != null) {
-			DatabaseCriteria criteria = new DatabaseCriteria.And(
+			criteria = new DatabaseCriteria.And(
 					new DatabaseCriteria.Equal("id", id),
 					new DatabaseCriteria.Equal("user", user));
-			objects = database.select(table, UserDatabaseObject.class, criteria,
-					0, null);
 		} else {
-			DatabaseCriteria criteria = new DatabaseCriteria.Equal("id", id);
-			objects = database.select(table, BaseDatabaseObject.class,
-					criteria, 0, null);
+			criteria = new DatabaseCriteria.Equal("id", id);
 		}
+		List<? extends BaseDatabaseObject> objects = database.select(table,
+				clazz, criteria, 0, null);
 		if (objects.isEmpty())
 			return null;
 		else
