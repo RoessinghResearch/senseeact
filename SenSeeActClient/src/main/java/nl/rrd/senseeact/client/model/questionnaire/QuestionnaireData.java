@@ -137,8 +137,7 @@ public class QuestionnaireData extends UTCSample {
 	 * @throws ParseException if an error occurs while parsing the JSON code
 	 */
 	public void setAnswers(String answers) throws ParseException {
-		answerList = JsonMapper.parse(answers,
-				new TypeReference<List<QuestionData>>() {});
+		answerList = JsonMapper.parse(answers, new TypeReference<>() {});
 	}
 
 	/**

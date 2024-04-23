@@ -15,8 +15,6 @@ import nl.rrd.senseeact.service.controller.ErrorController;
  */
 @ResponseStatus(value=HttpStatus.NOT_FOUND)
 public class NotFoundException extends HttpException {
-	private static final long serialVersionUID = 1L;
-
 	public NotFoundException() {
 		super("Not Found");
 	}

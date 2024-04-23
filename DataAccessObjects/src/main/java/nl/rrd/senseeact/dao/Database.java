@@ -1027,7 +1027,7 @@ public abstract class Database {
 					table));
 		}
 		String user = userObj.toString();
-		if (user.length() == 0) {
+		if (user.isEmpty()) {
 			throw new DatabaseException(String.format(
 					"Can't insert database object with empty field \"user\" into table \"%s\" that is split by user",
 					table));
@@ -1779,6 +1779,32 @@ public abstract class Database {
 	}
 
 	/**
+	 * Purges all data from the specified resource table, i.e. a table without
+	 * a user field. This method also deletes related data from the action table
+	 * and sync progress table.
+	 *
+	 * @param table the table name (lower case)
+	 * @throws DatabaseException if a database error occurs
+	 */
+	public void purgeResourceTable(String table) throws DatabaseException {
+		DatabaseCache cache = DatabaseCache.getInstance();
+		List<String> physTables = cache.getPhysicalTables(this);
+		DatabaseCriteria criteria = new DatabaseCriteria.And(
+				new DatabaseCriteria.Equal("user", (String)null),
+				new DatabaseCriteria.Equal("table", table)
+		);
+		UserTableKey key = selectOne(new UserTableKeyTable(), criteria, null);
+		delete(table, null, null, DatabaseAction.SOURCE_LOCAL, true);
+		if (key != null) {
+			String actionTable = DatabaseActionTable.NAME_PREFIX +
+					key.getKey();
+			if (physTables.contains(actionTable))
+				delete(actionTable, null, null);
+		}
+		delete(SyncProgressTableDef.NAME, null, criteria);
+	}
+
+	/**
 	 * Deletes all records that match the specified criteria.
 	 *
 	 * <p>If the table is split by user, then the criteria must contain a
@@ -1992,7 +2018,7 @@ public abstract class Database {
 				String recUser = (String)record.get("user");
 				if (actionTable == null ||
 						!isEqualNullString(recUser, currUser)) {
-					if (actionTable != null && actions.size() > 0)
+					if (actionTable != null && !actions.isEmpty())
 						insertActions(actionTable.getName(), actions);
 					actions.clear();
 					currUser = recUser;
@@ -2002,7 +2028,7 @@ public abstract class Database {
 				addDatabaseAction(actionTable, actions, action, record, data,
 						source);
 			}
-			if (actionTable != null && actions.size() > 0) {
+			if (actionTable != null && !actions.isEmpty()) {
 				insertActions(actionTable.getName(), actions);
 				DatabaseListenerRepository.getInstance()
 						.notifyAddDatabaseActions(name, table, actions);

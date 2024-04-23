@@ -10,7 +10,6 @@ import nl.rrd.senseeact.client.model.ProjectDataModule;
 import nl.rrd.senseeact.client.model.ProjectUserAccessRule;
 import nl.rrd.senseeact.service.QueryRunner;
 import nl.rrd.senseeact.service.exception.HttpException;
-import nl.rrd.senseeact.service.model.PermissionRecord;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;

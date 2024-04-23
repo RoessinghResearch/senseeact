@@ -1,5 +1,6 @@
 package nl.rrd.senseeact.service.model;
 
+import nl.rrd.senseeact.client.model.PermissionRecord;
 import nl.rrd.senseeact.dao.Database;
 import nl.rrd.senseeact.dao.DatabaseTableDef;
 import nl.rrd.utils.exception.DatabaseException;

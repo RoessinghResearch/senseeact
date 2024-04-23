@@ -576,7 +576,7 @@ public class ProjectControllerExecution {
 			Exception {
 		TableSelectCriteria tableCriteria = getTableSelectCriteria(version,
 				authDb, user, project, table, subject, start, end, request,
-				Arrays.asList("filter", "sort", "limit"));
+				Arrays.asList("filter", "sort", "limit"), true);
 		// TODO stream to response, add Database.selectCursor()
 		List<? extends DatabaseObject> result = db.select(
 				tableCriteria.tableDef, tableCriteria.criteria,
@@ -667,7 +667,7 @@ public class ProjectControllerExecution {
 
 	/**
 	 * Result of {@link
-	 * #getTableSelectCriteria(ProtocolVersion, Database, User, BaseProject, String, String, String, String, HttpServletRequest, List)
+	 * #getTableSelectCriteria(ProtocolVersion, Database, User, BaseProject, String, String, String, String, HttpServletRequest, List, boolean)
 	 * getTableSelectCriteria()}.
 	 */
 	private static class TableSelectCriteria {
@@ -708,6 +708,9 @@ public class ProjectControllerExecution {
 	 * the request with the filter in the content. Otherwise it's null.
 	 * @param allowedContentParams the allowed parameters in the request body.
 	 * This should be a set of "filter", "sort" and "limit".
+	 * @param isRead true if the select criteria will be used for a select
+	 * query, which does not require write permission for resource tables; false
+	 * if the select criteria will be used for a delete query
 	 * @return the table definition and database criteria
 	 * @throws HttpException if the request is invalid
 	 * @throws DatabaseException if a database error occurs
@@ -717,8 +720,8 @@ public class ProjectControllerExecution {
 			ProtocolVersion version, Database authDb, User user,
 			BaseProject project, String table, String subject, String start,
 			String end, HttpServletRequest request,
-			List<String> allowedContentParams) throws HttpException,
-			DatabaseException, IOException {
+			List<String> allowedContentParams, boolean isRead)
+			throws HttpException, DatabaseException, IOException {
 		DatabaseTableDef<?> tableDef = project.findTable(table);
 		if (tableDef == null) {
 			throw new NotFoundException(String.format(
@@ -814,7 +817,7 @@ public class ProjectControllerExecution {
 			subjectUser = userAccess.getUser();
 			andCriteria.add(0, new DatabaseCriteria.Equal("user",
 					subjectUser.getUserid()));
-		} else {
+		} else if (!isRead) {
 			checkPermissionWriteResourceTable(authDb, user, project.getCode(),
 					table);
 		}
@@ -975,6 +978,8 @@ public class ProjectControllerExecution {
 	private static void checkPermissionWriteResourceTable(Database authDb,
 			User user, String project, String table) throws HttpException,
 			DatabaseException {
+		if (user.getRole() == Role.ADMIN)
+			return;
 		PermissionManager permMgr = PermissionManager.getInstance();
 		Map<String,Object> permParams = new LinkedHashMap<>();
 		permParams.put("project", project);
@@ -1084,7 +1089,7 @@ public class ProjectControllerExecution {
 		}
 		TableSelectCriteria tableCriteria = getTableSelectCriteria(version,
 				authDb, user, project, table, subject, start, end, request,
-				Collections.singletonList("filter"));
+				Collections.singletonList("filter"), false);
 		db.delete(tableCriteria.tableDef, tableCriteria.criteria);
 		return null;
 	}
@@ -1166,13 +1171,15 @@ public class ProjectControllerExecution {
 		}
 		DatabaseCache cache = DatabaseCache.getInstance();
 		List<String> fields = cache.getTableFields(db, table);
-		if (!fields.contains("user")) {
-			throw new ForbiddenException(String.format(
-					"Table \"%s\" is not a user table", table));
+		if (fields.contains("user")) {
+			User subjectUser = User.findAccessibleUser(version, subject, authDb,
+					user);
+			db.purgeUserTable(tableDef.getName(), subjectUser.getUserid());
+		} else {
+			checkPermissionWriteResourceTable(authDb, user, project.getCode(),
+					table);
+			db.purgeResourceTable(table);
 		}
-		User subjectUser = User.findAccessibleUser(version, subject, authDb,
-				user);
-		db.purgeUserTable(tableDef.getName(), subjectUser.getUserid());
 		return null;
 	}
 
@@ -1205,7 +1212,7 @@ public class ProjectControllerExecution {
 			HttpServletRequest request) throws HttpException, Exception {
 		TableSelectCriteria tableCriteria = getTableSelectCriteria(version,
 				authDb, user, project, table, subject, start, end, request,
-				Arrays.asList("filter", "sort"));
+				Arrays.asList("filter", "sort"), true);
 		if (!getFirst)
 			tableCriteria.sort = DatabaseSort.reverse(tableCriteria.sort);
 		DatabaseObject record = db.selectOne(tableCriteria.tableDef,

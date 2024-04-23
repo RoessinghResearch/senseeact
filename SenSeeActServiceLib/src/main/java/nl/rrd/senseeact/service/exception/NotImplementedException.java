@@ -15,8 +15,6 @@ import nl.rrd.senseeact.service.controller.ErrorController;
  */
 @ResponseStatus(value=HttpStatus.NOT_IMPLEMENTED)
 public class NotImplementedException extends HttpException {
-	private static final long serialVersionUID = 1L;
-
 	public NotImplementedException() {
 		super("Not Implemented");
 	}

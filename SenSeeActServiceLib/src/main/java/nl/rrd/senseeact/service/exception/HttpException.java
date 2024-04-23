@@ -13,8 +13,6 @@ import nl.rrd.senseeact.service.controller.ErrorController;
  * @author Dennis Hofs (RRD)
  */
 public abstract class HttpException extends Exception {
-	private static final long serialVersionUID = 1L;
-	
 	private HttpError error;
 
 	/**
@@ -67,19 +65,19 @@ public abstract class HttpException extends Exception {
 	 * @return the HTTP exception
 	 */
 	public static HttpException forStatus(int statusCode, HttpError error) {
-		switch (statusCode) {
-		case 400:
-			return new BadRequestException(error);
-		case 401:
-			return new UnauthorizedException(error);
-		case 403:
-			return new ForbiddenException(error);
-		case 404:
-			return new NotFoundException(error);
-		case 501:
-			return new NotImplementedException(error);
-		default:
-			return new InternalServerErrorException(error);
-		}
+		return switch (statusCode) {
+		case 400 ->
+			new BadRequestException(error);
+		case 401 ->
+			new UnauthorizedException(error);
+		case 403 ->
+			new ForbiddenException(error);
+		case 404 ->
+			new NotFoundException(error);
+		case 501 ->
+			new NotImplementedException(error);
+		default ->
+			new InternalServerErrorException(error);
+		};
 	}
 }

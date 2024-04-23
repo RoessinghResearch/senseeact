@@ -83,9 +83,11 @@ public class DatabaseCache {
 	 * Returns the _action_log table for the specified user and table. If the
 	 * table does not exist in the cache yet, this method will initialize it
 	 * with {@link Database#initTable(DatabaseTableDef) Database.initTable()}.
+	 *
+	 * <p>The user can be null if the table does not have a user field.</p>
 	 * 
 	 * @param db the database
-	 * @param user the user (user ID)
+	 * @param user the user (user ID) or null
 	 * @param table the table name
 	 * @return the database action table
 	 * @throws DatabaseException if a database error occurs
@@ -112,9 +114,11 @@ public class DatabaseCache {
 	 * (logical) table. If the key does not exist in the cache, this method
 	 * tries to retrieve it from the database. If it still does not exist, it
 	 * will generate a new key and add it to the database and the cache.
-	 * 
+	 *
+	 * <p>The user can be null if the table does not have a user field.</p>
+	 *
 	 * @param db the database
-	 * @param user the user (user ID)
+	 * @param user the user (user ID) or null
 	 * @param table the (logical) table name
 	 * @return the user table key
 	 * @throws DatabaseException if a database error occurs
@@ -354,12 +358,8 @@ public class DatabaseCache {
 		TableMetadataTableDef metaDef = new TableMetadataTableDef();
 		List<TableMetadata> allMeta = db.select(metaDef, null, 0, null);
 		for (TableMetadata meta : allMeta) {
-			List<TableMetadata> metas = tableMetadata.get(
-					meta.getTable());
-			if (metas == null) {
-				metas = new ArrayList<>();
-				tableMetadata.put(meta.getTable(), metas);
-			}
+			List<TableMetadata> metas = tableMetadata.computeIfAbsent(
+					meta.getTable(), k -> new ArrayList<>());
 			metas.add(meta);
 		}
 		getCachedMetadata(db).tableMetadata = tableMetadata;
@@ -395,7 +395,7 @@ public class DatabaseCache {
 			ObjectMapper mapper = new ObjectMapper();
 			try {
 				fields = mapper.readValue(meta.getValue(),
-						new TypeReference<List<String>>() {});
+						new TypeReference<>() {});
 			} catch (IOException ex) {
 				throw new RuntimeException("Can't parse JSON array: " +
 						ex.getMessage(), ex);
@@ -585,7 +585,7 @@ public class DatabaseCache {
 			ObjectMapper mapper = new ObjectMapper();
 			try {
 				indexes = mapper.readValue(meta.getValue(),
-						new TypeReference<List<DatabaseIndex>>() {});
+						new TypeReference<>() {});
 			} catch (IOException ex) {
 				throw new RuntimeException("Can't parse JSON array: " +
 						ex.getMessage(), ex);

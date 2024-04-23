@@ -15,8 +15,6 @@ import nl.rrd.senseeact.service.controller.ErrorController;
  */
 @ResponseStatus(value=HttpStatus.FORBIDDEN)
 public class ForbiddenException extends HttpException {
-	private static final long serialVersionUID = 1L;
-
 	public ForbiddenException() {
 		super("Forbidden");
 	}

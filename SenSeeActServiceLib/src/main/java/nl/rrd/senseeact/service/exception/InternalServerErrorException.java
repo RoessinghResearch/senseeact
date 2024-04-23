@@ -16,8 +16,6 @@ import nl.rrd.senseeact.service.controller.ErrorController;
  */
 @ResponseStatus(value=HttpStatus.INTERNAL_SERVER_ERROR)
 public class InternalServerErrorException extends HttpException {
-	private static final long serialVersionUID = 1L;
-
 	public InternalServerErrorException() {
 		super("Internal Server Error");
 	}

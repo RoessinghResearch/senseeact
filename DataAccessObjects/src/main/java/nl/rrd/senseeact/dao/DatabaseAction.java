@@ -24,7 +24,7 @@ public class DatabaseAction extends AbstractDatabaseObject {
 	@DatabaseField(value=DatabaseType.STRING)
 	private String table;
 	@DatabaseField(value=DatabaseType.STRING)
-	private String user;
+	private String user = null;
 	@DatabaseField(value=DatabaseType.STRING)
 	private Action action;
 	@DatabaseField(value=DatabaseType.STRING, index=true)
@@ -74,9 +74,10 @@ public class DatabaseAction extends AbstractDatabaseObject {
 
 	/**
 	 * Returns the user whose data was affected by this action. The user should
-	 * be obtained from the "user" field of a database object.
+	 * be obtained from the "user" field of a database object. For database
+	 * actions in a table without a user field, this method returns null.
 	 *
-	 * @return the user name
+	 * @return the user name or null
 	 */
 	public String getUser() {
 		return user;
@@ -84,9 +85,10 @@ public class DatabaseAction extends AbstractDatabaseObject {
 
 	/**
 	 * Sets the user whose data was affected by this action. The user should be
-	 * obtained from the "user" field of a database object.
+	 * obtained from the "user" field of a database object. For database actions
+	 * in a table without a user field, this should be null (default).
 	 *
-	 * @param user the user name
+	 * @param user the user name or null
 	 */
 	public void setUser(String user) {
 		this.user = user;

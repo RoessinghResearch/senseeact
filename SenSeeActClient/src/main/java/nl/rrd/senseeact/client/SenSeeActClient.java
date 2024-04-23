@@ -14,6 +14,7 @@ import nl.rrd.senseeact.dao.*;
 import nl.rrd.senseeact.dao.sync.*;
 import nl.rrd.utils.AppComponents;
 import nl.rrd.utils.beans.PropertyReader;
+import nl.rrd.utils.beans.PropertyScanner;
 import nl.rrd.utils.datetime.DateTimeUtils;
 import nl.rrd.utils.exception.DatabaseException;
 import nl.rrd.utils.exception.ParseException;
@@ -4102,11 +4103,11 @@ public class SenSeeActClient {
 	
 	/**
 	 * Updates a record in a table within a project. You cannot change the ID or
-	 * user. If the record user doesn't exist or you're not allowed to access
-	 * the user, this method will throw an {@link SenSeeActClientException
-	 * SenSeeActClientException} with 403 Forbidden. If the record ID doesn't exist,
-	 * this method will throw an {@link SenSeeActClientException SenSeeActClientException}
-	 * with 404 Not Found.
+	 * user. If the record has a user field and the user doesn't exist or you're
+	 * not allowed to access the user, this method will throw a {@link
+	 * SenSeeActClientException SenSeeActClientException} with 403 Forbidden. If
+	 * the record ID doesn't exist, this method will throw a {@link
+	 * SenSeeActClientException SenSeeActClientException} with 404 Not Found.
 	 * 
 	 * @param project the project code
 	 * @param table the table name
@@ -4126,9 +4127,14 @@ public class SenSeeActClient {
 				project, table, record.getId()),
 				"PUT", true,
 				client -> {
-					String user = (String)PropertyReader.readProperty(record,
-							"user");
-					client.addQueryParam("user", user);
+					List<String> fields =
+							DatabaseFieldScanner.getDatabaseFieldNames(
+							record.getClass());
+					if (fields.contains("user")) {
+						String user = (String)PropertyReader.readProperty(
+								record, "user");
+						client.addQueryParam("user", user);
+					}
 					DatabaseObjectMapper mapper = new DatabaseObjectMapper();
 					Map<?,?> map = mapper.objectToMap(record, true);
 					client.writeJson(map).readString();
@@ -5030,7 +5036,7 @@ public class SenSeeActClient {
 						.writeJson(params)
 						.readJson(new TypeReference<>() {})
 		);
-		if (actions.size() == 0)
+		if (actions.isEmpty())
 			return 0;
 		getAuthHeaders();
 		logger.debug(String.format(
@@ -5396,7 +5402,7 @@ public class SenSeeActClient {
 		List<DatabaseAction> actions = sync.readSyncActions(db,
 				syncStats.getProgress(), maxCount, syncStats.getLatestTime(),
 				Collections.singletonList(SYNC_REMOTE_ID));
-		if (actions.size() == 0)
+		if (actions.isEmpty())
 			return 0;
 		logger.debug("Write batch of database actions to server");
 		final Map<String,Object> params = new LinkedHashMap<>();
@@ -5459,7 +5465,7 @@ public class SenSeeActClient {
 			IOException {
 		runQuery("/mobilelog/" + app, "POST", true,
 				client -> {
-					if (device != null && device.length() > 0)
+					if (device != null && !device.isEmpty())
 						client.addQueryParam("device", device);
 					client.addQueryParam("date", date.format(
 							DateTimeFormatter.ofPattern("yyyy-MM-dd")))
@@ -5672,7 +5678,7 @@ public class SenSeeActClient {
 	 * admins.
 	 *
 	 * @param project the project code
-	 * @param subject the user ID of the subject user or null
+	 * @param subject the user ID of the subject user
 	 * @param emailRegex the regular expression, or null if all regular
 	 * expressions should be removed
 	 * @throws SenSeeActClientException if the SenSeeAct service returns an
@@ -5694,6 +5700,132 @@ public class SenSeeActClient {
 					if (emailRegex != null)
 						client.addQueryParam("emailRegex", emailRegex);
 					client.readString();
+					return null;
+				});
+	}
+
+	/**
+	 * Returns the list of permissions granted to the specified user. If you set
+	 * the subject to null, you will get your own permissions. If the subject
+	 * doesn't exist or you're not allowed to access the subject, this method
+	 * will throw a {@link SenSeeActClientException SenSeeActClientException}
+	 * with 403 Forbidden.
+	 *
+	 * @param subject the user ID of the subject user or null
+	 * @return the permissions
+	 * @throws SenSeeActClientException if the SenSeeAct service returns an
+	 * error response
+	 * @throws HttpClientException if the server returns an error response (for
+	 * example if the server is available, but the SenSeeAct service is not)
+	 * @throws ParseException if an error occurs while parsing the response
+	 * @throws IOException if an error occurs while communicating with the
+	 * server
+	 */
+	public List<PermissionRecord> getPermissionList(String subject)
+			throws SenSeeActClientException, HttpClientException,
+			ParseException, IOException {
+		return runQuery("/access/permission/list", "GET", true,
+				client -> {
+					if (subject != null)
+						client.addQueryParam("user", subject);
+					List<Map<String,Object>> perms = client.readJson(
+							new TypeReference<>() {});
+					DatabaseObjectMapper mapper = new DatabaseObjectMapper();
+					List<PermissionRecord> result = new ArrayList<>();
+					for (Map<String,Object> perm : perms) {
+						result.add(mapper.mapToObject(perm,
+								PermissionRecord.class, true));
+					}
+					return result;
+				});
+	}
+
+	/**
+	 * Grants a permission to a user. This can only be called by admins. The
+	 * permission should be one of the PERMISSION_* constants defined in {@link
+	 * PermissionRecord PermissionRecord}. The permission parameters depend on
+	 * the permission. This is documented at the permission constant.
+	 *
+	 * @param subject the user ID of the subject user
+	 * @param permission the permission name
+	 * @param params the permission parameters
+	 * @throws SenSeeActClientException if the SenSeeAct service returns an
+	 * error response
+	 * @throws HttpClientException if the server returns an error response (for
+	 * example if the server is available, but the SenSeeAct service is not)
+	 * @throws ParseException if an error occurs while parsing the response
+	 * @throws IOException if an error occurs while communicating with the
+	 * server
+	 */
+	public void addPermission(String subject, String permission,
+			Map<String,Object> params) throws SenSeeActClientException,
+			HttpClientException, ParseException, IOException {
+		runQuery("/access/permission", "POST", true,
+				client -> {
+					client.addQueryParam("user", subject)
+							.addQueryParam("permission", permission)
+							.writeJson(params)
+							.readString();
+					return null;
+				});
+	}
+
+	/**
+	 * Revokes a permission that was granted to a user. It only revokes the
+	 * permission with the same name and parameters as specified. This can only
+	 * be called by admins. The permission should be one of the PERMISSION_*
+	 * constants defined in {@link PermissionRecord PermissionRecord}. The
+	 * permission parameters depend on the permission. This is documented at the
+	 * permission constant.
+	 *
+	 * @param subject the user ID of the subject user
+	 * @param permission the permission name
+	 * @param params the permission parameters
+	 * @throws SenSeeActClientException if the SenSeeAct service returns an
+	 * error response
+	 * @throws HttpClientException if the server returns an error response (for
+	 * example if the server is available, but the SenSeeAct service is not)
+	 * @throws ParseException if an error occurs while parsing the response
+	 * @throws IOException if an error occurs while communicating with the
+	 * server
+	 */
+	public void removePermission(String subject, String permission,
+			Map<String,Object> params) throws SenSeeActClientException,
+			HttpClientException, ParseException, IOException {
+		runQuery("/access/permission", "DELETE", true,
+				client -> {
+					client.addQueryParam("user", subject)
+							.addQueryParam("permission", permission)
+							.writeJson(params)
+							.readString();
+					return null;
+				});
+	}
+
+	/**
+	 * Revokes all permissions with the specified name from a user. This can
+	 * only be called by admins. The permission should be one of the
+	 * PERMISSION_* constants defined in {@link PermissionRecord
+	 * PermissionRecord}.
+	 *
+	 * @param subject the user ID of the subject user
+	 * @param permission the permission name
+	 * @throws SenSeeActClientException if the SenSeeAct service returns an
+	 * error response
+	 * @throws HttpClientException if the server returns an error response (for
+	 * example if the server is available, but the SenSeeAct service is not)
+	 * @throws ParseException if an error occurs while parsing the response
+	 * @throws IOException if an error occurs while communicating with the
+	 * server
+	 */
+	public void removePermissionsWithName(String subject, String permission)
+			throws SenSeeActClientException, HttpClientException,
+			ParseException, IOException {
+		runQuery("/access/permission/all", "DELETE", true,
+				client -> {
+					client.addQueryParam("user", subject)
+							.addQueryParam("permission", permission)
+							.readString();
 					return null;
 				});
 	}

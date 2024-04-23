@@ -5,6 +5,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import nl.rrd.senseeact.client.exception.ErrorCode;
 import nl.rrd.senseeact.client.exception.HttpError;
 import nl.rrd.senseeact.client.exception.HttpFieldError;
+import nl.rrd.senseeact.client.model.PermissionRecord;
 import nl.rrd.senseeact.client.model.ProjectDataModule;
 import nl.rrd.senseeact.client.model.ProjectUserAccessRule;
 import nl.rrd.senseeact.client.model.Role;

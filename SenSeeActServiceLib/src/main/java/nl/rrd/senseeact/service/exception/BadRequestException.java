@@ -21,8 +21,7 @@ import nl.rrd.senseeact.service.controller.ErrorController;
  */
 @ResponseStatus(value=HttpStatus.BAD_REQUEST)
 public class BadRequestException extends HttpException {
-	private static final long serialVersionUID = 1L;
-	
+
 	public BadRequestException() {
 		super("Bad Request");
 	}
@@ -41,12 +40,8 @@ public class BadRequestException extends HttpException {
 	
 	public BadRequestException appendInvalidInput(BadRequestException other) {
 		List<HttpFieldError> errors = new ArrayList<>();
-		for (HttpFieldError error : getError().getFieldErrors()) {
-			errors.add(error);
-		}
-		for (HttpFieldError error : other.getError().getFieldErrors()) {
-			errors.add(error);
-		}
+		errors.addAll(getError().getFieldErrors());
+		errors.addAll(other.getError().getFieldErrors());
 		return withInvalidInput(errors);
 	}
 	
@@ -58,12 +53,8 @@ public class BadRequestException extends HttpException {
 	public BadRequestException appendInvalidInput(
 			List<HttpFieldError> fieldErrors) {
 		List<HttpFieldError> newErrors = new ArrayList<>();
-		for (HttpFieldError error : getError().getFieldErrors()) {
-			newErrors.add(error);
-		}
-		for (HttpFieldError error : fieldErrors) {
-			newErrors.add(error);
-		}
+		newErrors.addAll(getError().getFieldErrors());
+		newErrors.addAll(fieldErrors);
 		return withInvalidInput(newErrors);
 	}
 	
@@ -74,10 +65,10 @@ public class BadRequestException extends HttpException {
 
 	public static BadRequestException withInvalidInput(
 			List<HttpFieldError> fieldErrors) {
-		StringBuffer errorMsg = new StringBuffer();
-		String newline = System.getProperty("line.separator");
+		StringBuilder errorMsg = new StringBuilder();
+		String newline = System.lineSeparator();
 		for (HttpFieldError fieldError : fieldErrors) {
-			if (errorMsg.length() > 0)
+			if (!errorMsg.isEmpty())
 				errorMsg.append(newline);
 			errorMsg.append(fieldError.getMessage());
 		}

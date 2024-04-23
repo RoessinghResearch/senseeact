@@ -15,8 +15,6 @@ import nl.rrd.senseeact.service.controller.ErrorController;
  */
 @ResponseStatus(value=HttpStatus.UNAUTHORIZED)
 public class UnauthorizedException extends HttpException {
-	private static final long serialVersionUID = 1L;
-
 	public UnauthorizedException() {
 		super("Unauthorized");
 	}

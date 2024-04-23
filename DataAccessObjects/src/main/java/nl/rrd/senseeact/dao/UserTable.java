@@ -3,8 +3,8 @@ package nl.rrd.senseeact.dao;
 import nl.rrd.utils.json.JsonObject;
 
 /**
- * This class consists of a user name and a table name. It can be used as a key
- * in a hash map.
+ * This class consists of a user ID and a table name. It can be used as a key in
+ * a hash map. The user ID can be null if the table does not have a user field.
  * 
  * @author Dennis Hofs (RRD)
  */

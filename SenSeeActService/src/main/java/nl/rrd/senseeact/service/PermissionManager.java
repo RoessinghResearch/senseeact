@@ -1,10 +1,10 @@
 package nl.rrd.senseeact.service;
 
+import nl.rrd.senseeact.client.model.PermissionRecord;
 import nl.rrd.senseeact.dao.Database;
 import nl.rrd.senseeact.dao.DatabaseCriteria;
 import nl.rrd.senseeact.dao.DatabaseSort;
 import nl.rrd.senseeact.service.exception.ForbiddenException;
-import nl.rrd.senseeact.service.model.PermissionRecord;
 import nl.rrd.senseeact.service.model.PermissionTable;
 import nl.rrd.utils.exception.DatabaseException;
 
@@ -34,8 +34,8 @@ public class PermissionManager {
 		if (params == null)
 			params = new LinkedHashMap<>();
 		if (!hasPermission(authDb, user, permission, params)) {
-			throw new ForbiddenException("Required permission \"%s\" not found",
-					permission);
+			throw new ForbiddenException(String.format(
+					"Required permission \"%s\" not found", permission));
 		}
 	}
 
