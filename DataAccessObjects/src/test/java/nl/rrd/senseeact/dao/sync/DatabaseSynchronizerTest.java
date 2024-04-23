@@ -73,7 +73,7 @@ public class DatabaseSynchronizerTest {
 		ResourceTestTable resTable = new ResourceTestTable();
 		List<ResourceTestObject> resObjects = fixture.getResourceObjects(0);
 		serverDb.insert(resTable.getName(), resObjects);
-		logger.info("Wrote {} user objects to server db, table {}",
+		logger.info("Wrote {} resource objects to server db, table {}",
 				resObjects.size(), resTable.getName());
 		for (DatabaseTableDef<SyncTestUserObject> table : userTables) {
 			List<SyncTestUserObject> objects = fixture.getUserObjects(
@@ -114,6 +114,7 @@ public class DatabaseSynchronizerTest {
 		logger.info("Synchronize from server to client1");
 		syncRead = new DatabaseSynchronizer(SyncTestFixture.USER1);
 		syncWrite = new DatabaseSynchronizer(SyncTestFixture.USER1);
+		syncWrite.setAllowWriteResourceTables(true);
 		progress = syncWrite.getSyncProgress(client1Db);
 		Assert.assertEquals(0, progress.size());
 		actions = syncRead.readSyncActions(serverDb, progress, 0, null,
@@ -149,6 +150,7 @@ public class DatabaseSynchronizerTest {
 		logger.info("Synchronize from server to client2");
 		syncRead = new DatabaseSynchronizer(SyncTestFixture.USER2);
 		syncWrite = new DatabaseSynchronizer(SyncTestFixture.USER2);
+		syncWrite.setAllowWriteResourceTables(true);
 		progress = syncWrite.getSyncProgress(client2Db);
 		Assert.assertEquals(0, progress.size());
 		actions = syncRead.readSyncActions(serverDb, progress, 0, null,
@@ -165,16 +167,29 @@ public class DatabaseSynchronizerTest {
 
 		// write second stage
 		for (DatabaseTableDef<SyncTestUserObject> table : userTables) {
-			serverDb.insert(table.getName(), fixture.getUserObjects(
-					SyncTestFixture.Source.SERVER, table.getName(), 1));
+			List<SyncTestUserObject> objects = fixture.getUserObjects(
+					SyncTestFixture.Source.SERVER, table.getName(), 1);
+			serverDb.insert(table.getName(), objects);
+			logger.info("Wrote {} user objects to server db, table {}",
+					objects.size(), table.getName());
+		}
+		resObjects = fixture.getResourceObjects(1);
+		serverDb.insert(resTable.getName(), resObjects);
+		logger.info("Wrote {} resource objects to server db, table {}",
+				resObjects.size(), resTable.getName());
+		for (DatabaseTableDef<SyncTestUserObject> table : userTables) {
+			List<SyncTestUserObject> objects = fixture.getUserObjects(
+					SyncTestFixture.Source.CLIENT1, table.getName(), 1);
+			client1Db.insert(table.getName(), objects);
+			logger.info("Wrote {} user objects to client1 db, table {}",
+					objects.size(), table.getName());
 		}
 		for (DatabaseTableDef<SyncTestUserObject> table : userTables) {
-			client1Db.insert(table.getName(), fixture.getUserObjects(
-					SyncTestFixture.Source.CLIENT1, table.getName(), 1));
-		}
-		for (DatabaseTableDef<SyncTestUserObject> table : userTables) {
-			client2Db.insert(table.getName(), fixture.getUserObjects(
-					SyncTestFixture.Source.CLIENT2, table.getName(), 1));
+			List<SyncTestUserObject> objects = fixture.getUserObjects(
+					SyncTestFixture.Source.CLIENT2, table.getName(), 1);
+			client2Db.insert(table.getName(), objects);
+			logger.info("Wrote {} user objects to client2 db, table {}",
+					objects.size(), table.getName());
 		}
 
 		// synchronize from client1 to server
@@ -202,10 +217,11 @@ public class DatabaseSynchronizerTest {
 		logger.info("Synchronize from server to client1");
 		syncRead = new DatabaseSynchronizer(SyncTestFixture.USER1);
 		syncWrite = new DatabaseSynchronizer(SyncTestFixture.USER1);
+		syncWrite.setAllowWriteResourceTables(true);
 		progress = syncWrite.getSyncProgress(client1Db);
 		actions = syncRead.readSyncActions(serverDb, progress, 0, null,
 				List.of("client1"));
-		Assert.assertEquals(6, actions.size());
+		Assert.assertEquals(9, actions.size());
 		syncWrite.writeSyncActions(client1Db, actions, "server");
 		// try to write the same actions again
 		syncWrite.writeSyncActions(client1Db, actions, "server");
