@@ -47,6 +47,13 @@ public class MariaDBDatabaseTest {
 	}
 
 	@Test
+	public void testInsertSelectResource() throws Exception {
+		if (dbTest == null)
+			return;
+		dbTest.testInsertSelectResource();
+	}
+
+	@Test
 	public void testUpdateDelete() throws Exception {
 		if (dbTest == null)
 			return;
@@ -58,6 +65,13 @@ public class MariaDBDatabaseTest {
 		if (dbTest == null)
 			return;
 		dbTest.testUpdateDeleteSplitByUser();
+	}
+
+	@Test
+	public void testUpdateDeleteResource() throws Exception {
+		if (dbTest == null)
+			return;
+		dbTest.testUpdateDeleteResource();
 	}
 
 	@Test

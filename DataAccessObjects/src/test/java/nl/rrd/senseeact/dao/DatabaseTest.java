@@ -6,6 +6,7 @@ import org.junit.Assert;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Random;
 
 public class DatabaseTest {
 	private DatabaseConnection dbConn;
@@ -21,6 +22,7 @@ public class DatabaseTest {
 		tableDefs.add(new PrimitiveTestTable(splitByUser));
 		tableDefs.add(new PrimitiveUpdateTestTable(splitByUser));
 		tableDefs.add(new SimpleTestTable(splitByUser));
+		tableDefs.add(new ResourceTestTable());
 		return dbConn.initDatabase(dbName, tableDefs, false);
 	}
 
@@ -120,6 +122,35 @@ public class DatabaseTest {
 		List<PrimitiveTestObject> selectedList = db.select(
 				new PrimitiveTestTable(true), criteria, 0, null);
 		Assert.assertEquals(new HashSet<>(testObjListUser1),
+				new HashSet<>(selectedList));
+	}
+
+	public void testInsertSelectResource() throws Exception {
+		Database db = initDatabase(false);
+
+		ResourceTestTable table = new ResourceTestTable();
+		ResourceTestObject inserted = new ResourceTestObject(1);
+		db.insert(table.getName(), inserted);
+		Assert.assertEquals(1, db.count(table.getName(), table.getDataClass(),
+				null));
+
+		ResourceTestObject selected = db.selectOne(table, null, null);
+		Assert.assertEquals(inserted, selected);
+
+		db.delete(table.getName(), selected);
+		Assert.assertEquals(0, db.count(table.getName(), table.getDataClass(),
+				null));
+
+		List<ResourceTestObject> testObjList = new ArrayList<>();
+		Random random = new Random();
+		for (int i = 0; i < 10; i++) {
+			testObjList.add(new ResourceTestObject(random.nextInt(100)));
+		}
+		db.insert(table.getName(), testObjList);
+		Assert.assertEquals(testObjList.size(), db.count(table.getName(),
+				table.getDataClass(), null));
+		List<ResourceTestObject> selectedList = db.select(table, null, 0, null);
+		Assert.assertEquals(new HashSet<>(testObjList),
 				new HashSet<>(selectedList));
 	}
 
@@ -239,6 +270,46 @@ public class DatabaseTest {
 		criteria = new DatabaseCriteria.Equal("user", "testuser1");
 		selected = db.select(new PrimitiveUpdateTestTable(true), criteria, 0,
 				null);
+		Assert.assertEquals(1, selected.size());
+		Assert.assertEquals(updated, selected.get(0));
+	}
+
+	public void testUpdateDeleteResource() throws Exception {
+		Database db = initDatabase(false);
+
+		ResourceTestTable table = new ResourceTestTable();
+		ResourceTestObject insertedUnchanged = new ResourceTestObject(1);
+		db.insert(table.getName(), insertedUnchanged);
+		ResourceTestObject insertedChanged = new ResourceTestObject(2);
+		db.insert(table.getName(), insertedChanged);
+
+		ResourceTestObject updated = new ResourceTestObject(3);
+		updated.setId(insertedChanged.getId());
+		db.update(table.getName(), updated);
+
+		DatabaseCriteria criteria = new DatabaseCriteria.Equal("id",
+				insertedUnchanged.getId());
+		List<ResourceTestObject> selected = db.select(table, criteria, 0, null);
+		Assert.assertEquals(1, selected.size());
+		Assert.assertEquals(insertedUnchanged, selected.get(0));
+
+		criteria = new DatabaseCriteria.Equal("id", insertedChanged.getId());
+		selected = db.select(table, criteria, 0, null);
+		Assert.assertEquals(1, selected.size());
+		Assert.assertEquals(updated, selected.get(0));
+
+		db.delete(table.getName(), insertedUnchanged);
+		selected = db.select(table, null, 0, null);
+		Assert.assertEquals(1, selected.size());
+		Assert.assertEquals(updated, selected.get(0));
+
+		insertedUnchanged.setId(null);
+		db.insert(table.getName(), insertedUnchanged);
+		criteria = new DatabaseCriteria.Equal("id", insertedUnchanged.getId());
+		int count = db.count(table.getName(), table.getDataClass(), criteria);
+		Assert.assertEquals(1, count);
+		db.delete(table.getName(), insertedUnchanged);
+		selected = db.select(table, null, 0, null);
 		Assert.assertEquals(1, selected.size());
 		Assert.assertEquals(updated, selected.get(0));
 	}
