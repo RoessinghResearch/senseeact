@@ -2,7 +2,7 @@ package nl.rrd.senseeact.dao.sync;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import nl.rrd.senseeact.dao.AbstractDatabaseObject;
+import nl.rrd.senseeact.dao.BaseDatabaseObject;
 import nl.rrd.senseeact.dao.DatabaseAction;
 import nl.rrd.senseeact.dao.DatabaseField;
 import nl.rrd.senseeact.dao.DatabaseType;
@@ -16,7 +16,7 @@ import nl.rrd.senseeact.dao.DatabaseType;
  *
  * @author Dennis Hofs (RRD)
  */
-public class SyncProgress extends AbstractDatabaseObject {
+public class SyncProgress extends BaseDatabaseObject {
 	@JsonIgnore
 	private String id;
 	

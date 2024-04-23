@@ -7,7 +7,7 @@ import nl.rrd.senseeact.client.model.Gender;
 import nl.rrd.senseeact.client.model.MaritalStatus;
 import nl.rrd.senseeact.client.model.Role;
 import nl.rrd.senseeact.client.model.User;
-import nl.rrd.senseeact.dao.AbstractDatabaseObject;
+import nl.rrd.senseeact.dao.BaseDatabaseObject;
 import nl.rrd.senseeact.dao.DatabaseField;
 import nl.rrd.senseeact.dao.DatabaseObject;
 import nl.rrd.senseeact.dao.DatabaseType;
@@ -18,8 +18,6 @@ import nl.rrd.utils.validation.ValidateNotNull;
 import nl.rrd.utils.validation.ValidateTimeZone;
 
 import java.time.LocalDate;
-import java.util.LinkedHashSet;
-import java.util.Set;
 
 /**
  * Model of a user in SenSeeAct. This class is used on the client side. The
@@ -34,7 +32,7 @@ import java.util.Set;
  * 
  * @author Dennis Hofs (RRD)
  */
-public class UserV8 extends AbstractDatabaseObject {
+public class UserV8 extends BaseDatabaseObject {
 	@JsonIgnore
 	private String id;
 

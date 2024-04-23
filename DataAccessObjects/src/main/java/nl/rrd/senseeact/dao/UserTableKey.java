@@ -7,7 +7,7 @@ package nl.rrd.senseeact.dao;
  * 
  * @author Dennis Hofs (RRD)
  */
-public class UserTableKey extends AbstractDatabaseObject {
+public class UserTableKey extends BaseDatabaseObject {
 	@DatabaseField(value=DatabaseType.STRING, index=true)
 	private String user = null;
 

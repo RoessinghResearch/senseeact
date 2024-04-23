@@ -1,7 +1,7 @@
 package nl.rrd.senseeact.client.model.sample;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import nl.rrd.senseeact.dao.AbstractDatabaseObject;
+import nl.rrd.senseeact.dao.BaseDatabaseObject;
 import nl.rrd.senseeact.dao.DatabaseField;
 import nl.rrd.senseeact.dao.DatabaseType;
 
@@ -17,7 +17,7 @@ import java.time.format.DateTimeFormatter;
  * @author Dennis Hofs (RRD)
  */
 @JsonIgnoreProperties(ignoreUnknown=true)
-public abstract class Sample extends AbstractDatabaseObject {
+public abstract class Sample extends BaseDatabaseObject {
 	public static final DateTimeFormatter LOCAL_TIME_FORMAT =
 			DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS");
 	

@@ -1,11 +1,11 @@
 package nl.rrd.senseeact.dao;
 
-import java.util.Map;
-
 import nl.rrd.utils.DataFormatter;
 import nl.rrd.utils.beans.PropertyReader;
 import nl.rrd.utils.beans.PropertyWriter;
 import nl.rrd.utils.exception.ParseException;
+
+import java.util.Map;
 
 /**
  * Base implementation of {@link DatabaseObject DatabaseObject}. It implements
@@ -26,8 +26,7 @@ import nl.rrd.utils.exception.ParseException;
  *
  * @author Dennis Hofs (RRD)
  */
-public abstract class AbstractDatabaseObject implements DatabaseObject,
-		Cloneable {
+public class BaseDatabaseObject implements DatabaseObject, Cloneable {
 	private String id;
 	
 	@Override
@@ -94,7 +93,7 @@ public abstract class AbstractDatabaseObject implements DatabaseObject,
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		AbstractDatabaseObject other = (AbstractDatabaseObject)obj;
+		BaseDatabaseObject other = (BaseDatabaseObject)obj;
 		DatabaseObjectMapper mapper = new DatabaseObjectMapper();
 		Map<String,Object> map = mapper.objectToMap(this, false);
 		Map<String,Object> otherMap = mapper.objectToMap(other, false);
@@ -115,7 +114,7 @@ public abstract class AbstractDatabaseObject implements DatabaseObject,
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		AbstractDatabaseObject other = (AbstractDatabaseObject)obj;
+		BaseDatabaseObject other = (BaseDatabaseObject)obj;
 		DatabaseObjectMapper mapper = new DatabaseObjectMapper();
 		Map<String,Object> map = mapper.objectToMap(this, false);
 		map.remove("id");

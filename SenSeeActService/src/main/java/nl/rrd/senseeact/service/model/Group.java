@@ -26,7 +26,7 @@ import java.util.List;
  * 
  * @author Dennis Hofs (RRD)
  */
-public class Group extends AbstractDatabaseObject {
+public class Group extends BaseDatabaseObject {
 	@DatabaseField(value=DatabaseType.STRING)
 	private String name;
 	

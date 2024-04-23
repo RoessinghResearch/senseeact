@@ -1,12 +1,12 @@
 package nl.rrd.senseeact.client.model.questionnaire;
 
-import nl.rrd.senseeact.dao.AbstractDatabaseObject;
+import nl.rrd.senseeact.dao.BaseDatabaseObject;
 import nl.rrd.senseeact.dao.DatabaseField;
 import nl.rrd.senseeact.dao.DatabaseType;
 import nl.rrd.utils.exception.ParseException;
 import nl.rrd.utils.json.JsonMapper;
 
-public class QuestionnaireRecord extends AbstractDatabaseObject {
+public class QuestionnaireRecord extends BaseDatabaseObject {
 	@DatabaseField(value=DatabaseType.STRING, index=true)
 	private String name;
 

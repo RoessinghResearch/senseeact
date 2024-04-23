@@ -3,11 +3,11 @@ package nl.rrd.senseeact.service.model;
 import nl.rrd.utils.exception.ParseException;
 import nl.rrd.utils.json.JsonMapper;
 import nl.rrd.senseeact.client.model.ProjectUserAccessRule;
-import nl.rrd.senseeact.dao.AbstractDatabaseObject;
+import nl.rrd.senseeact.dao.BaseDatabaseObject;
 import nl.rrd.senseeact.dao.DatabaseField;
 import nl.rrd.senseeact.dao.DatabaseType;
 
-public class ProjectUserAccessRecord extends AbstractDatabaseObject {
+public class ProjectUserAccessRecord extends BaseDatabaseObject {
 	@DatabaseField(value=DatabaseType.STRING)
 	private String project;
 	@DatabaseField(value=DatabaseType.STRING, index=true)

@@ -1,6 +1,6 @@
 package nl.rrd.senseeact.dao;
 
-public class UserDatabaseObject extends AbstractDatabaseObject {
+public class UserDatabaseObject extends BaseDatabaseObject {
 	@DatabaseField(value=DatabaseType.STRING, index=true)
 	private String user;
 

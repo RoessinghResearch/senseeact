@@ -4,7 +4,7 @@ import java.time.*;
 import java.util.Calendar;
 import java.util.Date;
 
-public class PrimitiveTestObject extends AbstractDatabaseObject {
+public class PrimitiveTestObject extends BaseDatabaseObject {
 	@DatabaseField(value=DatabaseType.STRING)
 	private String user = null;
 	

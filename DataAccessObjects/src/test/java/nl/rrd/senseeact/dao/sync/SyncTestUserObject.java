@@ -1,10 +1,10 @@
 package nl.rrd.senseeact.dao.sync;
 
-import nl.rrd.senseeact.dao.AbstractDatabaseObject;
+import nl.rrd.senseeact.dao.BaseDatabaseObject;
 import nl.rrd.senseeact.dao.DatabaseField;
 import nl.rrd.senseeact.dao.DatabaseType;
 
-public class SyncTestUserObject extends AbstractDatabaseObject {
+public class SyncTestUserObject extends BaseDatabaseObject {
 	@DatabaseField(value=DatabaseType.STRING)
 	private String user;
 	@DatabaseField(value=DatabaseType.STRING)

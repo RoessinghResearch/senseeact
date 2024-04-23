@@ -43,6 +43,7 @@ public class DatabaseSynchronizerTest {
 		List<DatabaseTableDef<?>> tableDefs = new ArrayList<>();
 		tableDefs.add(new SyncTestUser1Table());
 		tableDefs.add(new SyncTestUser2Table());
+		tableDefs.add(new ResourceTestTable());
 		return dbConn.initDatabase(dbName, tableDefs, false);
 	}
 
@@ -69,6 +70,11 @@ public class DatabaseSynchronizerTest {
 			logger.info("Wrote {} user objects to server db, table {}",
 					objects.size(), table.getName());
 		}
+		ResourceTestTable resTable = new ResourceTestTable();
+		List<ResourceTestObject> resObjects = fixture.getResourceObjects(0);
+		serverDb.insert(resTable.getName(), resObjects);
+		logger.info("Wrote {} user objects to server db, table {}",
+				resObjects.size(), resTable.getName());
 		for (DatabaseTableDef<SyncTestUserObject> table : userTables) {
 			List<SyncTestUserObject> objects = fixture.getUserObjects(
 					SyncTestFixture.Source.CLIENT1, table.getName(), 0);
@@ -80,7 +86,7 @@ public class DatabaseSynchronizerTest {
 			List<SyncTestUserObject> objects = fixture.getUserObjects(
 					SyncTestFixture.Source.CLIENT2, table.getName(), 0);
 			client2Db.insert(table.getName(), objects);
-			logger.info("Wrote {} general objects to client2 db, table {}",
+			logger.info("Wrote {} user objects to client2 db, table {}",
 					objects.size(), table.getName());
 		}
 

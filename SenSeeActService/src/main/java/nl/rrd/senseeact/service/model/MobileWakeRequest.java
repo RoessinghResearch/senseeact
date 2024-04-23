@@ -1,10 +1,10 @@
 package nl.rrd.senseeact.service.model;
 
-import nl.rrd.senseeact.dao.AbstractDatabaseObject;
+import nl.rrd.senseeact.dao.BaseDatabaseObject;
 import nl.rrd.senseeact.dao.DatabaseField;
 import nl.rrd.senseeact.dao.DatabaseType;
 
-public class MobileWakeRequest extends AbstractDatabaseObject {
+public class MobileWakeRequest extends BaseDatabaseObject {
 	@DatabaseField(value= DatabaseType.STRING, index=true)
 	private String user;
 

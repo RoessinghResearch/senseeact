@@ -1,5 +1,7 @@
 package nl.rrd.senseeact.dao.sync;
 
+import nl.rrd.senseeact.dao.ResourceTestObject;
+
 import java.util.*;
 
 public class SyncTestFixture {
@@ -9,6 +11,8 @@ public class SyncTestFixture {
 	private Random random = new Random();
 
 	private Map<ObjectSetKey,List<SyncTestUserObject>> userSets =
+			new LinkedHashMap<>();
+	private Map<Integer,List<ResourceTestObject>> resourceSets =
 			new LinkedHashMap<>();
 
 	public SyncTestFixture() {
@@ -30,6 +34,7 @@ public class SyncTestFixture {
 				userSets.put(new ObjectSetKey(Source.CLIENT2, table, stage),
 						createRandomUserObjects(3, USER2, Source.CLIENT2));
 			}
+			resourceSets.put(stage, createRandomResourceObjects(3));
 		}
 	}
 
@@ -48,11 +53,23 @@ public class SyncTestFixture {
 		return filtered;
 	}
 
+	public List<ResourceTestObject> getResourceObjects(int stage) {
+		return resourceSets.get(stage);
+	}
+
 	private List<SyncTestUserObject> createRandomUserObjects(int n, String user,
 			Source source) {
 		List<SyncTestUserObject> result = new ArrayList<>();
 		for (int i = 0; i < n; i++) {
 			result.add(createRandomUserObject(user, source));
+		}
+		return result;
+	}
+
+	private List<ResourceTestObject> createRandomResourceObjects(int n) {
+		List<ResourceTestObject> result = new ArrayList<>();
+		for (int i = 0; i < n; i++) {
+			result.add(new ResourceTestObject(createRandomInt()));
 		}
 		return result;
 	}

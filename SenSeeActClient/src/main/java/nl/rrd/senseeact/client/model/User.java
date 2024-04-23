@@ -10,7 +10,7 @@ import nl.rrd.utils.json.SqlDateSerializer;
 import nl.rrd.utils.validation.ValidateEmail;
 import nl.rrd.utils.validation.ValidateNotNull;
 import nl.rrd.utils.validation.ValidateTimeZone;
-import nl.rrd.senseeact.dao.AbstractDatabaseObject;
+import nl.rrd.senseeact.dao.BaseDatabaseObject;
 import nl.rrd.senseeact.dao.DatabaseField;
 import nl.rrd.senseeact.dao.DatabaseObject;
 import nl.rrd.senseeact.dao.DatabaseType;
@@ -48,7 +48,7 @@ import java.util.regex.Pattern;
  * 
  * @author Dennis Hofs (RRD)
  */
-public class User extends AbstractDatabaseObject {
+public class User extends BaseDatabaseObject {
 	@JsonIgnore
 	private String id;
 

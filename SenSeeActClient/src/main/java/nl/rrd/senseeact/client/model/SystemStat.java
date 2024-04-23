@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import nl.rrd.utils.json.DateTimeFromIsoDateTimeDeserializer;
 import nl.rrd.utils.json.IsoDateTimeSerializer;
-import nl.rrd.senseeact.dao.AbstractDatabaseObject;
+import nl.rrd.senseeact.dao.BaseDatabaseObject;
 import nl.rrd.senseeact.dao.DatabaseField;
 import nl.rrd.senseeact.dao.DatabaseType;
 
@@ -40,7 +40,7 @@ import java.time.ZonedDateTime;
  * 
  * @author Dennis Hofs (RRD)
  */
-public class SystemStat extends AbstractDatabaseObject {
+public class SystemStat extends BaseDatabaseObject {
 	
 	public enum Name {
 		/**

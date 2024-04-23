@@ -1,6 +1,6 @@
 package nl.rrd.senseeact.dao;
 
-public class ResourceTestObject extends AbstractDatabaseObject {
+public class ResourceTestObject extends BaseDatabaseObject {
 	@DatabaseField(value=DatabaseType.INT)
 	private int value = 0;
 

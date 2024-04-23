@@ -8,7 +8,7 @@ import java.util.List;
  * 
  * @author Dennis Hofs (RRD)
  */
-public class TableMetadata extends AbstractDatabaseObject {
+public class TableMetadata extends BaseDatabaseObject {
 
 	/**
 	 * The value is the current version of the specified table.

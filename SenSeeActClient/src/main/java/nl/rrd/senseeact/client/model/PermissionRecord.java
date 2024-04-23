@@ -1,7 +1,7 @@
 package nl.rrd.senseeact.client.model;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import nl.rrd.senseeact.dao.AbstractDatabaseObject;
+import nl.rrd.senseeact.dao.BaseDatabaseObject;
 import nl.rrd.senseeact.dao.DatabaseField;
 import nl.rrd.senseeact.dao.DatabaseType;
 import nl.rrd.utils.exception.ParseException;
@@ -11,7 +11,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-public class PermissionRecord extends AbstractDatabaseObject {
+public class PermissionRecord extends BaseDatabaseObject {
 	/**
 	 * This permission allows users to write records to a project table without
 	 * a user field. This kind of tables is used for general project resources.

@@ -1,10 +1,10 @@
 package nl.rrd.senseeact.dao.sync;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import nl.rrd.senseeact.dao.*;
 import nl.rrd.utils.AppComponents;
 import nl.rrd.utils.CurrentIterator;
 import nl.rrd.utils.exception.DatabaseException;
-import nl.rrd.senseeact.dao.*;
 import org.slf4j.Logger;
 
 import java.io.IOException;
@@ -25,9 +25,10 @@ import java.util.*;
  * properties. When writing database actions, the synchronizer will throw an
  * exception if an action does not match the properties.
  *
- * <p>Writing database actions for resource tables are only allowed if the table
- * if specified in {@link #setAllowedWriteResourceTables(List)
- * setAllowedWriteResourceTables(()}.</p>
+ * <p>Writing database actions for resource tables is by default not allowed.
+ * This can be controlled with {@link #setAllowWriteResourceTables(boolean)
+ * setAllowWriteResourceTables()} and {@link
+ * #setIncludeWriteResourceTables(List) setIncludeWriteResourceTables()}.</p>
  *
  * @author Dennis Hofs (RRD)
  */
@@ -36,7 +37,8 @@ public class DatabaseSynchronizer {
 	private List<String> excludeTables = new ArrayList<>();
 	private List<SyncTimeRangeRestriction> timeRangeRestrictions =
 			new ArrayList<>();
-	private List<String> allowedWriteResourceTables = new ArrayList<>();
+	private boolean allowWriteResourceTables = false;
+	private List<String> includeWriteResourceTables = new ArrayList<>();
 	private String user;
 
 	public DatabaseSynchronizer(String user) {
@@ -136,26 +138,63 @@ public class DatabaseSynchronizer {
 	}
 
 	/**
-	 * Returns the resource tables that the user is allowed to write to at the
-	 * local database. The default is an empty list.
+	 * Returns whether the user is allowed to write to any resource tables. If
+	 * this is allowed, the actual tables can still be restricted by {@link
+	 * #getIncludeWriteResourceTables() getIncludeWriteResourceTables()}. The
+	 * default is false.
 	 *
-	 * @return the resource tables that the user is allowed to write to at the
-	 * local database
+	 * @return true if the user is allowed to write to (some) resource tables,
+	 * false if the user is not allowed to write to any resource table
 	 */
-	public List<String> getAllowedWriteResourceTables() {
-		return allowedWriteResourceTables;
+	public boolean isAllowWriteResourceTables() {
+		return allowWriteResourceTables;
 	}
 
 	/**
-	 * Sets the resource tables that the user is allowed to write to at the
-	 * local database. The default is an empty list.
+	 * Sets whether the user is allowed to write to any resource tables. If this
+	 * is allowed, the actual tables can still be restricted with {@link
+	 * #setIncludeWriteResourceTables(List) setIncludeWriteResourceTables()}.
+	 * The default is false.
 	 *
-	 * @param allowedWriteResourceTables the resource tables that the user is
-	 * allowed to write to at the local database. The default is an empty list.
+	 * @param allowWriteResourceTables true if the user is allowed to write to
+	 * (some) resource tables, false if the user is not allowed to write to any
+	 * resource table
 	 */
-	public void setAllowedWriteResourceTables(
-			List<String> allowedWriteResourceTables) {
-		this.allowedWriteResourceTables = allowedWriteResourceTables;
+	public void setAllowWriteResourceTables(boolean allowWriteResourceTables) {
+		this.allowWriteResourceTables = allowWriteResourceTables;
+	}
+
+	/**
+	 * If the user is allowed to write to resource tables (see {@link
+	 * #isAllowWriteResourceTables() isAllowWriteResourceTables()}), then this
+	 * method may restrict the tables that the user can write to. If this method
+	 * returns an empty list, the user can write to any resource table.
+	 *
+	 * @return the resource tables that the user can write to or an empty list
+	 */
+	public List<String> getIncludeWriteResourceTables() {
+		return includeWriteResourceTables;
+	}
+
+	/**
+	 * If the user is allowed to write to resource tables (see {@link
+	 * #setAllowWriteResourceTables(boolean) setAllowWriteResourceTables()}),
+	 * then this method may restrict the tables that the user can write to. If
+	 * this method returns an empty list, the user can write to any resource
+	 * table.
+	 *
+	 * @param includeWriteResourceTables the resource tables that the user can
+	 * write to or an empty list
+	 */
+	public void setIncludeWriteResourceTables(
+			List<String> includeWriteResourceTables) {
+		this.includeWriteResourceTables = includeWriteResourceTables;
+	}
+
+	private boolean isWriteResourceTableAllowed(String table) {
+		return allowWriteResourceTables &&
+				(includeWriteResourceTables.isEmpty() ||
+				includeWriteResourceTables.contains(table));
 	}
 
 	/**
@@ -997,7 +1036,7 @@ public class DatabaseSynchronizer {
 		}
 		String table = action.getTable();
 		boolean isUserTable = isUserTable(database, table);
-		if (!isUserTable && !allowedWriteResourceTables.contains(table)) {
+		if (!isUserTable && isWriteResourceTableAllowed(table)) {
 			throw new SyncForbiddenException(String.format(
 					"Writing to resource table \"%s\" not allowed", table));
 		}
@@ -1011,22 +1050,25 @@ public class DatabaseSynchronizer {
 		String user = null;
 		if (cache.isTableSplitByUser(database, table))
 			user = action.getUser();
-		UserDatabaseObject record = selectRecord(database, table, user,
+		BaseDatabaseObject record = selectRecord(database, table, user,
 				action.getRecordId());
+		String recordUser = null;
+		if (record instanceof UserDatabaseObject userRecord)
+			recordUser = userRecord.getUser();
 		if (action.getAction() == DatabaseAction.Action.UPDATE ||
 				action.getAction() == DatabaseAction.Action.DELETE) {
 			if (record == null) {
 				result.skipAction = true;
 				return result;
 			}
-			if (isUserTable && !action.getUser().equals(record.getUser())) {
+			if (isUserTable && !action.getUser().equals(recordUser)) {
 				throw new SyncForbiddenException(String.format(
 						"Record with ID \"%s\" does not match user \"%s\"",
 						action.getRecordId(), action.getUser()));
 			}
 		} else if (action.getAction() == DatabaseAction.Action.INSERT) {
 			if (record != null && isUserTable &&
-					!action.getUser().equals(record.getUser())) {
+					!action.getUser().equals(recordUser)) {
 				throw new SyncForbiddenException(String.format(
 						"Record with ID \"%s\" already exists and does not match user \"%s\"",
 						action.getRecordId(), action.getUser()));
@@ -1109,18 +1151,20 @@ public class DatabaseSynchronizer {
 	 * @return the record or null
 	 * @throws DatabaseException if a database error occurs
 	 */
-	private UserDatabaseObject selectRecord(Database database, String table,
+	private BaseDatabaseObject selectRecord(Database database, String table,
 			String user, String id) throws DatabaseException {
-		DatabaseCriteria criteria;
+		List<? extends BaseDatabaseObject> objects;
 		if (user != null) {
-			criteria = new DatabaseCriteria.And(
+			DatabaseCriteria criteria = new DatabaseCriteria.And(
 					new DatabaseCriteria.Equal("id", id),
 					new DatabaseCriteria.Equal("user", user));
+			objects = database.select(table, UserDatabaseObject.class, criteria,
+					0, null);
 		} else {
-			criteria = new DatabaseCriteria.Equal("id", id);
+			DatabaseCriteria criteria = new DatabaseCriteria.Equal("id", id);
+			objects = database.select(table, BaseDatabaseObject.class,
+					criteria, 0, null);
 		}
-		List<UserDatabaseObject> objects = database.select(table,
-				UserDatabaseObject.class, criteria, 0, null);
 		if (objects.isEmpty())
 			return null;
 		else

@@ -3,7 +3,7 @@ package nl.rrd.senseeact.client.model;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
-import nl.rrd.senseeact.dao.AbstractDatabaseObject;
+import nl.rrd.senseeact.dao.BaseDatabaseObject;
 import nl.rrd.senseeact.dao.DatabaseField;
 import nl.rrd.senseeact.dao.DatabaseType;
 import nl.rrd.utils.json.DateTimeFromIsoDateTimeDeserializer;
@@ -28,7 +28,7 @@ import java.time.ZonedDateTime;
  * 
  * @author Dennis Hofs (RRD)
  */
-public class PerformanceStat extends AbstractDatabaseObject {
+public class PerformanceStat extends BaseDatabaseObject {
 	
 	@DatabaseField(value=DatabaseType.STRING, index=true)
 	private String name;

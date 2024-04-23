@@ -2,13 +2,13 @@ package nl.rrd.senseeact.service.model;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import nl.rrd.senseeact.client.SyncTableRestriction;
-import nl.rrd.senseeact.dao.AbstractDatabaseObject;
+import nl.rrd.senseeact.dao.BaseDatabaseObject;
 import nl.rrd.senseeact.dao.DatabaseField;
 import nl.rrd.senseeact.dao.DatabaseType;
 
 import java.io.IOException;
 
-public class SyncPushRegistration extends AbstractDatabaseObject {
+public class SyncPushRegistration extends BaseDatabaseObject {
 	
 	@DatabaseField(value=DatabaseType.STRING, index=true)
 	private String user;

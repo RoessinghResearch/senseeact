@@ -1,11 +1,11 @@
 package nl.rrd.senseeact.service.model;
 
 import nl.rrd.senseeact.client.model.Role;
-import nl.rrd.senseeact.dao.AbstractDatabaseObject;
+import nl.rrd.senseeact.dao.BaseDatabaseObject;
 import nl.rrd.senseeact.dao.DatabaseField;
 import nl.rrd.senseeact.dao.DatabaseType;
 
-public class UserProject extends AbstractDatabaseObject {
+public class UserProject extends BaseDatabaseObject {
 	@DatabaseField(value=DatabaseType.STRING, index=true)
 	private String user;
 

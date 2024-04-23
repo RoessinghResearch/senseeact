@@ -3,14 +3,14 @@ package nl.rrd.senseeact.client.model;
 import com.fasterxml.jackson.core.type.TypeReference;
 import nl.rrd.utils.exception.ParseException;
 import nl.rrd.utils.json.JsonMapper;
-import nl.rrd.senseeact.dao.AbstractDatabaseObject;
+import nl.rrd.senseeact.dao.BaseDatabaseObject;
 import nl.rrd.senseeact.dao.DatabaseField;
 import nl.rrd.senseeact.dao.DatabaseType;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public class AppSettings extends AbstractDatabaseObject {
+public class AppSettings extends BaseDatabaseObject {
 	@DatabaseField(value=DatabaseType.STRING, index=true)
 	private String user;
 	@DatabaseField(value=DatabaseType.TEXT)

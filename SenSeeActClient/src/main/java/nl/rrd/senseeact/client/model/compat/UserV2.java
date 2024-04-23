@@ -7,7 +7,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import nl.rrd.senseeact.client.model.MaritalStatus;
 import nl.rrd.senseeact.client.model.Role;
 import nl.rrd.senseeact.client.model.User;
-import nl.rrd.senseeact.dao.AbstractDatabaseObject;
+import nl.rrd.senseeact.dao.BaseDatabaseObject;
 import nl.rrd.senseeact.dao.DatabaseField;
 import nl.rrd.senseeact.dao.DatabaseObject;
 import nl.rrd.senseeact.dao.DatabaseType;
@@ -34,7 +34,7 @@ import java.util.Set;
  * 
  * @author Dennis Hofs (RRD)
  */
-public class UserV2 extends AbstractDatabaseObject {
+public class UserV2 extends BaseDatabaseObject {
 	@JsonIgnore
 	private String id;
 

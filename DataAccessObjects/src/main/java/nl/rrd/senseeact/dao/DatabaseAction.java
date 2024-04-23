@@ -15,7 +15,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  *
  * @author Dennis Hofs (RRD)
  */
-public class DatabaseAction extends AbstractDatabaseObject {
+public class DatabaseAction extends BaseDatabaseObject {
 	public static final String SOURCE_LOCAL = "local";
 	
 	@JsonIgnore
