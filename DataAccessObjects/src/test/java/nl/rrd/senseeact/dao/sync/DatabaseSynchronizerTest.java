@@ -93,7 +93,7 @@ public class DatabaseSynchronizerTest {
 		List<SyncProgress> progress = syncWrite.getSyncProgress(serverDb);
 		Assert.assertEquals(0, progress.size());
 		List<DatabaseAction> actions = syncRead.readSyncActions(client1Db,
-				progress, 0, null, Arrays.asList("server"));
+				progress, 0, null, List.of("server"));
 		syncWrite.writeSyncActions(serverDb, actions, "client1");
 		// try to write the same actions again
 		syncWrite.writeSyncActions(serverDb, actions, "client1");
@@ -111,7 +111,7 @@ public class DatabaseSynchronizerTest {
 		progress = syncWrite.getSyncProgress(client1Db);
 		Assert.assertEquals(0, progress.size());
 		actions = syncRead.readSyncActions(serverDb, progress, 0, null,
-				Arrays.asList("client1"));
+				List.of("client1"));
 		syncWrite.writeSyncActions(client1Db, actions, "server");
 		// try to write the same actions again
 		syncWrite.writeSyncActions(client1Db, actions, "server");
@@ -129,7 +129,7 @@ public class DatabaseSynchronizerTest {
 		progress = syncWrite.getSyncProgress(serverDb);
 		Assert.assertEquals(0, progress.size());
 		actions = syncRead.readSyncActions(client2Db, progress, 0, null,
-				Arrays.asList("server"));
+				List.of("server"));
 		syncWrite.writeSyncActions(serverDb, actions, "client2");
 		assertEqualUserSets(serverDb, new SourceStage[]{
 				new SourceStage(SyncTestFixture.Source.SERVER, 0),
@@ -146,7 +146,7 @@ public class DatabaseSynchronizerTest {
 		progress = syncWrite.getSyncProgress(client2Db);
 		Assert.assertEquals(0, progress.size());
 		actions = syncRead.readSyncActions(serverDb, progress, 0, null,
-				Arrays.asList("client2"));
+				List.of("client2"));
 		syncWrite.writeSyncActions(client2Db, actions, "server");
 		// try to write the same actions again
 		syncWrite.writeSyncActions(client2Db, actions, "server");
@@ -177,7 +177,7 @@ public class DatabaseSynchronizerTest {
 		syncWrite = new DatabaseSynchronizer(SyncTestFixture.USER1);
 		progress = syncWrite.getSyncProgress(serverDb);
 		actions = syncRead.readSyncActions(client1Db, progress, 0, null,
-				Arrays.asList("server"));
+				List.of("server"));
 		Assert.assertEquals(6, actions.size());
 		syncWrite.writeSyncActions(serverDb, actions, "client1");
 		// try to write the same actions again
@@ -198,7 +198,7 @@ public class DatabaseSynchronizerTest {
 		syncWrite = new DatabaseSynchronizer(SyncTestFixture.USER1);
 		progress = syncWrite.getSyncProgress(client1Db);
 		actions = syncRead.readSyncActions(serverDb, progress, 0, null,
-				Arrays.asList("client1"));
+				List.of("client1"));
 		Assert.assertEquals(6, actions.size());
 		syncWrite.writeSyncActions(client1Db, actions, "server");
 		// try to write the same actions again
@@ -352,7 +352,7 @@ public class DatabaseSynchronizerTest {
 		List<SyncProgress> progress = syncWrite.getSyncProgress(client1Db);
 		Assert.assertEquals(0, progress.size());
 		List<DatabaseAction> actions = syncRead.readSyncActions(serverDb,
-				progress, 0, null, Arrays.asList("server"));
+				progress, 0, null, List.of("server"));
 		Assert.assertEquals(6, actions.size());
 		syncWrite.writeSyncActions(client1Db, actions, "server");
 		progress = syncWrite.getSyncProgress(client1Db);
@@ -374,12 +374,12 @@ public class DatabaseSynchronizerTest {
 		progress = syncWrite.getSyncProgress(client1Db);
 		Assert.assertEquals(2, progress.size());
 		actions = syncRead.readSyncActions(serverDb, progress, 0, null,
-				Arrays.asList("server"));
+				List.of("server"));
 		// only 2 delete actions
 		Assert.assertEquals(2, actions.size());
 		// read all actions without progress
 		actions = syncRead.readSyncActions(serverDb, null, 0, null,
-				Arrays.asList("server"));
+				List.of("server"));
 		// merged actions on 6 records
 		Assert.assertEquals(6, actions.size());
 		syncWrite.writeSyncActions(client1Db, actions, "server");

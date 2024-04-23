@@ -1789,10 +1789,7 @@ public abstract class Database {
 	public void purgeResourceTable(String table) throws DatabaseException {
 		DatabaseCache cache = DatabaseCache.getInstance();
 		List<String> physTables = cache.getPhysicalTables(this);
-		DatabaseCriteria criteria = new DatabaseCriteria.And(
-				new DatabaseCriteria.Equal("user", (String)null),
-				new DatabaseCriteria.Equal("table", table)
-		);
+		DatabaseCriteria criteria = new DatabaseCriteria.Equal("table", table);
 		UserTableKey key = selectOne(new UserTableKeyTable(), criteria, null);
 		delete(table, null, null, DatabaseAction.SOURCE_LOCAL, true);
 		if (key != null) {

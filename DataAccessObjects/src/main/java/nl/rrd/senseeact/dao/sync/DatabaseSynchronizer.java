@@ -18,12 +18,16 @@ import java.util.*;
  * This class can synchronize two databases. It can read database actions that
  * should be written to a remote database, and it can write database actions
  * from a remote database. By default it synchronizes all data for the specified
- * user in the database except reserved tables (whose names start with an
- * underscore). You can limit this by table name and time range when you set
- * properties on this class. When reading database actions, you will get only
- * the actions that match the properties. When writing database actions, the
- * synchronizer will throw an exception if an action does not match the
- * properties.
+ * user and resource data (that does not belong to a user) in the database
+ * except reserved tables (whose names start with an underscore). You can limit
+ * this by table name and time range when you set properties on this class. When
+ * reading database actions, you will get only the actions that match the
+ * properties. When writing database actions, the synchronizer will throw an
+ * exception if an action does not match the properties.
+ *
+ * <p>Writing database actions for resource tables are only allowed if the table
+ * if specified in {@link #setAllowedWriteResourceTables(List)
+ * setAllowedWriteResourceTables(()}.</p>
  *
  * @author Dennis Hofs (RRD)
  */
@@ -32,6 +36,7 @@ public class DatabaseSynchronizer {
 	private List<String> excludeTables = new ArrayList<>();
 	private List<SyncTimeRangeRestriction> timeRangeRestrictions =
 			new ArrayList<>();
+	private List<String> allowedWriteResourceTables = new ArrayList<>();
 	private String user;
 
 	public DatabaseSynchronizer(String user) {
@@ -131,6 +136,29 @@ public class DatabaseSynchronizer {
 	}
 
 	/**
+	 * Returns the resource tables that the user is allowed to write to at the
+	 * local database. The default is an empty list.
+	 *
+	 * @return the resource tables that the user is allowed to write to at the
+	 * local database
+	 */
+	public List<String> getAllowedWriteResourceTables() {
+		return allowedWriteResourceTables;
+	}
+
+	/**
+	 * Sets the resource tables that the user is allowed to write to at the
+	 * local database. The default is an empty list.
+	 *
+	 * @param allowedWriteResourceTables the resource tables that the user is
+	 * allowed to write to at the local database. The default is an empty list.
+	 */
+	public void setAllowedWriteResourceTables(
+			List<String> allowedWriteResourceTables) {
+		this.allowedWriteResourceTables = allowedWriteResourceTables;
+	}
+
+	/**
 	 * Returns the user whose data should be synchronized.
 	 *
 	 * @return the user
@@ -148,15 +176,13 @@ public class DatabaseSynchronizer {
 	 * <li>if the table appears in the exclude tables</li>
 	 * <li>if there are include tables and the specified table is not one of
 	 * them</li>
-	 * <li>if the table does not have field "user"</li>
 	 * </ul></p>
 	 * 
 	 * @param table the table name
 	 * @return true if the table should be included, false otherwise
 	 * @throws DatabaseException if a database error occurs
 	 */
-	private boolean isTableIncluded(Database database, String table)
-			throws DatabaseException {
+	private boolean isTableIncluded(String table) throws DatabaseException {
 		if (table.startsWith("_"))
 			return false;
 		if (excludeTables != null && excludeTables.contains(table))
@@ -165,8 +191,6 @@ public class DatabaseSynchronizer {
 				!includeTables.contains(table)) {
 			return false;
 		}
-		if (!isUserTable(database, table))
-			return false;
 		return true;
 	}
 	
@@ -212,7 +236,7 @@ public class DatabaseSynchronizer {
 		Map<String,SyncProgress> tableProgress = new LinkedHashMap<>();
 		for (SyncProgress sp : allProgress) {
 			String table = sp.getTable();
-			if (!isTableIncluded(database, table))
+			if (!isTableIncluded(table))
 				continue;
 			if (tableProgress.containsKey(table)) {
 				throw new DatabaseException(String.format(
@@ -258,8 +282,11 @@ public class DatabaseSynchronizer {
 			SyncProgress sp = findTableProgress(table, progress);
 			DatabaseCriteria criteria = getReadSyncCriteria(table, sp,
 					null, excludeSources);
+			String actionUser = null;
+			if (isUserTable(database, table))
+				actionUser = this.user;
 			DatabaseActionTable actionTable = DatabaseCache
-					.getInstance().initActionTable(database, user, table);
+					.getInstance().initActionTable(database, actionUser, table);
 			int count = database.count(actionTable.getName(),
 					DatabaseAction.class, criteria);
 			if (count == 0)
@@ -322,8 +349,12 @@ public class DatabaseSynchronizer {
 			SyncProgress sp = findTableProgress(table, progress);
 			int iterMaxCount = maxCount > 0 ?
 					maxCount - actions.size() : 0;
+			String actionUser = null;
+			if (isUserTable(database, table))
+				actionUser = this.user;
 			List<DatabaseAction> unmerged = readTableSyncActions(database,
-					user, table, sp, iterMaxCount, maxTime, excludeSources);
+					actionUser, table, sp, iterMaxCount, maxTime,
+					excludeSources);
 			DatabaseActionMerger merger = new DatabaseActionMerger();
 			try {
 				actions.addAll(merger.mergeActions(unmerged));
@@ -338,8 +369,8 @@ public class DatabaseSynchronizer {
 
 	/**
 	 * Returns the names of the tables that can be synchronised. It returns
-	 * all tables in the database for which {@link
-	 * #isTableIncluded(Database, String) isTableIncluded()} returns true.
+	 * all tables in the database for which {@link #isTableIncluded(String)
+	 * isTableIncluded()} returns true.
 	 * 
 	 * @param database the database
 	 * @return the table names
@@ -350,7 +381,7 @@ public class DatabaseSynchronizer {
 		List<String> allTables = database.selectTables();
 		List<String> syncTables = new ArrayList<>();
 		for (String table : allTables) {
-			if (isTableIncluded(database, table))
+			if (isTableIncluded(table))
 				syncTables.add(table);
 		}
 		return syncTables;
@@ -439,28 +470,27 @@ public class DatabaseSynchronizer {
 					progress);
 			if (tableProgress == null)
 				continue;
-			purgeTimeRangeRecords(database, restrict.getTable(), user, restrict,
+			purgeTimeRangeRecords(database, restrict.getTable(), restrict,
 					tableProgress);
 		}
 	}
 
 	/**
-	 * Purges records in the database for the specified table and user. The
-	 * table should have a time range restriction (see {@link
-	 * #getTimeRangeRestrictions() getTimeRangeRestrictions()}). It deletes the
-	 * records that have been synchronized and that are before the specified
-	 * time range. It also deletes related records from the action tables.
+	 * Purges records in the database for the specified table. The table should
+	 * have a time range restriction (see {@link #getTimeRangeRestrictions()
+	 * getTimeRangeRestrictions()}). It deletes the records that have been
+	 * synchronized and that are before the specified time range. It also
+	 * deletes related records from the action tables.
 	 * 
 	 * @param database the database
 	 * @param table the table
-	 * @param user the user
 	 * @param restrict the time range restriction of the table
 	 * @param progress the synchronization progress of the table
 	 * @throws DatabaseException if a database error occurs
 	 */
 	private void purgeTimeRangeRecords(Database database, String table,
-			String user, SyncTimeRangeRestriction restrict,
-			SyncProgress progress) throws DatabaseException {
+			SyncTimeRangeRestriction restrict, SyncProgress progress)
+			throws DatabaseException {
 		List<String> tableFields = DatabaseCache.getInstance().getTableFields(
 				database, table);
 		boolean isTimeTable = tableFields.contains("localTime");
@@ -469,28 +499,30 @@ public class DatabaseSynchronizer {
 		boolean isUtcTable = tableFields.contains("utcTime");
 		boolean oldSyncEnabled = database.isSyncEnabled();
 		database.setSyncEnabled(false);
-		DatabaseCriteria criteria;
+		String actionUser = null;
+		List<DatabaseCriteria> andCriteria = new ArrayList<>();
+		if (isUserTable(database, table)) {
+			actionUser = this.user;
+			andCriteria.add(new DatabaseCriteria.Equal("user", user));
+		}
 		if (isUtcTable) {
-			criteria = new DatabaseCriteria.And(
-				new DatabaseCriteria.Equal("user", user),
-				new DatabaseCriteria.LessThan("utcTime",
-						restrict.getStartTime())
-			);
+			andCriteria.add(new DatabaseCriteria.LessThan("utcTime",
+						restrict.getStartTime()));
 		} else {
 			Instant instant = Instant.ofEpochMilli(restrict.getStartTime());
 			DateTimeFormatter format = DateTimeFormatter.ofPattern(
 					"yyyy-MM-dd'T'HH:mm:ss.SSS");
 			String localTime = ZonedDateTime.ofInstant(instant, ZoneOffset.UTC)
 					.toLocalDateTime().format(format);
-			criteria = new DatabaseCriteria.And(
-				new DatabaseCriteria.Equal("user", user),
-				new DatabaseCriteria.LessThan("localTime", localTime)
-			);
+			andCriteria.add(new DatabaseCriteria.LessThan("localTime",
+					localTime));
 		}
+		DatabaseCriteria criteria = new DatabaseCriteria.And(
+				andCriteria.toArray(new DatabaseCriteria[0]));
 		database.delete(table, null, criteria);
 		database.setSyncEnabled(oldSyncEnabled);
 		DatabaseActionTable actionTable = DatabaseCache.getInstance()
-				.initActionTable(database, user, table);
+				.initActionTable(database, actionUser, table);
 		criteria = new DatabaseCriteria.And(
 			new DatabaseCriteria.Or(
 				new DatabaseCriteria.LessThan("time", progress.getTime()),
@@ -645,7 +677,7 @@ public class DatabaseSynchronizer {
 			if (progress == null) {
 				progress = new SyncProgress();
 				progress.setTable(table);
-				progress.setUser(lastAction.getUser());
+				progress.setUser(user);
 			}
 			progress.setTime(lastAction.getTime());
 			progress.setOrder(lastAction.getOrder());
@@ -865,32 +897,33 @@ public class DatabaseSynchronizer {
 	private void validateWriteTableUser(Database database,
 			DatabaseAction action) throws SyncForbiddenException,
 			IllegalInputException, DatabaseException {
+		String table = action.getTable();
 		// validate table name
-		if (action.getTable() == null) {
+		if (table == null) {
 			throw new IllegalInputException("Table not set");
 		}
 		List<String> dbTables = database.selectTables();
-		if (!dbTables.contains(action.getTable())) {
+		if (!dbTables.contains(table)) {
 			throw new IllegalInputException(String.format(
 					"Table \"%s\" not found", action.getTable()));
 		}
-		if (action.getTable().startsWith("_")) {
+		if (table.startsWith("_")) {
 			throw new SyncForbiddenException(String.format(
 					"Writing to reserved table \"%s\" not allowed",
 					action.getTable()));
 		}
-		if (!isTableIncluded(database, action.getTable())) {
+		if (!isTableIncluded(table)) {
 			throw new SyncForbiddenException(String.format(
 					"Writing to table \"%s\" not allowed", action.getTable()));
 		}
 
 		// validate user
-		if (action.getUser() == null) {
+		if (isUserTable(database, table) && action.getUser() == null) {
 			throw new SyncForbiddenException(String.format(
 					"User not specified in database action for user data table \"%s\"",
 					action.getTable()));
 		}
-		if (!user.equals(action.getUser())) {
+		if (action.getUser() != null && !user.equals(action.getUser())) {
 			throw new SyncForbiddenException(String.format(
 					"Writing data for user \"%s\" not allowed",
 					action.getUser()));
@@ -962,32 +995,38 @@ public class DatabaseSynchronizer {
 				data.put((String)key, uncheckedData.get(key));
 			}
 		}
+		String table = action.getTable();
+		boolean isUserTable = isUserTable(database, table);
+		if (!isUserTable && !allowedWriteResourceTables.contains(table)) {
+			throw new SyncForbiddenException(String.format(
+					"Writing to resource table \"%s\" not allowed", table));
+		}
 		DatabaseCache cache = DatabaseCache.getInstance();
-		List<String> fields = cache.getTableFields(database,
-				action.getTable());
+		List<String> fields = cache.getTableFields(database, table);
 
 		// validate record ID
 		if (action.getRecordId() == null) {
 			throw new IllegalInputException("Record ID not set");
 		}
 		String user = null;
-		if (cache.isTableSplitByUser(database, action.getTable()))
+		if (cache.isTableSplitByUser(database, table))
 			user = action.getUser();
-		UserDatabaseObject record = selectRecord(database, action.getTable(),
-				user, action.getRecordId());
+		UserDatabaseObject record = selectRecord(database, table, user,
+				action.getRecordId());
 		if (action.getAction() == DatabaseAction.Action.UPDATE ||
 				action.getAction() == DatabaseAction.Action.DELETE) {
 			if (record == null) {
 				result.skipAction = true;
 				return result;
 			}
-			if (!action.getUser().equals(record.getUser())) {
+			if (isUserTable && !action.getUser().equals(record.getUser())) {
 				throw new SyncForbiddenException(String.format(
 						"Record with ID \"%s\" does not match user \"%s\"",
 						action.getRecordId(), action.getUser()));
 			}
 		} else if (action.getAction() == DatabaseAction.Action.INSERT) {
-			if (record != null && !action.getUser().equals(record.getUser())) {
+			if (record != null && isUserTable &&
+					!action.getUser().equals(record.getUser())) {
 				throw new SyncForbiddenException(String.format(
 						"Record with ID \"%s\" already exists and does not match user \"%s\"",
 						action.getRecordId(), action.getUser()));
@@ -1007,7 +1046,7 @@ public class DatabaseSynchronizer {
 				if (!key.equals("id") && !fields.contains(key)) {
 					throw new IllegalInputException(String.format(
 							"Unknown field \"%s\" in table \"%s\"",
-							key, action.getTable()));
+							key, table));
 				}
 			}
 		}
@@ -1032,26 +1071,26 @@ public class DatabaseSynchronizer {
 			}
 			data.remove("id");
 		}
-		if (action.getAction() == DatabaseAction.Action.INSERT) {
+		if (action.getAction() == DatabaseAction.Action.INSERT && isUserTable) {
 			Object dataUser = data.get("user");
 			if (dataUser == null) {
 				throw new IllegalInputException(String.format(
 						"Field \"user\" not set in data to insert into user data table \"%s\"",
-						action.getTable()));
+						table));
 			}
 			if (!action.getUser().equals(dataUser)) {
 				throw new IllegalInputException(String.format(
 						"Field \"user\" (%s) does not match user of action to insert into user data table \"%s\" (%s)",
-						dataUser, action.getTable(), action.getUser()));
+						dataUser, table, action.getUser()));
 			}
 		}
-		if (action.getAction() == DatabaseAction.Action.UPDATE &&
+		if (action.getAction() == DatabaseAction.Action.UPDATE && isUserTable &&
 				data.containsKey("user")) {
 			Object dataUser = data.get("user");
 			if (!action.getUser().equals(dataUser)) {
 				throw new SyncForbiddenException(String.format(
 						"Changing field \"user\" not allowed in user data table \"%s\"",
-						action.getTable()));
+						table));
 			}
 		}
 		result.data = data;
