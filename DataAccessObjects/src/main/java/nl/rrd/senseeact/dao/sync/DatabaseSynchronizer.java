@@ -1036,7 +1036,7 @@ public class DatabaseSynchronizer {
 		}
 		String table = action.getTable();
 		boolean isUserTable = isUserTable(database, table);
-		if (!isUserTable && isWriteResourceTableAllowed(table)) {
+		if (!isUserTable && !isWriteResourceTableAllowed(table)) {
 			throw new SyncForbiddenException(String.format(
 					"Writing to resource table \"%s\" not allowed", table));
 		}
