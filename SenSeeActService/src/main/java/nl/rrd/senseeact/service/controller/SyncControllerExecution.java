@@ -87,7 +87,7 @@ public class SyncControllerExecution {
 					ex.getMessage());
 		}
 		DatabaseSynchronizer sync = new DatabaseSynchronizer(
-				subjectUser.getUserid());
+				subjectUser.getUserid(), true);
 		sync.setIncludeTables(includeTables);
 		sync.setExcludeTables(excludeTables);
 		sync.setTimeRangeRestrictions(timeRangeRestrictions);
@@ -152,7 +152,7 @@ public class SyncControllerExecution {
 					ex.getMessage());
 		}
 		DatabaseSynchronizer sync = new DatabaseSynchronizer(
-				subjectUser.getUserid());
+				subjectUser.getUserid(), true);
 		sync.setIncludeTables(includeTables);
 		sync.setExcludeTables(excludeTables);
 		sync.setTimeRangeRestrictions(timeRangeRestrictions);
@@ -320,7 +320,7 @@ public class SyncControllerExecution {
 	private List<DatabaseAction> doWatchPoll(SyncWatchInput input,
 			Database database, User user) throws HttpException, Exception {
 		DatabaseSynchronizer sync = new DatabaseSynchronizer(
-				input.getSubjectUser().getUserid());
+				input.getSubjectUser().getUserid(), true);
 		sync.setIncludeTables(input.getIncludeTables());
 		sync.setExcludeTables(input.getExcludeTables());
 		sync.setTimeRangeRestrictions(input.getTimeRangeRestrictions());
@@ -397,7 +397,7 @@ public class SyncControllerExecution {
 					ex.getMessage());
 		}
 		DatabaseSynchronizer sync = new DatabaseSynchronizer(
-				subjectUser.getUserid());
+				subjectUser.getUserid(), false);
 		sync.setIncludeTables(includeTables);
 		sync.setExcludeTables(excludeTables);
 		return sync.getSyncProgress(database);
@@ -437,7 +437,7 @@ public class SyncControllerExecution {
 		if (actions.isEmpty())
 			return null;
 		DatabaseSynchronizer sync = new DatabaseSynchronizer(
-				subjectUser.getUserid());
+				subjectUser.getUserid(), false);
 		sync.setIncludeTables(includeTables);
 		sync.setExcludeTables(excludeTables);
 		Logger logger = AppComponents.getLogger(SenSeeActContext.LOGTAG);

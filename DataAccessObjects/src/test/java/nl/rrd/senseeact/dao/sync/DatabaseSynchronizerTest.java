@@ -93,9 +93,9 @@ public class DatabaseSynchronizerTest {
 		// synchronize from client1 to server
 		logger.info("Synchronize from client1 to server");
 		DatabaseSynchronizer syncRead = new DatabaseSynchronizer(
-				SyncTestFixture.USER1);
+				SyncTestFixture.USER1, false);
 		DatabaseSynchronizer syncWrite = new DatabaseSynchronizer(
-				SyncTestFixture.USER1);
+				SyncTestFixture.USER1, false);
 		List<SyncProgress> progress = syncWrite.getSyncProgress(serverDb);
 		Assert.assertEquals(0, progress.size());
 		List<DatabaseAction> actions = syncRead.readSyncActions(client1Db,
@@ -112,9 +112,8 @@ public class DatabaseSynchronizerTest {
 
 		// synchronize from server to client1
 		logger.info("Synchronize from server to client1");
-		syncRead = new DatabaseSynchronizer(SyncTestFixture.USER1);
-		syncWrite = new DatabaseSynchronizer(SyncTestFixture.USER1);
-		syncWrite.setAllowWriteResourceTables(true);
+		syncRead = new DatabaseSynchronizer(SyncTestFixture.USER1, true);
+		syncWrite = new DatabaseSynchronizer(SyncTestFixture.USER1, true);
 		progress = syncWrite.getSyncProgress(client1Db);
 		Assert.assertEquals(0, progress.size());
 		actions = syncRead.readSyncActions(serverDb, progress, 0, null,
@@ -131,8 +130,8 @@ public class DatabaseSynchronizerTest {
 
 		// synchronize from client2 to server
 		logger.info("Synchronize from client2 to server");
-		syncRead = new DatabaseSynchronizer(SyncTestFixture.USER2);
-		syncWrite = new DatabaseSynchronizer(SyncTestFixture.USER2);
+		syncRead = new DatabaseSynchronizer(SyncTestFixture.USER2, false);
+		syncWrite = new DatabaseSynchronizer(SyncTestFixture.USER2, false);
 		progress = syncWrite.getSyncProgress(serverDb);
 		Assert.assertEquals(0, progress.size());
 		actions = syncRead.readSyncActions(client2Db, progress, 0, null,
@@ -148,9 +147,8 @@ public class DatabaseSynchronizerTest {
 
 		// synchronize from server to client2
 		logger.info("Synchronize from server to client2");
-		syncRead = new DatabaseSynchronizer(SyncTestFixture.USER2);
-		syncWrite = new DatabaseSynchronizer(SyncTestFixture.USER2);
-		syncWrite.setAllowWriteResourceTables(true);
+		syncRead = new DatabaseSynchronizer(SyncTestFixture.USER2, true);
+		syncWrite = new DatabaseSynchronizer(SyncTestFixture.USER2, true);
 		progress = syncWrite.getSyncProgress(client2Db);
 		Assert.assertEquals(0, progress.size());
 		actions = syncRead.readSyncActions(serverDb, progress, 0, null,
@@ -194,8 +192,8 @@ public class DatabaseSynchronizerTest {
 
 		// synchronize from client1 to server
 		logger.info("Synchronize from client1 to server");
-		syncRead = new DatabaseSynchronizer(SyncTestFixture.USER1);
-		syncWrite = new DatabaseSynchronizer(SyncTestFixture.USER1);
+		syncRead = new DatabaseSynchronizer(SyncTestFixture.USER1, false);
+		syncWrite = new DatabaseSynchronizer(SyncTestFixture.USER1, false);
 		progress = syncWrite.getSyncProgress(serverDb);
 		actions = syncRead.readSyncActions(client1Db, progress, 0, null,
 				List.of("server"));
@@ -215,9 +213,8 @@ public class DatabaseSynchronizerTest {
 
 		// synchronize from server to client1
 		logger.info("Synchronize from server to client1");
-		syncRead = new DatabaseSynchronizer(SyncTestFixture.USER1);
-		syncWrite = new DatabaseSynchronizer(SyncTestFixture.USER1);
-		syncWrite.setAllowWriteResourceTables(true);
+		syncRead = new DatabaseSynchronizer(SyncTestFixture.USER1, true);
+		syncWrite = new DatabaseSynchronizer(SyncTestFixture.USER1, true);
 		progress = syncWrite.getSyncProgress(client1Db);
 		actions = syncRead.readSyncActions(serverDb, progress, 0, null,
 				List.of("client1"));
@@ -239,7 +236,7 @@ public class DatabaseSynchronizerTest {
 		serverDbConn.dropDatabase(serverDbName);
 		Database db = initDatabase(serverDbConn, serverDbName);
 		String user = SyncTestFixture.USER1;
-		DatabaseSynchronizer dbSync = new DatabaseSynchronizer(user);
+		DatabaseSynchronizer dbSync = new DatabaseSynchronizer(user, false);
 		List<DatabaseAction> actions = new ArrayList<>();
 		SyncTestUser1Table table = new SyncTestUser1Table();
 		SyncTestUserObject userObject = fixture.getUserObjects(
@@ -368,9 +365,9 @@ public class DatabaseSynchronizerTest {
 		// synchronize from server to client1
 		logger.info("Synchronize from server to client1");
 		DatabaseSynchronizer syncRead = new DatabaseSynchronizer(
-				SyncTestFixture.USER1);
+				SyncTestFixture.USER1, true);
 		DatabaseSynchronizer syncWrite = new DatabaseSynchronizer(
-				SyncTestFixture.USER1);
+				SyncTestFixture.USER1, true);
 		List<SyncProgress> progress = syncWrite.getSyncProgress(client1Db);
 		Assert.assertEquals(0, progress.size());
 		List<DatabaseAction> actions = syncRead.readSyncActions(serverDb,

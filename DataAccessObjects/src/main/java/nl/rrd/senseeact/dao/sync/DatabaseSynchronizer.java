@@ -25,24 +25,28 @@ import java.util.*;
  * properties. When writing database actions, the synchronizer will throw an
  * exception if an action does not match the properties.
  *
- * <p>Writing database actions for resource tables is by default not allowed.
- * This can be controlled with {@link #setAllowWriteResourceTables(boolean)
- * setAllowWriteResourceTables()} and {@link
- * #setIncludeWriteResourceTables(List) setIncludeWriteResourceTables()}.</p>
+ * <p>At construction you should specify whether resource tables should be
+ * included. This is more sensitive than the user tables, where users have full
+ * access to their own data, but it is simply a choice what tables are
+ * synchronized. In contrast, writing to resource tables on the server is not
+ * allowed for all users. To avoid accidental misconfiguration at the server,
+ * this should be explicitly enabled at construction. It should be enabled when
+ * synchronizing from server to client, but disabled when synchronizing from
+ * client to server.</p>
  *
  * @author Dennis Hofs (RRD)
  */
 public class DatabaseSynchronizer {
+	private String user;
+	private boolean includeResourceTables;
 	private List<String> includeTables = new ArrayList<>();
 	private List<String> excludeTables = new ArrayList<>();
 	private List<SyncTimeRangeRestriction> timeRangeRestrictions =
 			new ArrayList<>();
-	private boolean allowWriteResourceTables = false;
-	private List<String> includeWriteResourceTables = new ArrayList<>();
-	private String user;
 
-	public DatabaseSynchronizer(String user) {
+	public DatabaseSynchronizer(String user, boolean includeResourceTables) {
 		this.user = user;
+		this.includeResourceTables = includeResourceTables;
 	}
 
 	/**
@@ -138,66 +142,6 @@ public class DatabaseSynchronizer {
 	}
 
 	/**
-	 * Returns whether the user is allowed to write to any resource tables. If
-	 * this is allowed, the actual tables can still be restricted by {@link
-	 * #getIncludeWriteResourceTables() getIncludeWriteResourceTables()}. The
-	 * default is false.
-	 *
-	 * @return true if the user is allowed to write to (some) resource tables,
-	 * false if the user is not allowed to write to any resource table
-	 */
-	public boolean isAllowWriteResourceTables() {
-		return allowWriteResourceTables;
-	}
-
-	/**
-	 * Sets whether the user is allowed to write to any resource tables. If this
-	 * is allowed, the actual tables can still be restricted with {@link
-	 * #setIncludeWriteResourceTables(List) setIncludeWriteResourceTables()}.
-	 * The default is false.
-	 *
-	 * @param allowWriteResourceTables true if the user is allowed to write to
-	 * (some) resource tables, false if the user is not allowed to write to any
-	 * resource table
-	 */
-	public void setAllowWriteResourceTables(boolean allowWriteResourceTables) {
-		this.allowWriteResourceTables = allowWriteResourceTables;
-	}
-
-	/**
-	 * If the user is allowed to write to resource tables (see {@link
-	 * #isAllowWriteResourceTables() isAllowWriteResourceTables()}), then this
-	 * method may restrict the tables that the user can write to. If this method
-	 * returns an empty list, the user can write to any resource table.
-	 *
-	 * @return the resource tables that the user can write to or an empty list
-	 */
-	public List<String> getIncludeWriteResourceTables() {
-		return includeWriteResourceTables;
-	}
-
-	/**
-	 * If the user is allowed to write to resource tables (see {@link
-	 * #setAllowWriteResourceTables(boolean) setAllowWriteResourceTables()}),
-	 * then this method may restrict the tables that the user can write to. If
-	 * this method returns an empty list, the user can write to any resource
-	 * table.
-	 *
-	 * @param includeWriteResourceTables the resource tables that the user can
-	 * write to or an empty list
-	 */
-	public void setIncludeWriteResourceTables(
-			List<String> includeWriteResourceTables) {
-		this.includeWriteResourceTables = includeWriteResourceTables;
-	}
-
-	private boolean isWriteResourceTableAllowed(String table) {
-		return allowWriteResourceTables &&
-				(includeWriteResourceTables.isEmpty() ||
-				includeWriteResourceTables.contains(table));
-	}
-
-	/**
 	 * Returns the user whose data should be synchronized.
 	 *
 	 * @return the user
@@ -207,11 +151,21 @@ public class DatabaseSynchronizer {
 	}
 
 	/**
+	 * Returns whether resource tables should be included.
+	 *
+	 * @return true if resource tables should be included, false otherwise
+	 */
+	public boolean isIncludeResourceTables() {
+		return includeResourceTables;
+	}
+
+	/**
 	 * Returns whether the specified table should be included. It returns false
 	 * in the following cases:
 	 * 
 	 * <p><ul>
 	 * <li>if it's a reserved table</li>
+	 * <li>if it's a resource table and "includeResourceTables" is false</li>
 	 * <li>if the table appears in the exclude tables</li>
 	 * <li>if there are include tables and the specified table is not one of
 	 * them</li>
@@ -221,8 +175,11 @@ public class DatabaseSynchronizer {
 	 * @return true if the table should be included, false otherwise
 	 * @throws DatabaseException if a database error occurs
 	 */
-	private boolean isTableIncluded(String table) throws DatabaseException {
+	private boolean isTableIncluded(Database database, String table)
+			throws DatabaseException {
 		if (table.startsWith("_"))
+			return false;
+		if (!isUserTable(database, table) && !includeResourceTables)
 			return false;
 		if (excludeTables != null && excludeTables.contains(table))
 			return false;
@@ -275,7 +232,7 @@ public class DatabaseSynchronizer {
 		Map<String,SyncProgress> tableProgress = new LinkedHashMap<>();
 		for (SyncProgress sp : allProgress) {
 			String table = sp.getTable();
-			if (!isTableIncluded(table))
+			if (!isTableIncluded(database, table))
 				continue;
 			if (tableProgress.containsKey(table)) {
 				throw new DatabaseException(String.format(
@@ -408,8 +365,8 @@ public class DatabaseSynchronizer {
 
 	/**
 	 * Returns the names of the tables that can be synchronised. It returns
-	 * all tables in the database for which {@link #isTableIncluded(String)
-	 * isTableIncluded()} returns true.
+	 * all tables in the database for which {@link
+	 * #isTableIncluded(Database, String) isTableIncluded()} returns true.
 	 * 
 	 * @param database the database
 	 * @return the table names
@@ -420,7 +377,7 @@ public class DatabaseSynchronizer {
 		List<String> allTables = database.selectTables();
 		List<String> syncTables = new ArrayList<>();
 		for (String table : allTables) {
-			if (isTableIncluded(table))
+			if (isTableIncluded(database, table))
 				syncTables.add(table);
 		}
 		return syncTables;
@@ -951,7 +908,7 @@ public class DatabaseSynchronizer {
 					"Writing to reserved table \"%s\" not allowed",
 					action.getTable()));
 		}
-		if (!isTableIncluded(table)) {
+		if (!isTableIncluded(database, table)) {
 			throw new SyncForbiddenException(String.format(
 					"Writing to table \"%s\" not allowed", action.getTable()));
 		}
@@ -1036,10 +993,6 @@ public class DatabaseSynchronizer {
 		}
 		String table = action.getTable();
 		boolean isUserTable = isUserTable(database, table);
-		if (!isUserTable && !isWriteResourceTableAllowed(table)) {
-			throw new SyncForbiddenException(String.format(
-					"Writing to resource table \"%s\" not allowed", table));
-		}
 		DatabaseCache cache = DatabaseCache.getInstance();
 		List<String> fields = cache.getTableFields(database, table);
 

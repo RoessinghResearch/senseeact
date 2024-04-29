@@ -14,7 +14,6 @@ import nl.rrd.senseeact.dao.*;
 import nl.rrd.senseeact.dao.sync.*;
 import nl.rrd.utils.AppComponents;
 import nl.rrd.utils.beans.PropertyReader;
-import nl.rrd.utils.beans.PropertyScanner;
 import nl.rrd.utils.datetime.DateTimeUtils;
 import nl.rrd.utils.exception.DatabaseException;
 import nl.rrd.utils.exception.ParseException;
@@ -4886,7 +4885,7 @@ public class SenSeeActClient {
 		logger.debug(String.format(
 				"Get progress of actions from server written to database (user: %s)",
 				subject));
-		DatabaseSynchronizer sync = new DatabaseSynchronizer(subject);
+		DatabaseSynchronizer sync = new DatabaseSynchronizer(subject, true);
 		sync.setIncludeTables(tableRestriction.getIncludeTables());
 		sync.setExcludeTables(tableRestriction.getExcludeTables());
 		List<SyncProgress> progress = sync.getSyncProgress(db);
@@ -5042,7 +5041,7 @@ public class SenSeeActClient {
 		logger.debug(String.format(
 			"Write batch of database actions to local database (user: %s)",
 			subject));
-		DatabaseSynchronizer sync = new DatabaseSynchronizer(subject);
+		DatabaseSynchronizer sync = new DatabaseSynchronizer(subject, true);
 		sync.setIncludeTables(tableRestriction.getIncludeTables());
 		sync.setExcludeTables(tableRestriction.getExcludeTables());
 		try {
@@ -5161,7 +5160,7 @@ public class SenSeeActClient {
 		logger.debug(String.format(
 			"Write batch of database actions to local database (user: %s)",
 			subject));
-		DatabaseSynchronizer sync = new DatabaseSynchronizer(subject);
+		DatabaseSynchronizer sync = new DatabaseSynchronizer(subject, true);
 		sync.setIncludeTables(tableRestriction.getIncludeTables());
 		sync.setExcludeTables(tableRestriction.getExcludeTables());
 		try {
@@ -5289,7 +5288,7 @@ public class SenSeeActClient {
 		logger.debug(String.format(
 				"Get sync stats for actions from database to write to server (user: %s)",
 				subject));
-		DatabaseSynchronizer sync = new DatabaseSynchronizer(subject);
+		DatabaseSynchronizer sync = new DatabaseSynchronizer(subject, false);
 		sync.setIncludeTables(tableRestriction.getIncludeTables());
 		sync.setExcludeTables(tableRestriction.getExcludeTables());
 		return sync.getSyncActionStats(db, progress,
@@ -5396,7 +5395,7 @@ public class SenSeeActClient {
 		logger.debug(String.format(
 				"Read batch of database actions from local database (user: %s)",
 				subject));
-		DatabaseSynchronizer sync = new DatabaseSynchronizer(subject);
+		DatabaseSynchronizer sync = new DatabaseSynchronizer(subject, false);
 		sync.setIncludeTables(tableRestriction.getIncludeTables());
 		sync.setExcludeTables(tableRestriction.getExcludeTables());
 		List<DatabaseAction> actions = sync.readSyncActions(db,
