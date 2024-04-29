@@ -198,9 +198,8 @@ public class WatchTableListener implements DatabaseActionListener {
 	}
 
 	private boolean isCallbackExpiredError(Exception ex) {
-		if (!(ex instanceof HttpClientException))
+		if (!(ex instanceof HttpClientException httpEx))
 			return false;
-		HttpClientException httpEx = (HttpClientException)ex;
 		if (httpEx.getStatusCode() != 404)
 			return false;
 		String content = httpEx.getErrorContent().trim();
@@ -215,9 +214,8 @@ public class WatchTableListener implements DatabaseActionListener {
 		if (!map.containsKey("error"))
 			return false;
 		Object value = map.get("error");
-		if (!(value instanceof String))
+		if (!(value instanceof String strValue))
 			return false;
-		String strValue = (String)value;
 		return strValue.equalsIgnoreCase("callback_expired");
 	}
 
@@ -277,9 +275,8 @@ public class WatchTableListener implements DatabaseActionListener {
 			List<DatabaseActionListener> listeners =
 					repository.getDatabaseActionListeners(projectDb.getName());
 			for (DatabaseActionListener listener : listeners) {
-				if (!(listener instanceof WatchTableListener))
+				if (!(listener instanceof WatchTableListener watchListener))
 					continue;
-				WatchTableListener watchListener = (WatchTableListener)listener;
 				WatchTableRegistration reg = watchListener.registration;
 				if (canRemoveRegistration(reg, now)) {
 					logger.info("Autoremove watch project {}, table {}, subject {}",
@@ -405,9 +402,8 @@ public class WatchTableListener implements DatabaseActionListener {
 			List<DatabaseActionListener> listeners =
 					repository.getDatabaseActionListeners(projectDb.getName());
 			for (DatabaseActionListener listener : listeners) {
-				if (!(listener instanceof WatchTableListener))
+				if (!(listener instanceof WatchTableListener watchListener))
 					continue;
-				WatchTableListener watchListener = (WatchTableListener)listener;
 				WatchTableRegistration reg = watchListener.registration;
 				if (!reg.getUser().equals(user))
 					continue;
@@ -439,9 +435,8 @@ public class WatchTableListener implements DatabaseActionListener {
 			List<DatabaseActionListener> listeners =
 					repository.getDatabaseActionListeners(projectDb.getName());
 			for (DatabaseActionListener listener : listeners) {
-				if (!(listener instanceof WatchTableListener))
+				if (!(listener instanceof WatchTableListener watchListener))
 					continue;
-				WatchTableListener watchListener = (WatchTableListener)listener;
 				if (watchListener.registration.getId().equals(regId))
 					return watchListener;
 			}
