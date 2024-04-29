@@ -11,7 +11,14 @@ public class PushMessageData extends JsonObject {
 	
 	public PushMessageData() {
 	}
-	
+
+	/**
+	 * Constructs a new instance.
+	 *
+	 * @param project the project code
+	 * @param user the user or null if it is a table without a user field
+	 * @param table the table name
+	 */
 	public PushMessageData(String project, String user, String table) {
 		this.project = project;
 		this.user = user;
@@ -26,10 +33,20 @@ public class PushMessageData extends JsonObject {
 		this.project = project;
 	}
 
+	/**
+	 * Returns the user or null if it is a table without a user field.
+	 *
+	 * @return the user or null if it is a table without a user field.
+	 */
 	public String getUser() {
 		return user;
 	}
 
+	/**
+	 * Sets the user or null if it is a table without a user field.
+	 *
+	 * @param user the user or null if it is a table without a user field
+	 */
 	public void setUser(String user) {
 		this.user = user;
 	}

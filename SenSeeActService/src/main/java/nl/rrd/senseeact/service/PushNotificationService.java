@@ -286,21 +286,31 @@ public class PushNotificationService {
 
 	public void onAddDatabaseActions(String project, String database,
 			String table, List<DatabaseAction> actions) {
+		Boolean isUserTable = null;
 		List<String> users = new ArrayList<>();
 		for (DatabaseAction action : actions) {
-			List<String> excludeSources = Arrays.asList(
-					SenSeeActClient.SYNC_REMOTE_ID, action.getUser());
+			isUserTable = action.getUser() != null;
+			List<String> excludeSources = new ArrayList<>();
+			excludeSources.add(SenSeeActClient.SYNC_REMOTE_ID);
+			if (isUserTable)
+				excludeSources.add(action.getUser());
 			if (excludeSources.contains(action.getSource()))
 				continue;
-			if (action.getUser() != null && !users.contains(action.getUser()))
+			if (isUserTable && !users.contains(action.getUser()))
 				users.add(action.getUser());
 		}
 		synchronized (lock) {
-			if (stopped)
+			if (stopped || isUserTable == null)
 				return;
-			for (String user : users) {
-				PushUpdate update = new PushUpdate(new DatabaseTableUserKey(
-						database, table, user), project);
+			List<PushUpdate> updates = new ArrayList<>();
+			if (isUserTable) {
+				for (String user : users) {
+					updates.add(new PushUpdate(database, table, user, project));
+				}
+			} else {
+				updates.add(new PushUpdate(database, table, null, project));
+			}
+			for (PushUpdate update : updates) {
 				if (!pendingUpdates.contains(update)) {
 					pendingUpdates.add(update);
 					lock.notifyAll();
@@ -314,13 +324,15 @@ public class PushNotificationService {
 		synchronized (lock) {
 			if (stopped)
 				return false;
-			List<SyncPushRegistration> regs = registrations.get(update.key);
-			if (regs == null)
+			for (DatabaseTableUserKey key : registrations.keySet()) {
+				if (key.matchesUpdate(update))
+					updateRegs.addAll(registrations.get(key));
+			}
+			if (updateRegs.isEmpty())
 				return true;
-			updateRegs.addAll(regs);
 		}
-		PushMessageData data = new PushMessageData(update.project,
-				update.key.user, update.key.table);
+		PushMessageData data = new PushMessageData(update.project, update.user,
+				update.table);
 		Map<String,String> dataMap;
 		try {
 			dataMap = JsonMapper.convert(data, new TypeReference<>() {});
@@ -331,6 +343,8 @@ public class PushNotificationService {
 		}
 		logger.info("Sending push message: " + dataMap);
 		for (SyncPushRegistration reg : updateRegs) {
+			DatabaseTableUserKey key = new DatabaseTableUserKey(
+					reg.getDatabase(), update.table, reg.getUser());
 			AndroidConfig androidConfig = AndroidConfig.builder()
 					.setPriority(AndroidConfig.Priority.HIGH)
 					.build();
@@ -347,7 +361,7 @@ public class PushNotificationService {
 				MessagingErrorCode error = ex.getMessagingErrorCode();
 				if (error == MessagingErrorCode.UNREGISTERED ||
 						error == MessagingErrorCode.SENDER_ID_MISMATCH) {
-					unregisterOnError(update.key, reg, error);
+					unregisterOnError(key, reg, error);
 				} else {
 					logger.error("Failed to send push message to " +
 							reg.getFcmToken() + ": " + ex.getMessage(), ex);
@@ -365,6 +379,9 @@ public class PushNotificationService {
 		removeRegistration(key, reg);
 	}
 
+	/**
+	 * This key is used in the "registrations" map.
+	 */
 	private static class DatabaseTableUserKey {
 		public String database;
 		public String table;
@@ -375,6 +392,16 @@ public class PushNotificationService {
 			this.database = database;
 			this.table = table;
 			this.user = user;
+		}
+
+		public boolean matchesUpdate(PushUpdate update) {
+			if (!database.equals(update.database))
+				return false;
+			if (!table.equals(update.table))
+				return false;
+			if (update.user != null && !user.equals(update.user))
+				return false;
+			return true;
 		}
 		
 		@Override
@@ -406,23 +433,43 @@ public class PushNotificationService {
 			return JsonObject.toString(this);
 		}
 	}
-	
+
+	/**
+	 * An instance of this class is created when a database action occurs.
+	 */
 	private static class PushUpdate {
-		public DatabaseTableUserKey key;
+		public String database;
+		public String table;
+		public String user;
 		public String project;
-		
-		public PushUpdate(DatabaseTableUserKey key, String project) {
-			this.key = key;
+
+		/**
+		 * Constructs a new instance.
+		 *
+		 * @param database the name of the database where the action occurred
+		 * @param table the table name
+		 * @param user the user or null if it is a database action in a table
+		 * without a user field
+		 * @param project the project code
+		 */
+		public PushUpdate(String database, String table, String user,
+				String project) {
+			this.database = database;
+			this.table = table;
+			this.user = user;
 			this.project = project;
 		}
 		
 		@Override
 		public int hashCode() {
-			int result = key.hashCode();
+			int result = database.hashCode();
+			result += 31 * table.hashCode();
+			if (user != null)
+				result += 31 * user.hashCode();
 			result += 31 * project.hashCode();
 			return result;
 		}
-		
+
 		@Override
 		public boolean equals(Object obj) {
 			if (obj == null)
@@ -430,7 +477,13 @@ public class PushNotificationService {
 			if (obj.getClass() != getClass())
 				return false;
 			PushUpdate other = (PushUpdate)obj;
-			if (!key.equals(other.key))
+			if (!database.equals(other.database))
+				return false;
+			if (!table.equals(other.table))
+				return false;
+			if ((user == null) != (other.user == null))
+				return false;
+			if (user != null && !user.equals(other.user))
 				return false;
 			if (!project.equals(other.project))
 				return false;
