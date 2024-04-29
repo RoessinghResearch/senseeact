@@ -3,10 +3,13 @@ package nl.rrd.senseeact.client.model;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import nl.rrd.utils.json.JsonObject;
 
-@JsonIgnoreProperties(ignoreUnknown = true)
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+@JsonIgnoreProperties(ignoreUnknown=true)
 public class PushMessageData extends JsonObject {
 	private String project;
-	private String user;
+	private String user = null;
 	private String table;
 	
 	public PushMessageData() {
@@ -57,5 +60,14 @@ public class PushMessageData extends JsonObject {
 
 	public void setTable(String table) {
 		this.table = table;
+	}
+
+	public Map<String,String> toFcmMap() {
+		Map<String,String> map = new LinkedHashMap<>();
+		map.put("project", project);
+		if (user != null)
+			map.put("user", user);
+		map.put("table", table);
+		return map;
 	}
 }

@@ -333,14 +333,7 @@ public class PushNotificationService {
 		}
 		PushMessageData data = new PushMessageData(update.project, update.user,
 				update.table);
-		Map<String,String> dataMap;
-		try {
-			dataMap = JsonMapper.convert(data, new TypeReference<>() {});
-		} catch (ParseException ex) {
-			logger.error("Failed to create push message data map: " +
-					ex.getMessage(), ex);
-			return false;
-		}
+		Map<String,String> dataMap = data.toFcmMap();
 		logger.info("Sending push message: " + dataMap);
 		for (SyncPushRegistration reg : updateRegs) {
 			DatabaseTableUserKey key = new DatabaseTableUserKey(
