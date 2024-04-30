@@ -75,4 +75,12 @@ public class QuestionnaireSchedulesRecord extends BaseDatabaseObject {
 	public void setSchedulesList(List<DateTimeSchedule> schedulesList) {
 		this.schedulesList = schedulesList;
 	}
+
+	public List<QuestionnaireSchedule> toQuestionnaireSchedules() {
+		List<QuestionnaireSchedule> result = new ArrayList<>();
+		for (DateTimeSchedule schedule : schedulesList) {
+			result.add(new QuestionnaireSchedule(questionnaire, schedule));
+		}
+		return result;
+	}
 }

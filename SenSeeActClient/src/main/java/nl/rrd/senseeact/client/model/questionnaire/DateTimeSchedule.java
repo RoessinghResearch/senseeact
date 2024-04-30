@@ -16,6 +16,8 @@ import nl.rrd.utils.validation.MapReader;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.Period;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -313,6 +315,13 @@ public class DateTimeSchedule extends JsonObject {
 		public void setCount(int count) {
 			this.count = count;
 		}
+
+		public abstract LocalDate findLatestDateBefore(LocalDate startDate,
+				LocalDate date);
+		public abstract boolean occursAtDate(LocalDate startDate,
+				LocalDate date);
+		public abstract LocalDate findNextDateAfter(LocalDate startDate,
+				LocalDate date);
 	}
 
 	/**
@@ -323,6 +332,36 @@ public class DateTimeSchedule extends JsonObject {
 	public static class RepeatDay extends RecurDate {
 		public RepeatDay() {
 			super(RepeatType.DAY);
+		}
+
+		@Override
+		public LocalDate findLatestDateBefore(LocalDate startDate,
+				LocalDate date) {
+			Period period = Period.ofDays(getCount());
+			int singleCount = (int)ChronoUnit.DAYS.between(startDate,
+					date.minusDays(1));
+			int recurCount = singleCount / getCount();
+			return startDate.plus(period.multipliedBy(recurCount));
+		}
+
+		@Override
+		public boolean occursAtDate(LocalDate startDate, LocalDate date) {
+			Period period = Period.ofDays(getCount());
+			int singleCount = (int)ChronoUnit.DAYS.between(startDate, date);
+			int recurCount = singleCount / getCount();
+			LocalDate scheduleDate = startDate.plus(period.multipliedBy(
+					recurCount));
+			return scheduleDate.isEqual(date);
+		}
+
+		@Override
+		public LocalDate findNextDateAfter(LocalDate startDate,
+				LocalDate date) {
+			Period period = Period.ofDays(getCount());
+			int singleCount = (int)ChronoUnit.DAYS.between(startDate,
+					date.plus(period));
+			int recurCount = singleCount / getCount();
+			return startDate.plus(period.multipliedBy(recurCount));
 		}
 	}
 
@@ -358,6 +397,80 @@ public class DateTimeSchedule extends JsonObject {
 		 */
 		public void setDaysOfTheWeek(List<Integer> daysOfTheWeek) {
 			this.daysOfTheWeek = daysOfTheWeek;
+		}
+
+		@Override
+		public LocalDate findLatestDateBefore(LocalDate startDate,
+				LocalDate date) {
+			Period period = Period.ofWeeks(getCount());
+			List<Integer> days = daysOfTheWeek;
+			if (days.isEmpty())
+				days = List.of(startDate.getDayOfWeek().getValue());
+			LocalDate recurWeek = findPreviousRecurWeek(startDate, date);
+			LocalDate lastDate = startDate;
+			while (true) {
+				for (int day : days) {
+					LocalDate cmpDate = recurWeek.plusDays(day - 1);
+					if (!cmpDate.isBefore(startDate)) {
+						if (!cmpDate.isBefore(date))
+							return lastDate;
+						lastDate = cmpDate;
+					}
+				}
+				recurWeek = recurWeek.plus(period);
+			}
+		}
+
+		@Override
+		public boolean occursAtDate(LocalDate startDate, LocalDate date) {
+			Period period = Period.ofWeeks(getCount());
+			List<Integer> days = daysOfTheWeek;
+			if (days.isEmpty())
+				days = List.of(startDate.getDayOfWeek().getValue());
+			LocalDate recurWeek = findPreviousRecurWeek(startDate, date);
+			while (true) {
+				for (int day : days) {
+					LocalDate cmpDate = recurWeek.plusDays(day - 1);
+					if (cmpDate.isEqual(date))
+						return true;
+					else if (cmpDate.isAfter(date))
+						return false;
+				}
+				recurWeek = recurWeek.plus(period);
+			}
+		}
+
+		@Override
+		public LocalDate findNextDateAfter(LocalDate startDate,
+				LocalDate date) {
+			Period period = Period.ofWeeks(getCount());
+			List<Integer> days = daysOfTheWeek;
+			if (days.isEmpty())
+				days = List.of(startDate.getDayOfWeek().getValue());
+			LocalDate recurWeek = findPreviousRecurWeek(startDate, date);
+			while (true) {
+				for (int day : days) {
+					LocalDate cmpDate = recurWeek.plusDays(day - 1);
+					if (cmpDate.isAfter(date))
+						return cmpDate;
+				}
+				recurWeek = recurWeek.plus(period);
+			}
+		}
+
+		private LocalDate findPreviousRecurWeek(LocalDate startDate,
+				LocalDate date) {
+			LocalDate startWeek = startDate.minusDays(
+					startDate.getDayOfWeek().getValue() - 1);
+			LocalDate lastWeek = date.minusDays(
+					date.getDayOfWeek().getValue() + 6);
+			if (lastWeek.isBefore(startWeek))
+				return startWeek;
+			Period period = Period.ofWeeks(getCount());
+			int singleCount = (int)ChronoUnit.WEEKS.between(startWeek,
+					lastWeek);
+			int recurCount = singleCount / getCount();
+			return startWeek.plus(period.multipliedBy(recurCount));
 		}
 	}
 
@@ -395,6 +508,91 @@ public class DateTimeSchedule extends JsonObject {
 		public void setRepeatMonthType(RepeatMonthType repeatMonthType) {
 			this.repeatMonthType = repeatMonthType;
 		}
+
+		@Override
+		public LocalDate findLatestDateBefore(LocalDate startDate,
+				LocalDate date) {
+			Period period = Period.ofWeeks(getCount());
+			LocalDate recurMonth = findPreviousRecurMonth(startDate, date);
+			LocalDate lastDate = startDate;
+			while (true) {
+				LocalDate cmpDate = getRecurDateInMonth(startDate,
+						recurMonth);
+				if (!cmpDate.isBefore(startDate)) {
+					if (!cmpDate.isBefore(date))
+						return lastDate;
+					lastDate = cmpDate;
+				}
+				recurMonth = recurMonth.plus(period);
+			}
+		}
+
+		@Override
+		public boolean occursAtDate(LocalDate startDate, LocalDate date) {
+			Period period = Period.ofWeeks(getCount());
+			LocalDate recurMonth = findPreviousRecurMonth(startDate, date);
+			while (true) {
+				LocalDate cmpDate = getRecurDateInMonth(startDate,
+						recurMonth);
+				if (cmpDate.isEqual(date))
+					return true;
+				else if (cmpDate.isAfter(date))
+					return false;
+				recurMonth = recurMonth.plus(period);
+			}
+		}
+
+		@Override
+		public LocalDate findNextDateAfter(LocalDate startDate,
+				LocalDate date) {
+			Period period = Period.ofWeeks(getCount());
+			LocalDate recurMonth = findPreviousRecurMonth(startDate, date);
+			while (true) {
+				LocalDate cmpDate = getRecurDateInMonth(startDate,
+						recurMonth);
+				if (cmpDate.isAfter(date))
+					return cmpDate;
+				recurMonth = recurMonth.plus(period);
+			}
+		}
+
+		private LocalDate findPreviousRecurMonth(LocalDate startDate,
+				LocalDate date) {
+			LocalDate startMonth = startDate.withDayOfMonth(1);
+			LocalDate lastMonth = date.withDayOfMonth(1).minusMonths(1);
+			if (lastMonth.isBefore(startMonth))
+				return startMonth;
+			Period period = Period.ofMonths(getCount());
+			int singleCount = (int)ChronoUnit.MONTHS.between(startMonth,
+					lastMonth);
+			int recurCount = singleCount / getCount();
+			return startMonth.plus(period.multipliedBy(recurCount));
+		}
+
+		private LocalDate getRecurDateInMonth(LocalDate startDate,
+				LocalDate month) {
+			return switch (repeatMonthType) {
+				case SAME_DAY_OF_WEEK ->
+					getRecurDateInMonthSameDayOfWeek(startDate, month);
+				case SAME_DATE_NUMBER ->
+					getRecurDateInMonthSameDateNumber(startDate, month);
+			};
+		}
+
+		private LocalDate getRecurDateInMonthSameDayOfWeek(LocalDate startDate,
+				LocalDate month) {
+			LocalDate startMonth = startDate.withDayOfMonth(1);
+			int day = startDate.getDayOfWeek().getValue();
+			int num = (int)ChronoUnit.WEEKS.between(startMonth, startDate);
+			int addDays = (7 + day - month.getDayOfWeek().getValue()) % 7;
+			LocalDate first = month.plusDays(addDays);
+			return first.plusDays(7L * num);
+		}
+
+		private LocalDate getRecurDateInMonthSameDateNumber(LocalDate startDate,
+				LocalDate month) {
+			return month.withDayOfMonth(startDate.getDayOfMonth());
+		}
 	}
 
 	public enum RepeatMonthType {
@@ -423,6 +621,37 @@ public class DateTimeSchedule extends JsonObject {
 	public static class RepeatYear extends RecurDate {
 		public RepeatYear() {
 			super(RepeatType.YEAR);
+		}
+
+		@Override
+		public LocalDate findLatestDateBefore(LocalDate startDate,
+				LocalDate date) {
+			Period period = Period.ofYears(getCount());
+			int singleCount = (int)ChronoUnit.YEARS.between(startDate,
+					date.minusDays(1));
+			int recurCount = singleCount / getCount();
+			return startDate.plus(period.multipliedBy(recurCount));
+		}
+
+		@Override
+		public boolean occursAtDate(LocalDate startDate,
+				LocalDate date) {
+			Period period = Period.ofYears(getCount());
+			int singleCount = (int)ChronoUnit.YEARS.between(startDate, date);
+			int recurCount = singleCount / getCount();
+			LocalDate scheduleDate = startDate.plus(period.multipliedBy(
+					recurCount));
+			return scheduleDate.isEqual(date);
+		}
+
+		@Override
+		public LocalDate findNextDateAfter(LocalDate startDate,
+				LocalDate date) {
+			Period period = Period.ofYears(getCount());
+			int singleCount = (int)ChronoUnit.YEARS.between(startDate,
+					date.plus(period));
+			int recurCount = singleCount / getCount();
+			return startDate.plus(period.multipliedBy(recurCount));
 		}
 	}
 
