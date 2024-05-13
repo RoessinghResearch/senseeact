@@ -512,7 +512,7 @@ public class DateTimeSchedule extends JsonObject {
 		@Override
 		public LocalDate findLatestDateBefore(LocalDate startDate,
 				LocalDate date) {
-			Period period = Period.ofWeeks(getCount());
+			Period period = Period.ofMonths(getCount());
 			LocalDate recurMonth = findPreviousRecurMonth(startDate, date);
 			LocalDate lastDate = startDate;
 			while (true) {
@@ -529,7 +529,7 @@ public class DateTimeSchedule extends JsonObject {
 
 		@Override
 		public boolean occursAtDate(LocalDate startDate, LocalDate date) {
-			Period period = Period.ofWeeks(getCount());
+			Period period = Period.ofMonths(getCount());
 			LocalDate recurMonth = findPreviousRecurMonth(startDate, date);
 			while (true) {
 				LocalDate cmpDate = getRecurDateInMonth(startDate,
@@ -545,7 +545,7 @@ public class DateTimeSchedule extends JsonObject {
 		@Override
 		public LocalDate findNextDateAfter(LocalDate startDate,
 				LocalDate date) {
-			Period period = Period.ofWeeks(getCount());
+			Period period = Period.ofMonths(getCount());
 			LocalDate recurMonth = findPreviousRecurMonth(startDate, date);
 			while (true) {
 				LocalDate cmpDate = getRecurDateInMonth(startDate,
@@ -582,11 +582,21 @@ public class DateTimeSchedule extends JsonObject {
 		private LocalDate getRecurDateInMonthSameDayOfWeek(LocalDate startDate,
 				LocalDate month) {
 			LocalDate startMonth = startDate.withDayOfMonth(1);
-			int day = startDate.getDayOfWeek().getValue();
+			int startDay = startDate.getDayOfWeek().getValue();
+			LocalDate first = getFirstDateInMonthWithDayOfWeek(month, startDay);
+			LocalDate last = getFirstDateInMonthWithDayOfWeek(
+					month.plusMonths(1), startDay).minusWeeks(1);
 			int num = (int)ChronoUnit.WEEKS.between(startMonth, startDate);
-			int addDays = (7 + day - month.getDayOfWeek().getValue()) % 7;
-			LocalDate first = month.plusDays(addDays);
-			return first.plusDays(7L * num);
+			LocalDate recurDate = first.plusDays(7L * num);
+			if (recurDate.isAfter(last))
+				return last;
+			return recurDate;
+		}
+
+		private LocalDate getFirstDateInMonthWithDayOfWeek(LocalDate month,
+				int dayOfWeek) {
+			int addDays = (7 + dayOfWeek - month.getDayOfWeek().getValue()) % 7;
+			return month.plusDays(addDays);
 		}
 
 		private LocalDate getRecurDateInMonthSameDateNumber(LocalDate startDate,
