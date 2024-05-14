@@ -3,11 +3,11 @@ package nl.rrd.senseeact.client;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import nl.rrd.utils.exception.ParseException;
-import nl.rrd.utils.http.HttpClient;
-import nl.rrd.utils.http.HttpClientException;
 import nl.rrd.senseeact.client.exception.HttpError;
 import nl.rrd.senseeact.client.exception.SenSeeActClientException;
+import nl.rrd.utils.exception.ParseException;
+import nl.rrd.utils.http.HttpClient2;
+import nl.rrd.utils.http.HttpClientException;
 
 import java.io.IOException;
 
@@ -64,14 +64,15 @@ public class SenSeeActProjectClient {
 	 * server
 	 */
 	public <T> T runQuery(String action, String method, boolean authenticate,
-			SenSeeActQueryRunner<T> runner) throws SenSeeActClientException,
-			HttpClientException, ParseException, IOException {
+			SenSeeActRequestRunner runner, SenSeeActResultReader<T> reader)
+			throws SenSeeActClientException, HttpClientException,
+			ParseException, IOException {
 		String url = baseUrl + "/" + project + "/v" +
 				SenSeeActClient.PROTOCOL_VERSION + action;
-		HttpClient client = ssaClient.getHttpClientForUrl(url, method,
+		HttpClient2 client = ssaClient.getHttpClientForUrl(url, method,
 				authenticate);
 		try {
-			return runner.runQuery(client);
+			return reader.read(runner.run(client));
 		} catch (HttpClientException httpEx) {
 			ObjectMapper mapper = new ObjectMapper();
 			HttpError error;

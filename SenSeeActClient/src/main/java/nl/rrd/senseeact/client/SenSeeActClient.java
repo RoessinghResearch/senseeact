@@ -17,8 +17,11 @@ import nl.rrd.utils.beans.PropertyReader;
 import nl.rrd.utils.datetime.DateTimeUtils;
 import nl.rrd.utils.exception.DatabaseException;
 import nl.rrd.utils.exception.ParseException;
-import nl.rrd.utils.http.HttpClient;
+import nl.rrd.utils.http.HttpClient2;
 import nl.rrd.utils.http.HttpClientException;
+import nl.rrd.utils.http.HttpResponse;
+import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.Header;
 import org.slf4j.Logger;
 
 import java.io.*;
@@ -68,7 +71,7 @@ public class SenSeeActClient {
 	
 	private final Object lock = new Object();
 	private boolean closed = false;
-	private List<HttpClient> activeClients = new ArrayList<>();
+	private List<HttpClient2> activeClients = new ArrayList<>();
 	private String baseUrl;
 	
 	// the following variable is set after login(), loginUsername(), signup()
@@ -106,7 +109,7 @@ public class SenSeeActClient {
 			if (closed)
 				return;
 			closed = true;
-			for (HttpClient client : activeClients) {
+			for (HttpClient2 client : activeClients) {
 				client.close();
 			}
 		}
@@ -214,8 +217,8 @@ public class SenSeeActClient {
 		params.setCookie(cookie);
 		params.setAutoExtendCookie(autoExtendCookie);
 		TokenResult result = runQuery("/auth/login", "POST", false,
-				client -> client.writeJson(params)
-						.readJson(TokenResult.class));
+				client -> client.writeJson(params),
+				response -> response.readJson(TokenResult.class));
 		this.authHeaders = List.of(new AuthHeader(DEFAULT_AUTH_HEADER,
 				result.getToken()));
 		return result;
@@ -309,8 +312,8 @@ public class SenSeeActClient {
 		params.setAutoExtendCookie(autoExtendCookie);
 		LoginUsernameResult loginResult = runQuery("/auth/login-username",
 				"POST", false,
-				client -> client.writeJson(params)
-						.readJson(LoginUsernameResult.class));
+				client -> client.writeJson(params),
+				response -> response.readJson(LoginUsernameResult.class));
 		this.authHeaders = List.of(new AuthHeader(DEFAULT_AUTH_HEADER,
 				loginResult.getToken()));
 		return loginResult;
@@ -366,7 +369,8 @@ public class SenSeeActClient {
 			HttpClientException, ParseException, IOException {
 		TokenResult result = runQuery("/auth/login-as", "GET", true,
 			client -> client.addQueryParam("user", user)
-					.readJson(TokenResult.class));
+					.readResponse(),
+			response -> response.readJson(TokenResult.class));
 		this.authHeaders = List.of(new AuthHeader(DEFAULT_AUTH_HEADER,
 				result.getToken()));
 		return result;
@@ -524,8 +528,8 @@ public class SenSeeActClient {
 		params.setAutoExtendCookie(autoExtendCookie);
 		params.setProject(project);
 		TokenResult result = runQuery("/auth/signup", "POST", false,
-				client -> client.writeJson(params)
-							.readJson(TokenResult.class));
+				client -> client.writeJson(params),
+				response -> response.readJson(TokenResult.class));
 		this.authHeaders = List.of(new AuthHeader(DEFAULT_AUTH_HEADER,
 				result.getToken()));
 		return result;
@@ -580,8 +584,8 @@ public class SenSeeActClient {
 		params.setProject(project);
 		params.setEmailTemplate(emailTemplate);
 		TokenResult result = runQuery("/auth/signup", "POST", false,
-				client -> client.writeJson(params)
-							.readJson(TokenResult.class));
+				client -> client.writeJson(params),
+				response -> response.readJson(TokenResult.class));
 		this.authHeaders = List.of(new AuthHeader(DEFAULT_AUTH_HEADER,
 				result.getToken()));
 		return result;
@@ -660,8 +664,8 @@ public class SenSeeActClient {
 		params.setProject(project);
 		TokenResult result = runQuery("/auth/signup-temporary-user", "POST",
 				false,
-				client -> client.writeJson(params)
-						.readJson(TokenResult.class));
+				client -> client.writeJson(params),
+				response -> response.readJson(TokenResult.class));
 		this.authHeaders = List.of(new AuthHeader(DEFAULT_AUTH_HEADER,
 				result.getToken()));
 		return result;
@@ -690,9 +694,9 @@ public class SenSeeActClient {
 				client -> {
 					if (template != null && !template.isEmpty())
 						client.addQueryParam("template", template);
-					return client.readString();
-				}
-		);
+					return client.readResponse();
+				},
+				HttpResponse::readString);
 	}
 
 	/**
@@ -712,11 +716,12 @@ public class SenSeeActClient {
 	public void verifyEmail(String userId, String code)
 			throws SenSeeActClientException, HttpClientException,
 			ParseException, IOException {
+		Map<String,String> postParams = new LinkedHashMap<>();
+		postParams.put("user", userId);
+		postParams.put("code", code);
 		runQuery("/auth/verify-email", "POST", false,
-				client -> client.writePostParam("user", userId)
-						.writePostParam("code", code)
-						.readString()
-		);
+				client -> client.writePostParams(postParams),
+				HttpResponse::readString);
 	}
 
 	/**
@@ -743,16 +748,15 @@ public class SenSeeActClient {
 	public void changePassword(String email, String oldPassword,
 			String newPassword) throws SenSeeActClientException, HttpClientException,
 			ParseException, IOException {
+		Map<String,String> postParams = new LinkedHashMap<>();
+		if (email != null)
+			postParams.put("email", email);
+		if (oldPassword != null)
+			postParams.put("oldPassword", oldPassword);
+		postParams.put("newPassword", newPassword);
 		runQuery("/auth/change-password", "POST", true,
-			client -> {
-				if (email != null)
-					client.writePostParam("email", email);
-				if (oldPassword != null)
-					client.writePostParam("oldPassword", oldPassword);
-				return client.writePostParam("newPassword", newPassword)
-						.readString();
-			}
-		);
+			client -> client.writePostParams(postParams),
+			HttpResponse::readString);
 	}
 
 	/**
@@ -787,7 +791,8 @@ public class SenSeeActClient {
 						.addHeader("Accept-Language",
 								emailLocale.getLanguage() + "-" +
 								emailLocale.getCountry() + ", *;q=0.1")
-						.readString());
+						.readResponse(),
+				HttpResponse::readString);
 	}
 	
 	/**
@@ -814,11 +819,13 @@ public class SenSeeActClient {
 	public void resetPassword(final String email, final String code,
 			final String password) throws SenSeeActClientException,
 			HttpClientException, ParseException, IOException {
+		Map<String,String> postParams = new LinkedHashMap<>();
+		postParams.put("email", email);
+		postParams.put("code", code);
+		postParams.put("password", password);
 		runQuery("/auth/reset-password", "POST", false,
-				client -> client.writePostParam("email", email)
-						.writePostParam("code", code)
-						.writePostParam("password", password)
-						.readString());
+				client -> client.writePostParams(postParams),
+				HttpResponse::readString);
 	}
 
 	/**
@@ -837,7 +844,8 @@ public class SenSeeActClient {
 	public List<ListUser> getUserList() throws SenSeeActClientException,
 			HttpClientException, ParseException, IOException {
 		return runQuery("/user/list", "GET", true,
-				client -> client.readJson(new TypeReference<>() {}));
+				HttpClient2::readResponse,
+				response -> response.readJson(new TypeReference<>() {}));
 	}
 
 	/**
@@ -860,8 +868,9 @@ public class SenSeeActClient {
 				client -> {
 					if (user != null)
 						client.addQueryParam("user", user);
-					return client.readJson(User.class);
-				});
+					return client.readResponse();
+				},
+				response -> response.readJson(User.class));
 	}
 	
 	/**
@@ -884,8 +893,9 @@ public class SenSeeActClient {
 				client -> {
 					if (email != null)
 						client.addQueryParam("email", email);
-					return client.readJson(User.class);
-				});
+					return client.readResponse();
+				},
+				response -> response.readJson(User.class));
 	}
 
 	/**
@@ -927,9 +937,9 @@ public class SenSeeActClient {
 				client -> {
 					if (user != null)
 						client.addQueryParam("user", user);
-					return client.writeJson(profile)
-						.readJson(User.class);
-				});
+					return client.writeJson(profile);
+				},
+				response -> response.readJson(User.class));
 	}
 
 	/**
@@ -976,9 +986,9 @@ public class SenSeeActClient {
 						client.addQueryParam("user", user);
 					if (emailTemplate != null)
 						client.addQueryParam("emailTemplate", emailTemplate);
-					return client.writeJson(profile)
-						.readJson(User.class);
-				});
+					return client.writeJson(profile);
+				},
+				response -> response.readJson(User.class));
 	}
 
 	/**
@@ -1020,9 +1030,9 @@ public class SenSeeActClient {
 				client -> {
 					if (user != null)
 						client.addQueryParam("user", user);
-					return client.writeJson(userData)
-						.readJson(User.class);
-				});
+					return client.writeJson(userData);
+				},
+				response -> response.readJson(User.class));
 	}
 
 	/**
@@ -1069,9 +1079,9 @@ public class SenSeeActClient {
 						client.addQueryParam("user", user);
 					if (emailTemplate != null)
 						client.addQueryParam("emailTemplate", emailTemplate);
-					return client.writeJson(userData)
-						.readJson(User.class);
-				});
+					return client.writeJson(userData);
+				},
+				response -> response.readJson(User.class));
 	}
 
 	/**
@@ -1092,7 +1102,9 @@ public class SenSeeActClient {
 	public void deleteUser(final String user) throws SenSeeActClientException,
 			HttpClientException, ParseException, IOException {
 		runQuery("/user/", "DELETE", true,
-				client -> client.addQueryParam("user", user).readString());
+				client -> client.addQueryParam("user", user)
+						.readResponse(),
+				HttpResponse::readString);
 	}
 
 	/**
@@ -1116,8 +1128,9 @@ public class SenSeeActClient {
 				client -> {
 					if (user != null)
 						client.addQueryParam("user", user);
-					return client.readJson(new TypeReference<>() {});
-				});
+					return client.readResponse();
+				},
+				response -> response.readJson(new TypeReference<>() {}));
 	}
 	
 	/**
@@ -1166,13 +1179,14 @@ public class SenSeeActClient {
 				client -> {
 					client.addQueryParam("name", name);
 					if (members != null && !members.isEmpty()) {
-						Map<String,Object> params = new LinkedHashMap<>();
+						Map<String, Object> params = new LinkedHashMap<>();
 						params.put("members", members);
-						client.writeJson(params);
+						return client.writeJson(params);
+					} else {
+						return client.readResponse();
 					}
-					client.readString();
-					return null;
-				});
+				},
+				HttpResponse::readString);
 	}
 	
 	/**
@@ -1202,7 +1216,8 @@ public class SenSeeActClient {
 				client -> client.addQueryParam("name", name)
 						.addQueryParam("includeInactiveMembers",
 								Boolean.toString(includeInactiveMembers))
-						.readJson(Group.class));
+						.readResponse(),
+				response -> response.readJson(Group.class));
 	}
 	
 	/**
@@ -1221,7 +1236,9 @@ public class SenSeeActClient {
 	public void deleteGroup(final String name) throws SenSeeActClientException,
 			HttpClientException, ParseException, IOException {
 		runQuery("/group/", "DELETE", true,
-				client -> client.addQueryParam("name", name).readString());
+				client -> client.addQueryParam("name", name)
+						.readResponse(),
+				HttpResponse::readString);
 	}
 	
 	/**
@@ -1244,7 +1261,8 @@ public class SenSeeActClient {
 		runQuery("/group/member", "POST", true,
 				client -> client.addQueryParam("group", group)
 						.addQueryParam("member", member)
-						.readString());
+						.readResponse(),
+				HttpResponse::readString);
 	}
 	
 	/**
@@ -1267,7 +1285,8 @@ public class SenSeeActClient {
 		runQuery("/group/member", "DELETE", true,
 				client -> client.addQueryParam("group", group)
 					.addQueryParam("member", member)
-					.readString());
+					.readResponse(),
+				HttpResponse::readString);
 	}
 
 	/**
@@ -1290,7 +1309,8 @@ public class SenSeeActClient {
 		runQuery("/user/role", "PUT", true,
 				client -> client.addQueryParam("user", user)
 						.addQueryParam("role", role.toString())
-						.readString());
+						.readResponse(),
+				HttpResponse::readString);
 	}
 	
 	/**
@@ -1315,7 +1335,8 @@ public class SenSeeActClient {
 		runQuery("/user/active", "PUT", true,
 				client -> client.addQueryParam("user", user)
 						.addQueryParam("active", Boolean.toString(active))
-						.readString());
+						.readResponse(),
+				HttpResponse::readString);
 	}
 
 	/**
@@ -1333,7 +1354,8 @@ public class SenSeeActClient {
 	public List<Project> getProjectList() throws SenSeeActClientException,
 			HttpClientException, ParseException, IOException {
 		return runQuery("/project/list", "GET", true,
-				client -> client.readJson(new TypeReference<>() {}));
+				HttpClient2::readResponse,
+				response -> response.readJson(new TypeReference<>() {}));
 	}
 	
 	/**
@@ -1352,7 +1374,8 @@ public class SenSeeActClient {
 	public List<String> getAllProjectList() throws SenSeeActClientException,
 			HttpClientException, ParseException, IOException {
 		return runQuery("/project/list/all", "GET", true,
-				client -> client.readJson(new TypeReference<>() {}));
+				HttpClient2::readResponse,
+				response -> response.readJson(new TypeReference<>() {}));
 	}
 	
 	/**
@@ -1377,9 +1400,9 @@ public class SenSeeActClient {
 				client -> {
 					if (subject != null)
 						client.addQueryParam("user", subject);
-					client.readString();
-					return null;
-				});
+					return client.readResponse();
+				},
+				HttpResponse::readString);
 	}
 
 	/**
@@ -1453,8 +1476,9 @@ public class SenSeeActClient {
 						client.addQueryParam("role", role.toString());
 					client.addQueryParam("includeInactive", Boolean.toString(
 							includeInactive));
-					return client.readJson(new TypeReference<>() {});
-				});
+					return client.readResponse();
+				},
+				response -> response.readJson(new TypeReference<>() {}));
 	}
 	
 	/**
@@ -1476,15 +1500,14 @@ public class SenSeeActClient {
 	public void addUserToProject(final String user, String project,
 			final Role asRole) throws SenSeeActClientException, HttpClientException,
 			ParseException, IOException {
+		Map<String,String> postParams = new LinkedHashMap<>();
+		if (user != null)
+			postParams.put("user", user);
+		postParams.put("asRole", asRole.toString());
 		runQuery(String.format("/project/%s/user", project), "POST",
 				true,
-				client -> {
-					if (user != null)
-						client.writePostParam("user", user);
-					client.writePostParam("asRole", asRole.toString())
-							.readString();
-					return null;
-				});
+				client -> client.writePostParams(postParams),
+				HttpResponse::readString);
 	}
 	
 	/**
@@ -1518,9 +1541,9 @@ public class SenSeeActClient {
 						client.addQueryParam("user", user);
 					if (asRole != null)
 						client.addQueryParam("asRole", asRole.toString());
-					client.readString();
-					return null;
-				});
+					return client.readResponse();
+				},
+				HttpResponse::readString);
 	}
 
 	/**
@@ -1551,8 +1574,9 @@ public class SenSeeActClient {
 				client -> {
 					if (subject != null)
 						client.addQueryParam("subject", subject);
-					return client.readJson(new TypeReference<>() {});
-				});
+					return client.readResponse();
+				},
+				response -> response.readJson(new TypeReference<>() {}));
 	}
 
 	/**
@@ -1583,8 +1607,9 @@ public class SenSeeActClient {
 				client -> {
 					if (grantee != null)
 						client.addQueryParam("grantee", grantee);
-					return client.readJson(new TypeReference<>() {});
-				});
+					return client.readResponse();
+				},
+				response -> response.readJson(new TypeReference<>() {}));
 	}
 
 	/**
@@ -1622,9 +1647,9 @@ public class SenSeeActClient {
 						client.addQueryParam("subject", subject);
 					ProjectUserAccessRule rule = new ProjectUserAccessRule();
 					rule.setAccessRestriction(accessRestriction);
-					client.writeJson(rule).readString();
-					return null;
-				});
+					return client.writeJson(rule);
+				},
+				HttpResponse::readString);
 	}
 
 	/**
@@ -1655,9 +1680,9 @@ public class SenSeeActClient {
 					client.addQueryParam("grantee", grantee);
 					if (subject != null)
 						client.addQueryParam("subject", subject);
-					client.readString();
-					return null;
-				});
+					return client.readResponse();
+				},
+				HttpResponse::readString);
 	}
 
 	/**
@@ -1683,7 +1708,8 @@ public class SenSeeActClient {
 		runQuery("/access/subject", "POST", true,
 				client -> client.addQueryParam("user", user)
 						.addQueryParam("subject", subject)
-						.readString());
+						.readResponse(),
+				HttpResponse::readString);
 	}
 
 	/**
@@ -1708,7 +1734,8 @@ public class SenSeeActClient {
 		runQuery("/access/subject", "DELETE", true,
 				client -> client.addQueryParam("user", user)
 						.addQueryParam("subject", subject)
-						.readString());
+						.readResponse(),
+				HttpResponse::readString);
 	}
 
 	/**
@@ -1744,7 +1771,8 @@ public class SenSeeActClient {
 		return runQuery(String.format("/project/%s/subjects/watch/register",
 				project), "POST", true,
 				client -> client.addQueryParam("reset", Boolean.toString(reset))
-						.readString());
+						.readResponse(),
+				HttpResponse::readString);
 	}
 	
 	/**
@@ -1794,8 +1822,9 @@ public class SenSeeActClient {
 			IOException {
 		return runQuery(String.format("/project/%s/subjects/watch/%s",
 				project, regId), "GET", true,
-				client -> {
-					List<?> list = client.readJson(List.class);
+				HttpClient2::readResponse,
+				response -> {
+					List<?> list = response.readJson(List.class);
 					List<SubjectEvent> result = new ArrayList<>();
 					for (Object obj : list) {
 						result.add(SubjectEvent.parse(obj));
@@ -1825,7 +1854,8 @@ public class SenSeeActClient {
 			IOException {
 		runQuery(String.format("/project/%s/subjects/watch/unregister/%s",
 				project, regId), "POST", true,
-				HttpClient::readString);
+				HttpClient2::readResponse,
+				HttpResponse::readString);
 	}
 	
 	/**
@@ -1846,7 +1876,8 @@ public class SenSeeActClient {
 			IOException {
 		return runQuery(String.format("/project/%s/tables", project),
 				"GET", true,
-				client -> client.readJson(new TypeReference<>() {}));
+				HttpClient2::readResponse,
+				response -> response.readJson(new TypeReference<>() {}));
 	}
 
 	/**
@@ -1868,7 +1899,8 @@ public class SenSeeActClient {
 			IOException {
 		return runQuery(String.format("/project/%s/table/%s/spec",
 				project, table), "GET", true,
-				client -> client.readJson(TableSpec.class));
+				HttpClient2::readResponse,
+				response -> response.readJson(TableSpec.class));
 	}
 
 	/**
@@ -2508,28 +2540,28 @@ public class SenSeeActClient {
 				if (subject != null)
 					client.addQueryParam("user", subject);
 				if (start instanceof ZonedDateTime) {
-					client.addQueryParam("start", ((ZonedDateTime)start).format(
+					client.addQueryParam("start", ((ZonedDateTime) start).format(
 							zonedFormat));
 				} else if (start instanceof LocalDateTime) {
-					client.addQueryParam("start", ((LocalDateTime)start).format(
+					client.addQueryParam("start", ((LocalDateTime) start).format(
 							localFormat));
 				} else if (start instanceof LocalDate) {
-					client.addQueryParam("start", ((LocalDate)start).format(
+					client.addQueryParam("start", ((LocalDate) start).format(
 							dateFormat));
 				}
 				if (end instanceof ZonedDateTime) {
-					client.addQueryParam("end", ((ZonedDateTime)end).format(
+					client.addQueryParam("end", ((ZonedDateTime) end).format(
 							zonedFormat));
 				} else if (end instanceof LocalDateTime) {
-					client.addQueryParam("end", ((LocalDateTime)end).format(
+					client.addQueryParam("end", ((LocalDateTime) end).format(
 							localFormat));
 				} else if (end instanceof LocalDate) {
-					client.addQueryParam("end", ((LocalDate)end).format(
+					client.addQueryParam("end", ((LocalDate) end).format(
 							dateFormat));
 				}
-				Map<String,Object> content = new LinkedHashMap<>();
+				Map<String, Object> content = new LinkedHashMap<>();
 				if (criteria != null) {
-					Map<String,Object> jsonCriteria =
+					Map<String, Object> jsonCriteria =
 							SelectFilterGenerator.toJsonObject(criteria);
 					content.put("filter", jsonCriteria);
 				}
@@ -2538,8 +2570,12 @@ public class SenSeeActClient {
 				if (limit > 0)
 					content.put("limit", limit);
 				if (!content.isEmpty())
-					client.writeJson(content);
-				List<Map<?,?>> mapList = client.readJson(
+					return client.writeJson(content);
+				else
+					return client.readResponse();
+			},
+			response -> {
+				List<Map<?,?>> mapList = response.readJson(
 						new TypeReference<>() {});
 				List<T> result = new ArrayList<>();
 				DatabaseObjectMapper mapper = new DatabaseObjectMapper();
@@ -3732,38 +3768,42 @@ public class SenSeeActClient {
 				if (subject != null)
 					client.addQueryParam("user", subject);
 				if (start instanceof ZonedDateTime) {
-					client.addQueryParam("start", ((ZonedDateTime)start).format(
+					client.addQueryParam("start", ((ZonedDateTime) start).format(
 							zonedFormat));
 				} else if (start instanceof LocalDateTime) {
-					client.addQueryParam("start", ((LocalDateTime)start).format(
+					client.addQueryParam("start", ((LocalDateTime) start).format(
 							localFormat));
 				} else if (start instanceof LocalDate) {
-					client.addQueryParam("start", ((LocalDate)start).format(
+					client.addQueryParam("start", ((LocalDate) start).format(
 							dateFormat));
 				}
 				if (end instanceof ZonedDateTime) {
-					client.addQueryParam("end", ((ZonedDateTime)end).format(
+					client.addQueryParam("end", ((ZonedDateTime) end).format(
 							zonedFormat));
 				} else if (end instanceof LocalDateTime) {
-					client.addQueryParam("end", ((LocalDateTime)end).format(
+					client.addQueryParam("end", ((LocalDateTime) end).format(
 							localFormat));
 				} else if (end instanceof LocalDate) {
-					client.addQueryParam("end", ((LocalDate)end).format(
+					client.addQueryParam("end", ((LocalDate) end).format(
 							dateFormat));
 				}
-				Map<String,Object> content = new LinkedHashMap<>();
+				Map<String, Object> content = new LinkedHashMap<>();
 				if (criteria != null) {
-					Map<String,Object> jsonCriteria =
+					Map<String, Object> jsonCriteria =
 							SelectFilterGenerator.toJsonObject(criteria);
 					content.put("filter", jsonCriteria);
 				}
 				if (sort != null)
 					content.put("sort", sort);
 				if (!content.isEmpty())
-					client.writeJson(content);
-				Map<?,?> response = client.readJson(Map.class);
+					return client.writeJson(content);
+				else
+					return client.readResponse();
+			},
+			response -> {
+				Map<?,?> map = response.readJson(Map.class);
 				DatabaseObjectMapper mapper = new DatabaseObjectMapper();
-				Map<?,?> value = (Map<?,?>)response.get("value");
+				Map<?,?> value = (Map<?,?>)map.get("value");
 				if (value == null)
 					return null;
 				else
@@ -3784,9 +3824,9 @@ public class SenSeeActClient {
 	 * the subject to null, the record should belong to yourself. If the
 	 * specified subject doesn't exist or you're not allowed to access the
 	 * subject, this method will throw an {@link SenSeeActClientException
-	 * SenSeeActClientException} with 403 Forbidden. If the record ID doesn't exist,
-	 * this method will throw an {@link SenSeeActClientException SenSeeActClientException}
-	 * with 404 Not Found.</p>
+	 * SenSeeActClientException} with 403 Forbidden. If the record ID doesn't
+	 * exist, this method will throw an {@link SenSeeActClientException
+	 * SenSeeActClientException} with 404 Not Found.</p>
 	 * 
 	 * @param project the project code
 	 * @param table the table name
@@ -3812,7 +3852,10 @@ public class SenSeeActClient {
 				client -> {
 					if (subject != null)
 						client.addQueryParam("user", subject);
-					Map<?,?> map = client.readJson(Map.class);
+					return client.readResponse();
+				},
+				response -> {
+					Map<?,?> map = response.readJson(Map.class);
 					DatabaseObjectMapper mapper = new DatabaseObjectMapper();
 					return mapper.mapToObject(map, dataClass, true);
 				});
@@ -3872,8 +3915,9 @@ public class SenSeeActClient {
 					if (callbackUrl != null)
 						client.addQueryParam("callbackUrl", callbackUrl);
 					return client.addQueryParam("reset", Boolean.toString(reset))
-							.readString();
-				});
+							.readResponse();
+				},
+				HttpResponse::readString);
 	}
 	
 	/**
@@ -3927,8 +3971,9 @@ public class SenSeeActClient {
 						client.addQueryParam("callbackUrl", callbackUrl);
 					return client.addQueryParam("anyUser", "true")
 							.addQueryParam("reset", Boolean.toString(reset))
-							.readString();
-				});
+							.readResponse();
+				},
+				HttpResponse::readString);
 	}
 	
 	/**
@@ -3979,7 +4024,8 @@ public class SenSeeActClient {
 			IOException {
 		return runQuery(String.format("/project/%s/table/%s/watch/%s",
 				project, table, regId), "GET", true,
-				client -> client.readJson(new TypeReference<>() {}));
+				HttpClient2::readResponse,
+				response -> response.readJson(new TypeReference<>() {}));
 	}
 	
 	/**
@@ -4007,10 +4053,8 @@ public class SenSeeActClient {
 			IOException {
 		runQuery(String.format("/project/%s/table/%s/watch/unregister/%s",
 				project, table, regId), "POST", true,
-				client -> {
-					client.readString();
-					return null;
-				});
+				HttpClient2::readResponse,
+				HttpResponse::readString);
 	}
 	
 	/**
@@ -4086,12 +4130,15 @@ public class SenSeeActClient {
 					if (subject != null)
 						client.addQueryParam("user", subject);
 					DatabaseObjectMapper mapper = new DatabaseObjectMapper();
-					List<Map<?,?>> maps = new ArrayList<>();
+					List<Map<?, ?>> maps = new ArrayList<>();
 					for (DatabaseObject record : records) {
 						maps.add(mapper.objectToMap(record, true));
 					}
-					List<String> ids = client.writeJson(maps)
-							.readJson(new TypeReference<>() {});
+					return client.writeJson(maps);
+				},
+				response -> {
+					List<String> ids = response.readJson(
+							new TypeReference<>() {});
 					Iterator<String> idIt = ids.iterator();
 					for (DatabaseObject record : records) {
 						record.setId(idIt.next());
@@ -4128,17 +4175,17 @@ public class SenSeeActClient {
 				client -> {
 					List<String> fields =
 							DatabaseFieldScanner.getDatabaseFieldNames(
-							record.getClass());
+									record.getClass());
 					if (fields.contains("user")) {
-						String user = (String)PropertyReader.readProperty(
+						String user = (String) PropertyReader.readProperty(
 								record, "user");
 						client.addQueryParam("user", user);
 					}
 					DatabaseObjectMapper mapper = new DatabaseObjectMapper();
-					Map<?,?> map = mapper.objectToMap(record, true);
-					client.writeJson(map).readString();
-					return null;
-				});
+					Map<?, ?> map = mapper.objectToMap(record, true);
+					return client.writeJson(map);
+				},
+				HttpResponse::readString);
 	}
 
 	/**
@@ -4693,15 +4740,16 @@ public class SenSeeActClient {
 							dateFormat));
 				}
 				if (criteria != null) {
-					Map<String,Object> jsonCriteria =
+					Map<String, Object> jsonCriteria =
 							SelectFilterGenerator.toJsonObject(criteria);
-					Map<String,Object> content = new LinkedHashMap<>();
+					Map<String, Object> content = new LinkedHashMap<>();
 					content.put("filter", jsonCriteria);
-					client.writeJson(content);
+					return client.writeJson(content);
+				} else {
+					return client.readResponse();
 				}
-				client.readString();
-				return null;
-			});
+			},
+			HttpResponse::readString);
 	}
 
 	/**
@@ -4732,9 +4780,9 @@ public class SenSeeActClient {
 				client -> {
 					if (subject != null)
 						client.addQueryParam("user", subject);
-					client.readString();
-					return null;
-				});
+					return client.readResponse();
+				},
+				HttpResponse::readString);
 	}
 
 	/**
@@ -4772,9 +4820,9 @@ public class SenSeeActClient {
 				client -> {
 					if (subject != null)
 						client.addQueryParam("user", subject);
-					client.readString();
-					return null;
-				});
+					return client.readResponse();
+				},
+				HttpResponse::readString);
 	}
 
 	/**
@@ -4903,8 +4951,8 @@ public class SenSeeActClient {
 				String.format("/sync/project/%s/get-read-stats", project),
 				"POST", true,
 				client -> client.addQueryParam("user", subject)
-						.writeJson(params)
-						.readJson(SyncActionStats.class));
+						.writeJson(params),
+				response -> response.readJson(SyncActionStats.class));
 	}
 
 	/**
@@ -5032,8 +5080,8 @@ public class SenSeeActClient {
 		List<DatabaseAction> actions = runQuery(
 				String.format("/sync/project/%s/read", project), "POST", true,
 				client -> client.addQueryParam("user", subject)
-						.writeJson(params)
-						.readJson(new TypeReference<>() {})
+						.writeJson(params),
+				response -> response.readJson(new TypeReference<>() {})
 		);
 		if (actions.isEmpty())
 			return 0;
@@ -5067,14 +5115,14 @@ public class SenSeeActClient {
 				client -> {
 					if (subject != null)
 						client.addQueryParam("user", subject);
-					Map<String,Object> data = new LinkedHashMap<>();
+					Map<String, Object> data = new LinkedHashMap<>();
 					data.put("fcmToken", fcmToken);
 					data.put("deviceId", deviceId);
 					data.put("includeTables", tableRestriction.getIncludeTables());
 					data.put("excludeTables", tableRestriction.getExcludeTables());
-					client.writeJson(data).readString();
-					return null;
-				});
+					return client.writeJson(data);
+				},
+				HttpResponse::readString);
 	}
 
 	public void syncUnregisterPush(String project, final String subject,
@@ -5085,10 +5133,10 @@ public class SenSeeActClient {
 				client -> {
 					if (subject != null)
 						client.addQueryParam("user", subject);
-					client.addQueryParam("deviceId", deviceId)
-						.readString();
-					return null;
-				});
+					return client.addQueryParam("deviceId", deviceId)
+							.readResponse();
+				},
+				HttpResponse::readString);
 	}
 
 	/**
@@ -5147,11 +5195,9 @@ public class SenSeeActClient {
 		}
 		SyncWatchResult syncRes = runQuery(String.format(
 				"/sync/project/%s/watch", project), "POST", true,
-				client -> {
-					client.addQueryParam("user", subject);
-					return client.writeJson(params)
-							.readJson(SyncWatchResult.class);
-				});
+				client -> client.addQueryParam("user", subject)
+						.writeJson(params),
+				response -> response.readJson(SyncWatchResult.class));
 		if (syncRes.getResultCode() == ResultCode.NO_DATA)
 			return false;
 		else if (syncRes.getResultCode() == ResultCode.TIMEOUT)
@@ -5277,11 +5323,9 @@ public class SenSeeActClient {
 		params.put("excludeTables", tableRestriction.getExcludeTables());
 		String action = String.format("/sync/project/%s/get-progress", project);
 		List<SyncProgress> progress = runQuery(action, "POST", true,
-			client -> {
-				client.addQueryParam("user", subject);
-				return client.writeJson(params)
-						.readJson(new TypeReference<>() {});
-			});
+			client -> client.addQueryParam("user", subject)
+					.writeJson(params),
+			response -> response.readJson(new TypeReference<>() {}));
 		logger.debug("Progress of actions from database written to server: " +
 				progress);
 		getAuthHeaders();
@@ -5410,18 +5454,17 @@ public class SenSeeActClient {
 		params.put("excludeTables", tableRestriction.getExcludeTables());
 		runQuery(String.format("/sync/project/%s/write", project),
 				"POST", true,
-				client -> {
-					client.addQueryParam("user", subject);
-					return client.writeJson(params).readString();
-				});
+				client -> client.addQueryParam("user", subject)
+						.writeJson(params),
+				HttpResponse::readString);
 		params.clear();
 		params.put("includeTables", tableRestriction.getIncludeTables());
 		params.put("excludeTables", tableRestriction.getExcludeTables());
 		List<SyncProgress> progress = runQuery(String.format(
 				"/sync/project/%s/get-progress", project), "POST", true,
 				client -> client.addQueryParam("user", subject)
-						.writeJson(params)
-						.readJson(new TypeReference<>() {}));
+						.writeJson(params),
+				response -> response.readJson(new TypeReference<>() {}));
 		syncStats.setProgress(progress);
 		logger.debug("Synchronized batch to server: " + actions.size() +
 				" items");
@@ -5466,15 +5509,14 @@ public class SenSeeActClient {
 				client -> {
 					if (device != null && !device.isEmpty())
 						client.addQueryParam("device", device);
-					client.addQueryParam("date", date.format(
-							DateTimeFormatter.ofPattern("yyyy-MM-dd")))
+					return client.addQueryParam("date", date.format(
+									DateTimeFormatter.ofPattern("yyyy-MM-dd")))
 						.addQueryParam("position", Long.toString(position))
 						.addQueryParam("zip", Boolean.toString(zip))
 						.addHeader("Content-Type", "application/octet-stream")
-						.writeBytes(data)
-						.readBytes();
-					return null;
-				});
+						.writeBytes(data, ContentType.APPLICATION_OCTET_STREAM);
+				},
+				HttpResponse::readBytes);
 	}
 	
 	/**
@@ -5512,7 +5554,11 @@ public class SenSeeActClient {
 				if (end != null) {
 					client.addQueryParam("end", end.format(zonedFormat));
 				}
-				List<Map<?,?>> maps = client.readJson(new TypeReference<>() {});
+				return client.readResponse();
+			},
+			response -> {
+				List<Map<?,?>> maps = response.readJson(
+						new TypeReference<>() {});
 				List<SystemStat> result = new ArrayList<>();
 				DatabaseObjectMapper mapper = new DatabaseObjectMapper();
 				for (Map<?,?> map : maps) {
@@ -5546,8 +5592,9 @@ public class SenSeeActClient {
 			throws SenSeeActClientException, HttpClientException, ParseException,
 			IOException {
 		return runQuery("/stats/" + name + "/latest", "GET", true,
-				client -> {
-					Map<?,?> nullable = client.readJson(Map.class);
+				HttpClient2::readResponse,
+				response -> {
+					Map<?,?> nullable = response.readJson(Map.class);
 					Map<?,?> map = (Map<?,?>)nullable.get("value");
 					if (map == null)
 						return null;
@@ -5569,35 +5616,38 @@ public class SenSeeActClient {
 	 * @throws IOException if an error occurs while communicating with the
 	 * service
 	 */
-	public File downloadFile(HttpClient client, Long fileSize, File dir,
+	public File downloadFile(HttpClient2 client, Long fileSize, File dir,
 			DownloadProgressListener listener) throws HttpClientException,
 			IOException {
-		String disposition = client.getResponse().getHeaderField(
-				"Content-Disposition");
-		if (disposition == null)
-			throw new IOException("Header Content-Disposition not found");
-		Pattern regex = Pattern.compile("filename=\"(.+)\"");
-		Matcher m = regex.matcher(disposition);
-		if (!m.find()) {
-			throw new IOException(
-					"Can't find filename in Content-Disposition: " +
-					disposition);
-		}
-		String filename = m.group(1);
-		long current = 0;
-		File file = new File(dir, filename);
-		InputStream in = client.getInputStream();
-		try (OutputStream out = new FileOutputStream(file)) {
-			byte[] bs = new byte[4096];
-			int len;
-			while ((len = in.read(bs)) > 0) {
-				out.write(bs, 0, len);
-				current += len;
-				if (listener != null)
-					listener.onDownloadProgress(current, fileSize);
+		return client.readResponse(response -> {
+			Header header = response.getHeader("Content-Disposition");
+			if (header == null)
+				throw new IOException("Header Content-Disposition not found");
+			String disposition = header.getValue();
+			Pattern regex = Pattern.compile("filename=\"(.+)\"");
+			Matcher m = regex.matcher(disposition);
+			if (!m.find()) {
+				throw new IOException(
+						"Can't find filename in Content-Disposition: " +
+						disposition);
 			}
-		}
-		return file;
+			String filename = m.group(1);
+			long current = 0;
+			File file = new File(dir, filename);
+			try (InputStream in = response.getEntity().getContent()) {
+				try (OutputStream out = new FileOutputStream(file)) {
+					byte[] bs = new byte[4096];
+					int len;
+					while ((len = in.read(bs)) > 0) {
+						out.write(bs, 0, len);
+						current += len;
+						if (listener != null)
+							listener.onDownloadProgress(current, fileSize);
+					}
+				}
+			}
+			return file;
+		});
 	}
 
 	/**
@@ -5638,7 +5688,8 @@ public class SenSeeActClient {
 		String url = String.format("/project/%s/user_access", project);
 		return runQuery(url, "GET", true,
 				client -> client.addQueryParam("user", subject)
-						.readJson(new TypeReference<>() {}));
+						.readResponse(),
+				response -> response.readJson(new TypeReference<>() {}));
 	}
 
 	/**
@@ -5662,12 +5713,10 @@ public class SenSeeActClient {
 			ParseException, IOException {
 		String url = String.format("/project/%s/user_access", project);
 		runQuery(url, "POST", true,
-				client -> {
-					client.addQueryParam("user", subject)
-							.addQueryParam("emailRegex", emailRegex)
-							.readString();
-					return null;
-				});
+				client -> client.addQueryParam("user", subject)
+						.addQueryParam("emailRegex", emailRegex)
+						.readResponse(),
+				HttpResponse::readString);
 	}
 
 	/**
@@ -5698,9 +5747,9 @@ public class SenSeeActClient {
 					client.addQueryParam("user", subject);
 					if (emailRegex != null)
 						client.addQueryParam("emailRegex", emailRegex);
-					client.readString();
-					return null;
-				});
+					return client.readResponse();
+				},
+				HttpResponse::readString);
 	}
 
 	/**
@@ -5727,7 +5776,10 @@ public class SenSeeActClient {
 				client -> {
 					if (subject != null)
 						client.addQueryParam("user", subject);
-					List<Map<String,Object>> perms = client.readJson(
+					return client.readResponse();
+				},
+				response -> {
+					List<Map<String,Object>> perms = response.readJson(
 							new TypeReference<>() {});
 					DatabaseObjectMapper mapper = new DatabaseObjectMapper();
 					List<PermissionRecord> result = new ArrayList<>();
@@ -5760,13 +5812,10 @@ public class SenSeeActClient {
 			Map<String,Object> params) throws SenSeeActClientException,
 			HttpClientException, ParseException, IOException {
 		runQuery("/access/permission", "POST", true,
-				client -> {
-					client.addQueryParam("user", subject)
-							.addQueryParam("permission", permission)
-							.writeJson(params)
-							.readString();
-					return null;
-				});
+				client -> client.addQueryParam("user", subject)
+						.addQueryParam("permission", permission)
+						.writeJson(params),
+				HttpResponse::readString);
 	}
 
 	/**
@@ -5792,13 +5841,10 @@ public class SenSeeActClient {
 			Map<String,Object> params) throws SenSeeActClientException,
 			HttpClientException, ParseException, IOException {
 		runQuery("/access/permission", "DELETE", true,
-				client -> {
-					client.addQueryParam("user", subject)
-							.addQueryParam("permission", permission)
-							.writeJson(params)
-							.readString();
-					return null;
-				});
+				client -> client.addQueryParam("user", subject)
+						.addQueryParam("permission", permission)
+						.writeJson(params),
+				HttpResponse::readString);
 	}
 
 	/**
@@ -5821,12 +5867,10 @@ public class SenSeeActClient {
 			throws SenSeeActClientException, HttpClientException,
 			ParseException, IOException {
 		runQuery("/access/permission/all", "DELETE", true,
-				client -> {
-					client.addQueryParam("user", subject)
-							.addQueryParam("permission", permission)
-							.readString();
-					return null;
-				});
+				client -> client.addQueryParam("user", subject)
+						.addQueryParam("permission", permission)
+						.readResponse(),
+				HttpResponse::readString);
 	}
 
 	/**
@@ -5848,16 +5892,15 @@ public class SenSeeActClient {
 	public void registerMobileWake(String subject, String deviceId,
 			String fcmToken, int interval) throws SenSeeActClientException,
 			HttpClientException, ParseException, IOException {
+		Map<String,String> postParams = new LinkedHashMap<>();
+		if (subject != null)
+			postParams.put("user", subject);
+		postParams.put("deviceId", deviceId);
+		postParams.put("fcmToken", fcmToken);
+		postParams.put("interval", Integer.toString(interval));
 		runQuery("/mobile/wake/register", "POST", true,
-				client -> {
-					if (subject != null)
-						client.writePostParam("user", subject);
-					client.writePostParam("deviceId", deviceId)
-						.writePostParam("fcmToken", fcmToken)
-						.writePostParam("interval", Integer.toString(interval))
-						.readString();
-					return null;
-				});
+				client -> client.writePostParams(postParams),
+				HttpResponse::readString);
 	}
 
 	/**
@@ -5877,14 +5920,13 @@ public class SenSeeActClient {
 	public void unregisterMobileWake(String subject, String deviceId)
 			throws SenSeeActClientException, HttpClientException, ParseException,
 			IOException {
+		Map<String,String> postParams = new LinkedHashMap<>();
+		if (subject != null)
+			postParams.put("user", subject);
+		postParams.put("deviceId", deviceId);
 		runQuery("/mobile/wake/unregister", "POST", true,
-				client -> {
-					if (subject != null)
-						client.writePostParam("user", subject);
-					client.writePostParam("deviceId", deviceId)
-						.readString();
-					return null;
-				});
+				client -> client.writePostParams(postParams),
+				HttpResponse::readString);
 	}
 
 	/**
@@ -5934,12 +5976,14 @@ public class SenSeeActClient {
 	 * server
 	 */
 	protected <T> T runQuery(String action, String method, boolean authenticate,
-			SenSeeActQueryRunner<T> runner) throws SenSeeActClientException,
-			HttpClientException, ParseException, IOException {
-		HttpClient client = getHttpClient(action, method, authenticate);
+			SenSeeActRequestRunner runner, SenSeeActResultReader<T> reader)
+			throws SenSeeActClientException, HttpClientException,
+			ParseException, IOException {
+		HttpClient2 client = getHttpClient(action, method, authenticate);
 		try {
-			T result = runner.runQuery(client);
-			responseHeaders = client.getResponseHeaders();
+			HttpResponse httpResponse = runner.run(client);
+			T result = reader.read(httpResponse);
+			responseHeaders = httpResponse.getHeaders();
 			return result;
 		} catch (HttpClientException httpEx) {
 			ObjectMapper mapper = new ObjectMapper();
@@ -5961,9 +6005,9 @@ public class SenSeeActClient {
 	
 	/**
 	 * Creates an HTTP client for a new SenSeeAct query. This method is used in
-	 * {@link #runQuery(String, String, boolean, SenSeeActQueryRunner)
+	 * {@link #runQuery(String, String, boolean, SenSeeActRequestRunner, SenSeeActResultReader)
 	 * runQuery()}. When the client is no longer needed, it should be closed
-	 * with {@link #closeHttpClient(HttpClient) closeHttpClient()}.
+	 * with {@link #closeHttpClient(HttpClient2) closeHttpClient()}.
 	 * 
 	 * @param action the action. This is appended to the base URL and should
 	 * start with a slash.
@@ -5979,7 +6023,7 @@ public class SenSeeActClient {
 	 * @throws IOException if an error occurs while communicating with the
 	 * server
 	 */
-	private HttpClient getHttpClient(String action, String method,
+	private HttpClient2 getHttpClient(String action, String method,
 			boolean authenticate) throws SenSeeActClientException,
 			HttpClientException, ParseException, IOException {
 		return getHttpClientForUrl(baseUrl + "/v" + PROTOCOL_VERSION + action,
@@ -5992,7 +6036,7 @@ public class SenSeeActClient {
 	 * takes a complete URL, so it can also be used for SenSeeAct project
 	 * services (see {@link SenSeeActProjectClient SenSeeActProjectClient}).
 	 * When the client is no longer needed, it should be closed with {@link
-	 * #closeHttpClient(HttpClient) closeHttpClient()}.
+	 * #closeHttpClient(HttpClient2) closeHttpClient()}.
 	 *
 	 * @param url the URL
 	 * @param method the HTTP method (e.g. GET or POST)
@@ -6007,10 +6051,10 @@ public class SenSeeActClient {
 	 * @throws IOException if an error occurs while communicating with the
 	 * server
 	 */
-	protected HttpClient getHttpClientForUrl(String url, String method,
+	protected HttpClient2 getHttpClientForUrl(String url, String method,
 			boolean authenticate) throws SenSeeActClientException,
 			HttpClientException, ParseException, IOException {
-		HttpClient client = new HttpClient(url);
+		HttpClient2 client = new HttpClient2(url);
 		client.setMethod(method);
 		if (authenticate) {
 			List<AuthHeader> headers = getAuthHeaders();
@@ -6034,7 +6078,7 @@ public class SenSeeActClient {
 	 * 
 	 * @param client the HTTP client
 	 */
-	protected void closeHttpClient(HttpClient client) {
+	protected void closeHttpClient(HttpClient2 client) {
 		synchronized (lock) {
 			if (closed)
 				return;
