@@ -286,6 +286,17 @@ public class DateTimeSchedule extends JsonObject {
 		}
 
 		/**
+		 * Constructs a new instance.
+		 *
+		 * @param type the repeat type (day, week, month, year)
+		 * @param count the count between two instances
+		 */
+		public RecurDate(RepeatType type, int count) {
+			this.type = type;
+			this.count = count;
+		}
+
+		/**
 		 * Returns the repeat type (day, week, month, year).
 		 *
 		 * @return the repeat type (day, week, month, year)
@@ -329,9 +340,13 @@ public class DateTimeSchedule extends JsonObject {
 	 */
 	@JsonDeserialize(using=JsonDeserializer.None.class)
 	@JsonIgnoreProperties(ignoreUnknown=true)
-	public static class RepeatDay extends RecurDate {
-		public RepeatDay() {
+	public static class RecurDay extends RecurDate {
+		public RecurDay() {
 			super(RepeatType.DAY);
+		}
+
+		public RecurDay(int count) {
+			super(RepeatType.DAY, count);
 		}
 
 		@Override
@@ -372,11 +387,15 @@ public class DateTimeSchedule extends JsonObject {
 	 */
 	@JsonDeserialize(using=JsonDeserializer.None.class)
 	@JsonIgnoreProperties(ignoreUnknown=true)
-	public static class RepeatWeek extends RecurDate {
+	public static class RecurWeek extends RecurDate {
 		private List<Integer> daysOfTheWeek = new ArrayList<>();
 
-		public RepeatWeek() {
+		public RecurWeek() {
 			super(RepeatType.WEEK);
+		}
+
+		public RecurWeek(int count) {
+			super(RepeatType.WEEK, count);
 		}
 
 		/**
@@ -481,12 +500,16 @@ public class DateTimeSchedule extends JsonObject {
 	 */
 	@JsonDeserialize(using=JsonDeserializer.None.class)
 	@JsonIgnoreProperties(ignoreUnknown=true)
-	public static class RepeatMonth extends RecurDate {
-		private RepeatMonthType repeatMonthType =
-				RepeatMonthType.SAME_DAY_OF_WEEK;
+	public static class RecurMonth extends RecurDate {
+		private RecurMonthType repeatMonthType =
+				RecurMonthType.SAME_DAY_OF_WEEK;
 
-		public RepeatMonth() {
+		public RecurMonth() {
 			super(RepeatType.MONTH);
+		}
+
+		public RecurMonth(int count) {
+			super(RepeatType.MONTH, count);
 		}
 
 		/**
@@ -495,7 +518,7 @@ public class DateTimeSchedule extends JsonObject {
 		 *
 		 * @return the repeat month type
 		 */
-		public RepeatMonthType getRepeatMonthType() {
+		public RecurMonthType getRepeatMonthType() {
 			return repeatMonthType;
 		}
 
@@ -505,7 +528,7 @@ public class DateTimeSchedule extends JsonObject {
 		 *
 		 * @param repeatMonthType the repeat month type
 		 */
-		public void setRepeatMonthType(RepeatMonthType repeatMonthType) {
+		public void setRepeatMonthType(RecurMonthType repeatMonthType) {
 			this.repeatMonthType = repeatMonthType;
 		}
 
@@ -605,7 +628,7 @@ public class DateTimeSchedule extends JsonObject {
 		}
 	}
 
-	public enum RepeatMonthType {
+	public enum RecurMonthType {
 		/**
 		 * Recur every x months at the same day of the week. The day of the week
 		 * is determined by the start date. For example if the start date is
@@ -628,9 +651,13 @@ public class DateTimeSchedule extends JsonObject {
 	 */
 	@JsonDeserialize(using=JsonDeserializer.None.class)
 	@JsonIgnoreProperties(ignoreUnknown=true)
-	public static class RepeatYear extends RecurDate {
-		public RepeatYear() {
+	public static class RecurYear extends RecurDate {
+		public RecurYear() {
 			super(RepeatType.YEAR);
+		}
+
+		public RecurYear(int count) {
+			super(RepeatType.YEAR, count);
 		}
 
 		@Override
@@ -688,10 +715,10 @@ public class DateTimeSchedule extends JsonObject {
 						p.currentTokenLocation(), ex);
 			}
 			Class<? extends RecurDate> typeClass = switch (type) {
-				case DAY -> RepeatDay.class;
-				case WEEK -> RepeatWeek.class;
-				case MONTH -> RepeatMonth.class;
-				case YEAR ->  RepeatYear.class;
+				case DAY -> RecurDay.class;
+				case WEEK -> RecurWeek.class;
+				case MONTH -> RecurMonth.class;
+				case YEAR ->  RecurYear.class;
 			};
 			try {
 				return JsonMapper.convert(map, typeClass);

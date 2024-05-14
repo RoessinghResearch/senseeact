@@ -1,8 +1,11 @@
 package nl.rrd.senseeact.client.model.questionnaire;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import nl.rrd.senseeact.dao.BaseDatabaseObject;
 import nl.rrd.senseeact.dao.DatabaseField;
 import nl.rrd.senseeact.dao.DatabaseType;
+import nl.rrd.utils.exception.ParseException;
+import nl.rrd.utils.json.JsonMapper;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -45,7 +48,7 @@ public class QuestionnaireSchedulesRecord extends BaseDatabaseObject {
 	 * @return the JSON code for the schedule
 	 */
 	public String getSchedules() {
-		return schedules;
+		return JsonMapper.generate(schedulesList);
 	}
 
 	/**
@@ -53,9 +56,10 @@ public class QuestionnaireSchedulesRecord extends BaseDatabaseObject {
 	 * Users can call {@link #setSchedulesList(List) setSchedulesList()}.
 	 *
 	 * @param schedules the JSON code for the schedule
+	 * @throws ParseException if the JSON code is invalid
 	 */
-	public void setSchedules(String schedules) {
-		this.schedules = schedules;
+	public void setSchedules(String schedules) throws ParseException {
+		schedulesList = JsonMapper.parse(schedules, new TypeReference<>() {});
 	}
 
 	/**
