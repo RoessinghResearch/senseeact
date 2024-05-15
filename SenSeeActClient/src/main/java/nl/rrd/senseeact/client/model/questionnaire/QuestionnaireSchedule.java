@@ -7,6 +7,9 @@ public class QuestionnaireSchedule {
 	private String questionnaire;
 	private DateTimeSchedule schedule;
 
+	public QuestionnaireSchedule() {
+	}
+
 	public QuestionnaireSchedule(String questionnaire,
 			DateTimeSchedule schedule) {
 		this.questionnaire = questionnaire;
