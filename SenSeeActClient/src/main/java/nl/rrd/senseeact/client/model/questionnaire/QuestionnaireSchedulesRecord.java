@@ -1,16 +1,24 @@
 package nl.rrd.senseeact.client.model.questionnaire;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import nl.rrd.senseeact.dao.BaseDatabaseObject;
+import nl.rrd.senseeact.client.model.sample.ResourceUTCSample;
 import nl.rrd.senseeact.dao.DatabaseField;
 import nl.rrd.senseeact.dao.DatabaseType;
 import nl.rrd.utils.exception.ParseException;
 import nl.rrd.utils.json.JsonMapper;
 
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-public class QuestionnaireSchedulesRecord extends BaseDatabaseObject {
+/**
+ * This record defines a list of schedules for a questionnaire. The time
+ * indicates the time when the record was published from the questionnaire
+ * editor.
+ *
+ * @author Dennis Hofs (RRD)
+ */
+public class QuestionnaireSchedulesRecord extends ResourceUTCSample {
 	@DatabaseField(value=DatabaseType.STRING, index=true)
 	private String questionnaire;
 
@@ -18,7 +26,21 @@ public class QuestionnaireSchedulesRecord extends BaseDatabaseObject {
 	private String schedules;
 	private List<DateTimeSchedule> schedulesList = new ArrayList<>();
 
+	/**
+	 * Constructs a new empty record. This is used for DataAccessObjects and
+	 * JSON serialization. Users should not call this.
+	 */
 	public QuestionnaireSchedulesRecord() {
+	}
+
+	/**
+	 * Constructs a new record at the specified time. It should define the
+	 * local time and location-based time zone (not an offset).
+	 *
+	 * @param tzTime the time
+	 */
+	public QuestionnaireSchedulesRecord(ZonedDateTime tzTime) {
+		super(tzTime);
 	}
 
 	/**
