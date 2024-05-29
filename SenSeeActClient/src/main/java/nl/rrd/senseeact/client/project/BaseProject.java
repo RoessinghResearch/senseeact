@@ -1,9 +1,13 @@
 package nl.rrd.senseeact.client.project;
 
+import nl.rrd.senseeact.client.model.User;
 import nl.rrd.senseeact.client.sensor.BaseSensor;
 import nl.rrd.senseeact.dao.Database;
 import nl.rrd.senseeact.dao.DatabaseTableDef;
 import nl.rrd.senseeact.dao.sync.DatabaseSynchronizer;
+import nl.rrd.utils.exception.DatabaseException;
+import nl.rrd.utils.validation.ValidationException;
+import org.apache.hc.core5.http.HttpException;
 
 import java.util.*;
 
@@ -131,7 +135,29 @@ public abstract class BaseProject {
 	 * @return the database tables (can be empty or null)
 	 */
 	public abstract List<DatabaseTableDef<?>> getDatabaseTables();
-	
+
+	/**
+	 * Validates whether "user" can add "userToAdd" to this project. This method
+	 * can use the authentication database if needed. The users "user" and
+	 * "userToAdd" could be the same user, if the user wants to add themselves
+	 * to a project. This method is called from the API endpoint
+	 * POST /project/{project}/user. If adding the user is not allowed, this
+	 * method should throw a {@link ValidationException ValidationException}.
+	 * The exception message will be used in the API error response.
+	 *
+	 * <p>The default implementation does nothing, so adding the user is always
+	 * allowed according to the conditions of the endpoint.</p>
+	 *
+	 * @param user the user that wants to add "userToAdd" to this project
+	 * @param userToAdd the user that should be added to this project
+	 * @param authDb the authentication database
+	 * @throws ValidationException if adding the user is not allowed
+	 * @throws DatabaseException if a database error occurs
+	 */
+	public void validateAddUser(User user, User userToAdd, Database authDb)
+			throws ValidationException, DatabaseException {
+	}
+
 	/**
 	 * Returns the tables that are needed for the sensors returned by
 	 * {@link #getSensors() getSensors()}. This can be useful for the

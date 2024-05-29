@@ -34,6 +34,7 @@ import nl.rrd.utils.json.JsonMapper;
 import nl.rrd.utils.json.JsonObjectStreamReader;
 import nl.rrd.utils.json.JsonParseException;
 import nl.rrd.utils.validation.TypeConversion;
+import nl.rrd.utils.validation.ValidationException;
 import org.slf4j.Logger;
 
 import java.io.IOException;
@@ -223,6 +224,11 @@ public class ProjectControllerExecution {
 				criteria, null);
 		if (userProject != null)
 			return null;
+		try {
+			project.validateAddUser(user, userToAdd, authDb);
+		} catch (ValidationException ex) {
+			throw new ForbiddenException(ex.getMessage());
+		}
 		userProject = new UserProject();
 		userProject.setUser(userToAdd.getUserid());
 		userProject.setProjectCode(project.getCode());

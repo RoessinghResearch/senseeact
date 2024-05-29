@@ -131,7 +131,7 @@ public class AuthControllerExecution {
 	 * @param response the response
 	 * @param email the email address
 	 * @param password the password
-	 * @param project the project code or null
+	 * @param projectCode the project code or null
 	 * @param expireMinutes the number of minutes after which the token should
 	 * expire
 	 * @param cookie true if a HttpOnly cookie should be set
@@ -148,7 +148,7 @@ public class AuthControllerExecution {
 	 */
 	private static TokenResult signup(ProtocolVersion version,
 			HttpServletRequest request, HttpServletResponse response,
-			String email, String password, String project,
+			String email, String password, String projectCode,
 			Integer expireMinutes, boolean cookie, boolean autoExtendCookie,
 			String emailTemplateName, Database authDb, boolean isTempUser,
 			boolean sendEmail) throws HttpException, Exception {
@@ -184,8 +184,9 @@ public class AuthControllerExecution {
 			else
 				badReqEx = badReqEx.appendInvalidInput(ex);
 		}
+		BaseProject project = null;
 		try {
-			project = validateProject(version, project);
+			project = validateProject(version, projectCode);
 		} catch (BadRequestException ex) {
 			if (badReqEx == null)
 				badReqEx = ex;
@@ -207,13 +208,18 @@ public class AuthControllerExecution {
 		}
 		userCache.createUser(authDb, user);
 		if (project != null) {
+			try {
+				project.validateAddUser(user, user, authDb);
+			} catch (ValidationException ex) {
+				throw new ForbiddenException(ex.getMessage());
+			}
 			UserProject userProject = new UserProject();
 			userProject.setUser(user.getUserid());
-			userProject.setProjectCode(project);
+			userProject.setProjectCode(project.getCode());
 			userProject.setAsRole(Role.PATIENT);
 			authDb.insert(UserProjectTable.NAME, userProject);
 			UserListenerRepository.getInstance().notifyUserAddedToProject(user,
-					project, Role.PATIENT);
+					project.getCode(), Role.PATIENT);
 		}
 		if (sendEmail)
 			sendNewUserMail(request, user, emailTemplate, authDb);
@@ -228,13 +234,13 @@ public class AuthControllerExecution {
 
 	public Object signupTemporaryUser(ProtocolVersion version,
 			HttpServletRequest request, HttpServletResponse response,
-			String project, boolean cookie, boolean autoExtendCookie,
+			String projectCode, boolean cookie, boolean autoExtendCookie,
 			SignupTemporaryUserParams signupParams, Database authDb)
 			throws HttpException, Exception {
 		validateForbiddenQueryParams(request, "email", "password");
 		Integer expiration = LoginParams.DEFAULT_EXPIRATION;
 		if (signupParams != null) {
-			project = signupParams.getProject();
+			projectCode = signupParams.getProject();
 			if (signupParams.getTokenExpiration() == null ||
 					signupParams.getTokenExpiration() != 0) {
 				expiration = signupParams.getTokenExpiration();
@@ -242,7 +248,7 @@ public class AuthControllerExecution {
 			cookie = signupParams.isCookie();
 			autoExtendCookie = signupParams.isAutoExtendCookie();
 		}
-		project = validateProject(version, project);
+		BaseProject project = validateProject(version, projectCode);
 		SignupParams delegateParams = new SignupParams();
 		String email = UUID.randomUUID().toString().toLowerCase()
 				.replaceAll("-", "") + "@temp.senseeact.com";
@@ -250,7 +256,7 @@ public class AuthControllerExecution {
 		String password = UUID.randomUUID().toString().toLowerCase()
 				.replaceAll("-", "");
 		delegateParams.setPassword(password);
-		delegateParams.setProject(project);
+		delegateParams.setProject(project.getCode());
 		delegateParams.setTokenExpiration(expiration);
 		delegateParams.setCookie(cookie);
 		delegateParams.setAutoExtendCookie(autoExtendCookie);
@@ -258,19 +264,21 @@ public class AuthControllerExecution {
 				false, null, delegateParams, authDb, true, false);
 	}
 
-	private static String validateProject(ProtocolVersion version,
-			String project) throws BadRequestException {
+	private static BaseProject validateProject(ProtocolVersion version,
+			String projectCode) throws BadRequestException {
 		ProjectRepository projects = AppComponents.get(ProjectRepository.class);
-		if (project == null || project.isEmpty()) {
+		if (projectCode == null || projectCode.isEmpty()) {
 			if (version.ordinal() >= ProtocolVersion.V5_0_7.ordinal())
 				return null;
 			else
-				return "default";
-		} else if (projects.findProjectByCode(project) != null) {
+				return projects.findProjectByCode("default");
+		}
+		BaseProject project = projects.findProjectByCode(projectCode);
+		if (project != null) {
 			return project;
 		} else {
 			HttpFieldError error = new HttpFieldError("project",
-					"Project not found: " + project);
+					"Project not found: " + projectCode);
 			throw BadRequestException.withInvalidInput(error);
 		}
 	}
