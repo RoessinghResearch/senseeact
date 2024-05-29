@@ -206,13 +206,15 @@ public class AuthControllerExecution {
 			if (!errors.isEmpty())
 				throw BadRequestException.withInvalidInput(errors);
 		}
-		userCache.createUser(authDb, user);
 		if (project != null) {
 			try {
 				project.validateAddUser(user, user, authDb);
 			} catch (ValidationException ex) {
 				throw new ForbiddenException(ex.getMessage());
 			}
+		}
+		userCache.createUser(authDb, user);
+		if (project != null) {
 			UserProject userProject = new UserProject();
 			userProject.setUser(user.getUserid());
 			userProject.setProjectCode(project.getCode());
