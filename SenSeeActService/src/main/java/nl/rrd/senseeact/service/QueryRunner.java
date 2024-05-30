@@ -3,6 +3,8 @@ package nl.rrd.senseeact.service;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import nl.rrd.senseeact.client.AuthHeader;
+import nl.rrd.senseeact.client.SenSeeActClient;
 import nl.rrd.senseeact.client.exception.ErrorCode;
 import nl.rrd.senseeact.client.project.BaseProject;
 import nl.rrd.senseeact.dao.Database;
@@ -17,12 +19,15 @@ import nl.rrd.senseeact.service.sso.SSOTokenRepository;
 import nl.rrd.utils.AppComponents;
 import nl.rrd.utils.datetime.DateTimeUtils;
 import nl.rrd.utils.exception.DatabaseException;
+import nl.rrd.utils.http.HttpClient2;
 import org.slf4j.Logger;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * This class can run queries on the authentication database or a project
@@ -362,5 +367,35 @@ public class QueryRunner {
 					"Authentication token invalid");
 		}
 		return new ValidateTokenResult(user, details);
+	}
+
+	public static SenSeeActClient getSelfClient(HttpServletRequest request) {
+		Configuration config = AppComponents.get(Configuration.class);
+		String baseUrl = config.getBaseUrl();
+		String path = baseUrl.replaceAll("^https?://[^/]+", "");
+		baseUrl = "http://localhost:8080" + path;
+		SenSeeActClient client = new SenSeeActClient(baseUrl);
+		List<AuthHeader> authHeaders = new ArrayList<>();
+		request.getHeaderNames().asIterator().forEachRemaining(
+				name -> {
+					name = name.toLowerCase();
+					if (!name.equals("authorization") && !name.startsWith("x-"))
+						return;
+					String value = request.getHeader(name);
+					authHeaders.add(new AuthHeader(name, value));
+				}
+		);
+		StringBuilder cookieStr = new StringBuilder();
+		for (Cookie cookie : request.getCookies()) {
+			if (!cookieStr.isEmpty())
+				cookieStr.append("; ");
+			cookieStr.append(cookie.getName());
+			cookieStr.append("=");
+			cookieStr.append(cookie.getValue());
+		}
+		if (!cookieStr.isEmpty())
+			authHeaders.add(new AuthHeader("Cookie", cookieStr.toString()));
+		client.setAuthHeaders(authHeaders);
+		return client;
 	}
 }

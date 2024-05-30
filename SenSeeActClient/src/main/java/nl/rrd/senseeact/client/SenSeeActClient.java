@@ -73,6 +73,7 @@ public class SenSeeActClient {
 	private boolean closed = false;
 	private List<HttpClient2> activeClients = new ArrayList<>();
 	private String baseUrl;
+	private String protocolVersion = PROTOCOL_VERSION;
 	
 	// the following variable is set after login(), loginUsername(), signup()
 	// and setAuthHeaders()
@@ -90,6 +91,10 @@ public class SenSeeActClient {
 	public SenSeeActClient(String baseUrl) {
 		logger = AppComponents.getLogger(getClass().getSimpleName());
 		this.baseUrl = baseUrl.replaceAll("/+$", "");
+	}
+
+	public void setProtocolVersion(String protocolVersion) {
+		this.protocolVersion = protocolVersion;
 	}
 
 	/**
@@ -5975,7 +5980,7 @@ public class SenSeeActClient {
 	 * @throws IOException if an error occurs while communicating with the
 	 * server
 	 */
-	protected <T> T runQuery(String action, String method, boolean authenticate,
+	public <T> T runQuery(String action, String method, boolean authenticate,
 			SenSeeActRequestRunner runner, SenSeeActResultReader<T> reader)
 			throws SenSeeActClientException, HttpClientException,
 			ParseException, IOException {
@@ -6026,7 +6031,7 @@ public class SenSeeActClient {
 	private HttpClient2 getHttpClient(String action, String method,
 			boolean authenticate) throws SenSeeActClientException,
 			HttpClientException, ParseException, IOException {
-		return getHttpClientForUrl(baseUrl + "/v" + PROTOCOL_VERSION + action,
+		return getHttpClientForUrl(baseUrl + "/v" + protocolVersion + action,
 				method, authenticate);
 	}
 
