@@ -1,5 +1,8 @@
 package nl.rrd.senseeact.client.model.questionnaire;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import nl.rrd.senseeact.client.model.sample.ResourceUTCSample;
 import nl.rrd.senseeact.dao.DatabaseField;
 import nl.rrd.senseeact.dao.DatabaseType;
@@ -14,12 +17,16 @@ import java.time.ZonedDateTime;
  *
  * @author Dennis Hofs (RRD)
  */
+@JsonIgnoreProperties(ignoreUnknown=true)
 public class QuestionnaireRecord extends ResourceUTCSample {
 	@DatabaseField(value=DatabaseType.STRING, index=true)
 	private String name;
 
 	@DatabaseField(value=DatabaseType.TEXT, json=true)
+	@JsonIgnore
 	private String questionnaire;
+
+	@JsonProperty("questionnaire")
 	private Questionnaire questionnaireObject;
 
 	/**

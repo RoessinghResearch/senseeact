@@ -1,5 +1,8 @@
 package nl.rrd.senseeact.client.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.type.TypeReference;
 import nl.rrd.senseeact.dao.BaseDatabaseObject;
 import nl.rrd.senseeact.dao.DatabaseField;
@@ -11,6 +14,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+@JsonIgnoreProperties(ignoreUnknown=true)
 public class PermissionRecord extends BaseDatabaseObject {
 	/**
 	 * This permission allows users to write records to a project table without
@@ -34,8 +38,10 @@ public class PermissionRecord extends BaseDatabaseObject {
 
 	// JSON code for paramsMap
 	@DatabaseField(value=DatabaseType.TEXT, json=true)
+	@JsonIgnore
 	private String params;
 
+	@JsonProperty("params")
 	private Map<String,Object> paramsMap = new LinkedHashMap<>();
 
 	/**
