@@ -21,7 +21,7 @@ RUN line=`grep -n -m 1 "Listen 80" conf/httpd.conf | sed -e "s/:.*$//"` && \
 	sed -i -e "${line}i Listen 8081" conf/httpd.conf
 EXPOSE 8081
 
-FROM node:21-alpine as build
+FROM node:22-alpine as build
 WORKDIR /app
 COPY ./senseeact/SenSeeActService/src/main/web/ ./
 RUN npm install handlebars -g
