@@ -19,7 +19,6 @@ import nl.rrd.senseeact.service.sso.SSOTokenRepository;
 import nl.rrd.utils.AppComponents;
 import nl.rrd.utils.datetime.DateTimeUtils;
 import nl.rrd.utils.exception.DatabaseException;
-import nl.rrd.utils.http.HttpClient2;
 import org.slf4j.Logger;
 
 import java.io.PrintWriter;

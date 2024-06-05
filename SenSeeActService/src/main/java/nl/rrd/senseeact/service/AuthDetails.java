@@ -1,9 +1,8 @@
 package nl.rrd.senseeact.service;
 
-import org.apache.tomcat.util.codec.binary.Base64;
-
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Base64;
 import java.util.Date;
 
 /**
@@ -186,8 +185,8 @@ public class AuthDetails {
 			throw new RuntimeException("Algorithm SHA-256 not found: " +
 					ex.getMessage(), ex);
 		}
-		byte[] saltBytes = Base64.decodeBase64(salt);
+		byte[] saltBytes = Base64.getDecoder().decode(salt);
 		byte[] hash = md.digest(saltBytes);
-		return Base64.encodeBase64String(hash);
+		return Base64.getEncoder().encodeToString(hash);
 	}
 }

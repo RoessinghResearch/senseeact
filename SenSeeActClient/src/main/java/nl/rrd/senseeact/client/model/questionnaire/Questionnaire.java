@@ -2,6 +2,7 @@ package nl.rrd.senseeact.client.model.questionnaire;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import nl.rrd.utils.exception.ParseException;
+import nl.rrd.utils.validation.ValidateNotEmpty;
 import nl.rrd.utils.xml.AbstractSimpleSAXHandler;
 import nl.rrd.utils.xml.SimpleSAXHandler;
 import org.xml.sax.Attributes;
@@ -10,6 +11,7 @@ import java.util.*;
 
 @JsonIgnoreProperties(ignoreUnknown=true)
 public class Questionnaire {
+	@ValidateNotEmpty
 	private String id;
 	private boolean randomOrder = false;
 	private List<Question> questions = new ArrayList<>();

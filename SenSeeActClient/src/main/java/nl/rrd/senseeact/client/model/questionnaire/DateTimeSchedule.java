@@ -12,6 +12,7 @@ import nl.rrd.utils.exception.ParseException;
 import nl.rrd.utils.json.*;
 import nl.rrd.utils.schedule.TimeDuration;
 import nl.rrd.utils.validation.MapReader;
+import nl.rrd.utils.validation.ValidateNotNull;
 
 import java.io.IOException;
 import java.time.LocalDate;
@@ -72,6 +73,7 @@ import java.util.Map;
 public class DateTimeSchedule extends JsonObject {
 	@JsonSerialize(using=SqlDateSerializer.class)
 	@JsonDeserialize(using=SqlDateDeserializer.class)
+	@ValidateNotNull
 	private LocalDate startDate;
 	@JsonSerialize(using=SqlDateSerializer.class)
 	@JsonDeserialize(using=SqlDateDeserializer.class)
@@ -79,6 +81,7 @@ public class DateTimeSchedule extends JsonObject {
 	private RecurDate recurDate = null;
 	@JsonSerialize(using=SqlTimeSerializer.class)
 	@JsonDeserialize(using=SqlTimeDeserializer.class)
+	@ValidateNotNull
 	private LocalTime startTime;
 	@JsonSerialize(using=SqlTimeSerializer.class)
 	@JsonDeserialize(using=SqlTimeDeserializer.class)

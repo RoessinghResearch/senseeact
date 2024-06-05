@@ -31,7 +31,6 @@ import nl.rrd.utils.exception.ParseException;
 import nl.rrd.utils.http.URLParameters;
 import nl.rrd.utils.validation.Validation;
 import nl.rrd.utils.validation.ValidationException;
-import org.apache.tomcat.util.codec.binary.Base64;
 import org.slf4j.Logger;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -395,7 +394,7 @@ public class AuthControllerExecution {
 			throw new UnauthorizedException(ErrorCode.ACCOUNT_BLOCKED,
 					"Account temporarily blocked because of too many failed login attempts");
 		}
-		byte[] salt = Base64.decodeBase64(user.getSalt());
+		byte[] salt = Base64.getDecoder().decode(user.getSalt());
 		String hash = hashPassword(password, salt);
 		String hashDeprecated = hashPasswordDeprecated(password, salt);
 		if (!hash.equals(user.getPassword()) && hashDeprecated.equals(
@@ -662,7 +661,7 @@ public class AuthControllerExecution {
 					"oldPassword", "Parameter \"oldPassword\" not defined"));
 		}
 		if (requireOldPassword) {
-			byte[] salt = Base64.decodeBase64(changeUser.getSalt());
+			byte[] salt = Base64.getDecoder().decode(changeUser.getSalt());
 			String oldHash = hashPassword(oldPassword, salt);
 			String oldHashDeprecated = hashPasswordDeprecated(oldPassword, salt);
 			if (!oldHash.equals(changeUser.getPassword()) &&
@@ -866,7 +865,7 @@ public class AuthControllerExecution {
 		random.nextBytes(salt);
 		String hash = hashPassword(password, salt);
 		user.setPassword(hash);
-		user.setSalt(Base64.encodeBase64String(salt));
+		user.setSalt(Base64.getEncoder().encodeToString(salt));
 		user.setHasTemporaryPassword(isTempPassword);
 	}
 	
@@ -881,7 +880,7 @@ public class AuthControllerExecution {
 	private static String hashPassword(String password, byte[] salt) {
 		Configuration config = AppComponents.get(Configuration.class);
 		String secretSaltBase64 = config.get(Configuration.SECRET_SALT);
-		byte[] secretSalt = Base64.decodeBase64(secretSaltBase64);
+		byte[] secretSalt = Base64.getDecoder().decode(secretSaltBase64);
 		MessageDigest md;
 		try {
 			md = MessageDigest.getInstance("SHA-256");
@@ -893,7 +892,7 @@ public class AuthControllerExecution {
 		md.update(salt);
 		Charset utf8 = StandardCharsets.UTF_8;
 		byte[] bs = md.digest(password.getBytes(utf8));
-		return Base64.encodeBase64String(bs);
+		return Base64.getEncoder().encodeToString(bs);
 	}
 	
 	/**
@@ -915,6 +914,6 @@ public class AuthControllerExecution {
 		md.update(salt);
 		Charset utf8 = StandardCharsets.UTF_8;
 		byte[] bs = md.digest(password.getBytes(utf8));
-		return Base64.encodeBase64String(bs);
+		return Base64.getEncoder().encodeToString(bs);
 	}
 }

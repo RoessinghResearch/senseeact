@@ -1,5 +1,7 @@
 package nl.rrd.senseeact.client.model.questionnaire;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.type.TypeReference;
 import nl.rrd.senseeact.client.model.sample.ResourceUTCSample;
 import nl.rrd.senseeact.dao.DatabaseField;
@@ -23,7 +25,10 @@ public class QuestionnaireSchedulesRecord extends ResourceUTCSample {
 	private String questionnaire;
 
 	@DatabaseField(value=DatabaseType.TEXT, json=true)
+	@JsonIgnore
 	private String schedules;
+
+	@JsonProperty("schedules")
 	private List<DateTimeSchedule> schedulesList = new ArrayList<>();
 
 	/**
