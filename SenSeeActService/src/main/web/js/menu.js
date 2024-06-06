@@ -146,9 +146,11 @@ class MenuController {
 	}
 
 	_onLogoutCompleted(success) {
-		if (success)
+		if (success) {
+			clearAllCookies();
 			window.location.href = basePath + '/';
-		else
+		} else {
 			showToast(i18next.t('unexpected_error'));
+		}
 	}
 };
