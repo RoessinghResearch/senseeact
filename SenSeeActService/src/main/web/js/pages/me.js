@@ -31,18 +31,22 @@ class MySenSeeActPage {
 		header.title = i18next.t('my_senseeact');
 		header.render();
 
-		let dashboard = $('#dashboard');
-		dashboard.append(this.createDashboardWidget(
+		let widget = this.createDashboardWidget(
 			'images/icon_user.svg',
 			i18next.t('my_account'),
-			basePath + '/me/account'));
-		dashboard.append(this.createDashboardWidget(
+			basePath + '/me/account');
+		this.addDashboardWidget(widget);
+
+		widget = this.createDashboardWidget(
 			'images/icon_download.svg',
 			i18next.t('download_data'),
-			basePath + '/me/download'));
-		let widget = this.createDashboardWidget(
+			basePath + '/me/download');
+		this.addDashboardWidget(widget);
+
+		widget = this.createDashboardWidget(
 			'images/icon_logout.svg',
 			i18next.t('log_out'), null);
+		this.addDashboardWidget(widget);
 		this._logoutWidget = widget;
 		var self = this;
 		animator.addAnimatedClickHandler(widget, widget,
@@ -54,9 +58,9 @@ class MySenSeeActPage {
 				self._onLogoutCompleted(result);
 			}
 		);
-		dashboard.append(widget);
 
 		menuController.showSidebar();
+		menuController.selectMenuItem('me');
 		$(document.body).addClass('tinted-background');
 		$('#content').css('visibility', 'visible');
 	}

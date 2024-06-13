@@ -43,6 +43,7 @@ class DownloadPage {
 		header.render();
 
 		menuController.showSidebar();
+		menuController.selectMenuItem('me-download');
 		$(document.body).addClass('tinted-background');
 		let content = $('#content');
 		content.addClass('white-background');

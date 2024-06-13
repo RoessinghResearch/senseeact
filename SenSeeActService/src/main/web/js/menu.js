@@ -4,11 +4,11 @@ class MenuController {
 		this._registerCloseEvent();
 	}
 
-	appendMenuItem(title, url) {
+	appendMenuItem(id, title, url) {
 		let menu = $('.menu-item-list');
 		let sidebar = $('#sidebar');
-		let menuItem = this._createMenuItemDiv(title, url);
-		let sidebarItem = this._createMenuItemDiv(title, url);
+		let menuItem = this._createMenuItem(id, title, url);
+		let sidebarItem = this._createMenuItem(id, title, url);
 		if (this._hasLogOut) {
 			let logoutItem = menu.children(':last-child');
 			logoutItem.before(menuItem);
@@ -20,24 +20,60 @@ class MenuController {
 		}
 	}
 
+	appendSubMenuItem(parentId, subId, title, url) {
+		let menuItem = $('.menu-item-list').find('.menu-item-id-' + parentId)
+			.parent();
+		let sidebarItem = $('#sidebar').find('.menu-item-id-' + parentId)
+			.parent();
+		let subMenuItem = this._createSubMenuItem(subId, title, url);
+		let subSidebarItem = this._createSubMenuItem(subId, title, url);
+		menuItem.append(subMenuItem);
+		sidebarItem.append(subSidebarItem);
+	}
+
 	appendLogout() {
-		let item = this._createLogoutItemDiv();
+		let item = this._createLogoutItem();
 		$('.menu-item-list').append(item);
-		item = this._createLogoutItemDiv();
+		item = this._createLogoutItem();
 		$('#sidebar').append(item);
 		this._hasLogOut = true;
 	}
 
-	_createMenuItemDiv(title, url = null) {
-		let itemDiv = $('<a></a>');
-		itemDiv.addClass('menu-item');
+	selectMenuItem(id) {
+		let menus = $('.menu-item-list').add('#sidebar');
+		let items = menus.find('.menu-item');
+		items.each((index, elem) => {
+			if ($(elem).hasClass('menu-item-id-' + id))
+				$(elem).addClass('menu-item-selected');
+			else
+				$(elem).removeClass('menu-item-selected');
+		});
+	}
+
+	_createMenuItem(id, title, url = null) {
+		let container = $('<div></div>');
+		container.addClass('menu-item-container');
+		let item = this._createMenuItemElement(id, title, url);
+		container.append(item);
+		return container;
+	}
+
+	_createSubMenuItem(id, title, url = null) {
+		let item = this._createMenuItemElement(id, title, url);
+		item.addClass('menu-item-sub');
+		return item;
+	}
+
+	_createMenuItemElement(id, title, url = null) {
+		let item = $('<a></a>');
+		item.addClass('menu-item menu-item-id-' + id);
 		if (url)
-			itemDiv.attr('href', url);
+			item.attr('href', url);
 		else
-			itemDiv.attr('href', '#');
-		itemDiv.text(title);
+			item.attr('href', '#');
+		item.text(title);
 		if (url) {
-			animator.addAnimatedClickHandler(itemDiv, itemDiv,
+			animator.addAnimatedClickHandler(item, item,
 				'animate-menu-item-click',
 				null,
 				function() {
@@ -45,13 +81,13 @@ class MenuController {
 				}
 			);
 		}
-		return itemDiv;
+		return item;
 	}
 
-	_createLogoutItemDiv() {
-		let itemDiv = this._createMenuItemDiv(i18next.t('log_out'));
+	_createLogoutItem() {
+		let item = this._createMenuItem('logout', i18next.t('log_out'));
 		var self = this;
-		animator.addAnimatedClickHandler(itemDiv, itemDiv,
+		animator.addAnimatedClickHandler(item, item,
 			'animate-menu-item-click',
 			function(clickId) {
 				self._onLogoutClick(clickId);
@@ -60,7 +96,7 @@ class MenuController {
 				self._onLogoutCompleted(result);
 			}
 		);
-		return itemDiv;
+		return item;
 	}
 
 	showSidebar() {

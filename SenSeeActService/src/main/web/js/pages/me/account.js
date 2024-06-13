@@ -48,6 +48,7 @@ class MyAccountPage {
 		lastNameValue.render();
 
 		menuController.showSidebar();
+		menuController.selectMenuItem('me-account');
 		$(document.body).addClass('tinted-background');
 		let content = $('#content');
 		content.addClass('white-background');

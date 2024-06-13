@@ -134,6 +134,14 @@ body {
 	margin-top: 10px;
 }
 
+#menu .menu-item-container:first-child {
+	border-top: 1px solid #bfbfbf;
+}
+
+.menu-item-container {
+	border-bottom: 1px solid #bfbfbf;
+}
+
 a.menu-item {
 	display: block;
 	text-decoration: none;
@@ -143,8 +151,16 @@ a.menu-item {
 	font-size: 20px;
 	text-transform: uppercase;
 	padding: 6px 16px;
-	border-bottom: 1px solid #bfbfbf;
 	cursor: pointer;
+}
+
+a.menu-item-sub {
+	text-transform: none;
+	padding: 2px 16px 10px 32px;
+}
+
+a.menu-item.menu-item-selected {
+	color: #5298b2;
 }
 
 a.menu-item:hover {
@@ -152,8 +168,8 @@ a.menu-item:hover {
 	background: #f0f0f0;
 }
 
-#menu a.menu-item:first-child {
-	border-top: 1px solid #bfbfbf;
+a.menu-item.menu-item-selected:hover {
+	color: #5298b2;
 }
 
 #footer {
