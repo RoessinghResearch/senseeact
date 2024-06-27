@@ -8,7 +8,7 @@ import nl.rrd.senseeact.exampleclient.project.ExampleProjectRepository;
 import nl.rrd.senseeact.service.ApplicationInit;
 import nl.rrd.senseeact.service.Configuration;
 import nl.rrd.senseeact.service.OAuthTableRepository;
-import nl.rrd.senseeact.service.ProjectUserAccessControlRepository;
+import nl.rrd.senseeact.service.access.ProjectUserAccessControlRepository;
 import nl.rrd.senseeact.service.export.DataExporterFactory;
 import nl.rrd.senseeact.service.mail.EmailTemplateRepository;
 import nl.rrd.senseeact.service.sso.SSOTokenRepository;
@@ -25,7 +25,7 @@ public class ExampleApplicationInit extends ApplicationInit {
 
 	@Override
 	protected DatabaseFactory createDatabaseFactory() throws ParseException {
-		return createMySQLDatabaseFactory();
+		return createMariaDBDatabaseFactory();
 	}
 
 	@Override
