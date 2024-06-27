@@ -314,22 +314,143 @@ tasks.register('dockerStop') {
 	}
 }
 
+def prepareDevProdFiles(dir, isProd) {
+	def prodDevRegex = ~"^(.+)\\.((dev)|(prod))\\.([^\\.]+)\$"
+	dir.eachFile {
+		if (it.isDirectory()) {
+			prepareDevProdFiles(it, isProd)
+			return
+		}
+		def matcher = it.path =~ prodDevRegex
+		if (!matcher)
+			return
+		def match = matcher[0]
+		def base = match[1]
+		def env = match[2]
+		def ext = match[5]
+		def matchesEnv = isProd == (env == 'prod')
+		if (!matchesEnv) {
+			it.delete()
+			return
+		}
+		def destFile = new File(base + '.' + ext)
+		if (destFile.exists())
+			destFile.delete()
+		it.renameTo(destFile)
+	}
+}
+
+def buildWebFiles(isProd) {
+	def buildDir = file('build/web-src')
+	prepareDevProdFiles(buildDir, isProd)
+	def cmd = ['handlebars', 'templates', '-f', 'js/templates.js']
+	runShell(cmd, buildDir)
+}
+
+tasks.register('webDevBuild') {
+	group = 'build'
+	description = 'Build web dev application'
+
+	doLast {
+		def ssaDir = file('../SenSeeActService/src/main/web')
+		def buildDir = file('build/web-src')
+		copy {
+			from ssaDir
+			into buildDir
+		}
+		copy {
+			from 'src/main/web'
+			into buildDir
+		}
+		buildWebFiles(false)
+	}
+}
+
+def minimizeCss() {
+	def buildDir = file('build/web-src')
+	def cssDir = new File(buildDir, 'css')
+	def tempCssDir = new File(buildDir, 'csstemp')
+	project.delete(tempCssDir)
+	cssDir.renameTo(tempCssDir)
+	cssDir.mkdir()
+	new File(tempCssDir, 'pages').renameTo(new File(cssDir, 'pages'))
+	def cssFile = new File(cssDir, 'senseeact.css')
+	cssFile.withOutputStream() {
+		mergeFileTree(tempCssDir, it)
+	}
+	project.delete(tempCssDir)
+	def cmd = ['npx', 'postcss', 'senseeact.css', '-o', 'senseeact.min.css']
+	runShell(cmd, cssDir)
+	cssFile.delete()
+}
+
+def minimizeJs() {
+	def buildDir = file('build/web-src')
+	def jsFiles = [
+		'animation.js',
+		'client.js',
+		'menu.js',
+		'widgets/background-image.js',
+		'widgets/editable-text-value.js',
+		'widgets/icon-text-edit.js',
+		'widgets/page-back-header.js',
+		'widgets/password-edit.js',
+		'widgets/progress-bar.js'
+	]
+	def jsDir = new File(buildDir, 'js')
+	def jsFile = new File(jsDir, 'senseeact.js')
+	jsFile.withOutputStream() { out ->
+		jsFiles.each {
+			def inFile = new File(jsDir, it)
+			out << inFile.bytes
+			inFile.delete()
+		}
+	}
+	def cmd = ['uglifyjs', 'senseeact.js', '-o', 'senseeact.min.js']
+	runShell(cmd, jsDir)
+	jsFile.delete()
+	deleteEmptyDirs(jsDir)
+}
+
+def deleteEmptyDirs(dir) {
+	if (dir.list().length == 0) {
+		dir.delete()
+		return
+	}
+	dir.eachFile {
+		if (it.isDirectory())
+			deleteEmptyDirs(it)
+	}
+}
+
+def mergeFileTree(dir, out) {
+	dir.eachFile {
+		if (it.isDirectory()) {
+			mergeFileTree(it, out)
+		} else {
+			out << it.bytes
+		}
+	}
+}
+
 tasks.register('webBuild') {
 	group = 'build'
 	description = 'Build web application'
 
 	doLast {
+		def ssaDir = file('../SenSeeActService/src/main/web')
+		def buildDir = file('build/web-src')
 		copy {
-			from '../SenSeeActService/src/main/web'
-			into 'build/web-src'
+			from ssaDir
+			into buildDir
 		}
 		copy {
 			from 'src/main/web'
-			into 'build/web-src'
+			into buildDir
 		}
-		def buildDir = file('build/web-src')
-		def cmd = ['handlebars', 'templates', '-f', 'js/templates.js']
-		runShell(cmd, buildDir)
+		minimizeCss()
+		minimizeJs()
+		buildWebFiles(true)
 	}
 }
 

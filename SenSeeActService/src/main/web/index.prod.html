@@ -1,0 +1,92 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+	<title>SenSeeAct - Roessingh Research and Development</title>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+
+	<script type="text/javascript">
+		var version = '20';
+		var basePath = '/senseeact';
+		var servicePath = '/servlets/senseeact/v6.0.8';
+		
+		function initCss(name) {
+			document.write('<link rel="stylesheet" type="text/css" href="' +
+				basePath + '/css/' + name + '.css?v=' + version + '" />');
+		}
+	
+		function initJS(name) {
+			document.write('<s' + 'cript src="' + basePath + '/js/' + name +
+				'.js?v=' + version + '"></s' + 'cript>');
+		}
+		
+		function initLib(name) {
+			document.write('<s' + 'cript src="' + basePath + '/lib/' + name +
+				'"></s' + 'cript>');
+		}
+		
+		function initFavIcon(size) {
+			document.write('<link rel="icon" type="image/png" sizes="' + size +
+				'x' + size + '" href="' + basePath + '/images/favicon' + size +
+				'.png">');
+		}
+	</script>
+
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&family=Oswald:wght@200..700&display=swap" rel="stylesheet">
+	
+	<script type="text/javascript">
+		initCss('senseeact.min');
+		initFavIcon(192);
+		initFavIcon(128);
+		initFavIcon(64);
+		initFavIcon(48);
+		initFavIcon(32);
+		initFavIcon(16);
+		document.write('<link rel="shortcut icon" href="' + basePath +
+			'/images/favicon.ico">')
+		
+		initLib('handlebars.runtime.min-v4.7.8.js');
+		initLib('i18next.min.js');
+		initLib('i18nextBrowserLanguageDetector.min.js');
+		initLib('i18nextHttpBackend.min.js');
+		initLib('jquery-3.7.1.min.js');
+		initLib('jquery-i18next.min.js');
+		initLib('luxon.min.js');
+	
+		initJS('senseeact.min');
+		initJS('pages/me');
+		initJS('templates')
+		initJS('global');
+		initJS('i18n');
+	</script>
+</head>
+<body>
+	<div id="body">
+		<div id="header"></div>
+		<div id="root">
+			<div id="sidebar-switch">
+				<div id="sidebar"></div>
+			</div>
+			<div id="main-root">
+				<div id="content-root">
+					<div id="content"></div>
+					<div id="footer"></div>
+				</div>
+				<div id="main-root-overlay"></div>
+				<div id="menu-background"></div>
+				<div id="menu"></div>
+				<div id="toast">
+					<div id="toast-text" data-i18n="unexpected_error"></div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<script type="text/javascript">
+		$(function() {
+			onDocumentInitialized();
+		});
+	</script>
+</body>
+</html>
