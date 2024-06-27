@@ -384,9 +384,29 @@ def minimizeCss() {
 	cssFile.delete()
 }
 
+def minimizeJsFiles(srcDir, srcFiles, destDir, destFile,
+		deleteSrcFiles = false) {
+	destDir.mkdirs()
+	def ext = '.min.js'
+	def mergedName = destFile.substring(0, destFile.length() - ext.length()) +
+		'.js'
+	def mergedFile = new File(destDir, mergedName)
+	mergedFile.withOutputStream() { out ->
+		srcFiles.each { srcName ->
+			def srcFile = new File(srcDir, srcName)
+			out << srcFile.bytes
+			if (deleteSrcFiles)
+				srcFile.delete()
+		}
+	}
+	def cmd = ['uglifyjs', mergedName, '-o', destFile]
+	runShell(cmd, destDir)
+	mergedFile.delete()
+}
+
 def minimizeJs() {
-	def buildDir = file('build/web-src')
-	def jsFiles = [
+	def jsDir = file('build/web-src/js')
+	def srcFiles = [
 		'animation.js',
 		'client.js',
 		'menu.js',
@@ -397,18 +417,7 @@ def minimizeJs() {
 		'widgets/password-edit.js',
 		'widgets/progress-bar.js'
 	]
-	def jsDir = new File(buildDir, 'js')
-	def jsFile = new File(jsDir, 'senseeact.js')
-	jsFile.withOutputStream() { out ->
-		jsFiles.each {
-			def inFile = new File(jsDir, it)
-			out << inFile.bytes
-			inFile.delete()
-		}
-	}
-	def cmd = ['uglifyjs', 'senseeact.js', '-o', 'senseeact.min.js']
-	runShell(cmd, jsDir)
-	jsFile.delete()
+	minimizeJsFiles(jsDir, srcFiles, jsDir, 'senseeact.min.js', true)
 	deleteEmptyDirs(jsDir)
 }
 
