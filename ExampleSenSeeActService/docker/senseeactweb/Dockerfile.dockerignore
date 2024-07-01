@@ -10,5 +10,16 @@
 #   at the git root directory.
 
 **/
-!senseeact/SenSeeActService/src/main/web/
+!senseeact/
+**/.*/
+!**/.htaccess
+**/bin/
+**/build/
+**/node_modules/
+senseeact/DataAccessObjects/
+senseeact/ExampleSenSeeActClient/
+senseeact/SenSeeActClient/
+senseeact/SenSeeActServiceLib/
+senseeact/ExampleSenSeeActService/docker/
 !senseeact/ExampleSenSeeActService/docker/senseeactweb/
+senseeact/ExampleSenSeeActService/src/

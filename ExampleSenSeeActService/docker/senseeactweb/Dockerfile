@@ -21,17 +21,22 @@ RUN line=`grep -n -m 1 "Listen 80" conf/httpd.conf | sed -e "s/:.*$//"` && \
 	sed -i -e "${line}i Listen 8081" conf/httpd.conf
 EXPOSE 8081
 
-FROM node:22-alpine as build
+FROM eclipse-temurin:22 as build
 WORKDIR /app
-COPY ./senseeact/SenSeeActService/src/main/web/ ./
-RUN npm install handlebars -g
-RUN handlebars templates -f js/templates.js
+COPY ./ ./
+WORKDIR /app/senseeact/ExampleSenSeeActService
+RUN apt update && apt install curl -y
+RUN curl -fsSL https://deb.nodesource.com/setup_22.x -o nodesource_setup.sh && chmod 755 nodesource_setup.sh && ./nodesource_setup.sh
+RUN apt install nodejs -y
+RUN npm install handlebars uglify-js -g
+RUN npm install cssnano postcss postcss-cli --save-dev
+RUN chmod 755 gradlew && sed -i 's/\r//' gradlew && ./gradlew webBuild
 
 FROM httpd:2.4-alpine AS prod
 ARG WEB_PATH
 WORKDIR /usr/local/apache2
 COPY senseeact/ExampleSenSeeActService/docker/senseeactweb/*.conf conf/extra/
-COPY --from=build /app/ htdocs${WEB_PATH}/
+COPY --from=build /app/senseeact/ExampleSenSeeActService/build/web-src/ htdocs${WEB_PATH}/
 RUN sed -i \
 	-e "s|var basePath = '.*';|var basePath = '${WEB_PATH}';|" \
 	-e "s|var servicePath = '.*';|var servicePath = '/servlets/senseeact/v6.0.8';|" \
