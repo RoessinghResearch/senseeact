@@ -92,19 +92,49 @@ body {
 	-webkit-mask-image: url('../images/icon_bars.svg');
 }
 
-.header-title {
+.header-title,
+.header-submenu-title {
 	display: none;
-	color: white;
 	font-family: 'Oswald', sans-serif;
 	font-weight: 400;
 	font-size: 20px;
-	text-transform: uppercase;
 	text-decoration: none;
+}
+
+.header-title {
+	color: white;
+	text-transform: uppercase;
 	margin: 0px 16px;
+}
+
+.header-submenu-title {
+	color: #373844;
+	background-color: #e1f0f5;
+	padding: 0px 16px;
 }
 
 .header-title:hover {
 	color: #f2e9dc;
+}
+
+.header-submenu-title:hover {
+	color: #373844;
+	background-color: #cde3ea;
+}
+
+.header-submenu-container {
+	position: absolute;
+	display: none;
+	padding-top: 8px;
+}
+
+.header-submenu {
+	background-color: #e1f0f5;
+	border: 1px solid #8a9599;
+	border-radius: 8px;
+	padding: 8px 0px;
+	min-width: 200px;
+	box-shadow: 1px 1px 6px 0px rgba(0, 0, 0, 0.15);
 }
 
 @media (min-width: 960px) {
@@ -112,7 +142,8 @@ body {
 		display: block;
 	}
 
-	.header-title {
+	.header-title,
+	.header-submenu-title {
 		display: block;
 	}
 
