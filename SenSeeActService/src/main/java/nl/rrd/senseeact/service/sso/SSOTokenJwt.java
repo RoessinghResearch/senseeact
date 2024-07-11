@@ -148,7 +148,7 @@ public class SSOTokenJwt extends SSOToken {
 				authDb, subject);
 		if (user == null) {
 			logger.error(String.format("User for JWT token in %s not found: ",
-					tokenHeader) + claims.getSubject());
+					tokenHeader) + subject);
 			throw new UnauthorizedException(ErrorCode.AUTH_TOKEN_INVALID,
 					"Authentication token invalid");
 		}

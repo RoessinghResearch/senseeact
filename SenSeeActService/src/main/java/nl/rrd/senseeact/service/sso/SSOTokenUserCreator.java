@@ -20,6 +20,7 @@ import nl.rrd.utils.AppComponents;
 import nl.rrd.utils.datetime.DateTimeUtils;
 import nl.rrd.utils.exception.DatabaseException;
 import nl.rrd.utils.validation.ValidationException;
+import org.slf4j.Logger;
 
 import java.time.ZonedDateTime;
 import java.util.UUID;
@@ -29,14 +30,20 @@ public class SSOTokenUserCreator {
 			HttpServletResponse response, Database authDb, String project,
 			String email) throws HttpException, Exception {
 		synchronized (AuthControllerExecution.AUTH_LOCK) {
+			Logger logger = AppComponents.getLogger(
+					SSOTokenUserCreator.class.getSimpleName());
+			logger.info("CREATE USER: " + email);
 			UserCache userCache = UserCache.getInstance();
 			User user = userCache.findByEmail(email);
 			if (user == null) {
+				logger.info("CREATE NEW USER: " + email);
 				return createNewUser(version, response, authDb, project, email);
 			} else if (project != null) {
+				logger.info("ADD USER TO PROJECT: " + user.getUserid());
 				return addUserToProject(version, response, authDb, project,
 						user);
 			} else {
+				logger.info("CREATE TOKEN: " + user.getUserid());
 				return createToken(version, response, user);
 			}
 		}
