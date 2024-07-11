@@ -16,6 +16,7 @@ button, a.button {
 
 button:hover, a.button:hover {
 	background-color: #62a9c3;
+	color: white;
 }
 
 button.small, a.button.small {
