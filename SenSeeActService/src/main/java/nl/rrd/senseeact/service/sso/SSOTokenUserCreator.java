@@ -33,9 +33,11 @@ public class SSOTokenUserCreator {
 			User user = userCache.findByEmail(email);
 			if (user == null) {
 				return createNewUser(version, response, authDb, project, email);
-			} else {
+			} else if (project != null) {
 				return addUserToProject(version, response, authDb, project,
 						user);
+			} else {
+				return createToken(version, response, user);
 			}
 		}
 	}
@@ -69,6 +71,11 @@ public class SSOTokenUserCreator {
 			UserListenerRepository.getInstance().notifyUserAddedToProject(
 					user, project.getCode(), Role.PATIENT);
 		}
+		return createToken(version, response, user);
+	}
+
+	private static TokenResult createToken(ProtocolVersion version,
+			HttpServletResponse response, User user) {
 		ZonedDateTime now = DateTimeUtils.nowMs();
 		String token = AuthToken.createToken(version, user, now, null,
 				false, false, response);
