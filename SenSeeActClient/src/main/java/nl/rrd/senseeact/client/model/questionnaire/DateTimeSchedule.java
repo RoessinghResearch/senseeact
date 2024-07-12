@@ -8,6 +8,8 @@ import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+
+import nl.rrd.utils.datetime.DateTimeUtils;
 import nl.rrd.utils.exception.ParseException;
 import nl.rrd.utils.json.*;
 import nl.rrd.utils.schedule.TimeDuration;
@@ -37,7 +39,7 @@ import java.util.Map;
  * (e.g. every 2nd Tuesday of the month), or on the same date number (e.g.
  * every 1st of the month). This is specified with {@link
  * #setRecurDate(RecurDate) setRecurDate()}. You can also specify an end date
- * {@link #setEndDate(LocalDate) setEndDate()} from which the recurring event
+ * {@link #setEndDate(LocalDate) setEndDate()} after which the recurring event
  * should no longer occur.</p>
  *
  * <p>The time schedule is applied to every recurring date. At a minimum, the
@@ -55,17 +57,17 @@ import java.util.Map;
  *
  * <p><ul>
  * <li>startDate: 6 Jan 2024</li>
- * <li>endDate: 1 Jan 2025</li>
+ * <li>endDate: 31 Dec 2024</li>
  * <li>recurDate: every week on Sat and Sun</li>
  * <li>startTime: 10:00</li>
- * <li>endTime: 20:01</li>
+ * <li>endTime: 20:00</li>
  * <li>recurTime: every 2 hours</li>
  * </ul></p>
  *
  * <p>The event occurs every week on Sat and Sun, starting at 6 Jan 2024. It
- * no longer occurs at or after 1 Jan 2025, so the last date is Sun 29 Dec 2024.
+ * no longer occurs after 31 Dec 2024, so the last date is Sun 29 Dec 2024.
  * On each of these days, the event occurs every 2 hours starting at 10:00 and
- * no longer occurs at or after 20:01, so the last time is 20:00.</p>
+ * no longer occurs after 20:00, so the last time is 20:00.</p>
  *
  * @author Dennis Hofs (RRD)
  */
@@ -116,7 +118,7 @@ public class DateTimeSchedule extends JsonObject {
 
 	/**
 	 * Returns the end date. This is used with recurring dates and indicates the
-	 * date at or after which the event should no longer occur.
+	 * date after which the event should no longer occur.
 	 *
 	 * @return the end date or null
 	 */
@@ -126,7 +128,7 @@ public class DateTimeSchedule extends JsonObject {
 
 	/**
 	 * Sets the end date. This is used with recurring dates and indicates the
-	 * date at or after which the event should no longer occur.
+	 * date after which the event should no longer occur.
 	 *
 	 * @param endDate the end date or null
 	 */
@@ -176,8 +178,8 @@ public class DateTimeSchedule extends JsonObject {
 
 	/**
 	 * Returns the end time. This is used with recurring times and indicates the
-	 * time at or after which the event should no longer occur. This applies to
-	 * every recurring date.
+	 * time after which the event should no longer occur. This applies to every
+	 * recurring date.
 	 *
 	 * @return the end time or null
 	 */
@@ -187,8 +189,8 @@ public class DateTimeSchedule extends JsonObject {
 
 	/**
 	 * Sets the end time. This is used with recurring times and indicates the
-	 * time at or after which the event should no longer occur. This applies to
-	 * every recurring date.
+	 * time after which the event should no longer occur. This applies to every
+	 * recurring date.
 	 *
 	 * @param endTime the end time or null
 	 */
