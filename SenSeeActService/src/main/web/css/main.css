@@ -400,6 +400,7 @@ a.menu-item.menu-item-selected:hover {
 }
 
 .form-value {
+	width: 0px;
 	flex-grow: 1;
 	box-sizing: border-box;
 	padding-left: 12px;

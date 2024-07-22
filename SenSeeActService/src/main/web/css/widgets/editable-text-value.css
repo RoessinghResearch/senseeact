@@ -27,11 +27,15 @@
 
 .editable-text-value .view .value {
 	flex-grow: 1;
+	width: 0px;
+	overflow-x: hidden;
+	text-overflow: ellipsis;
 	font-weight: 600;
 	padding-left: 12px;
 }
 
-.editable-text-value .view .value.not-filled {
+.editable-text-value .view .value.not-filled,
+.editable-text-value .view .value.placeholder {
 	font-weight: 300;
 	font-style: italic;
 	color: #7f7f7f;

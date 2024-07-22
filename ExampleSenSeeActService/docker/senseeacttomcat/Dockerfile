@@ -6,7 +6,7 @@
 #     --build-arg TOMCAT_ADMIN_PASSWORD=secret \
 #     .
 
-FROM tomcat:10.1-jdk17 as build
+FROM tomcat:10.1-jdk17 AS build
 ARG GOOGLE_APPLICATION_CREDENTIALS
 WORKDIR /app
 COPY ./rrd-utils/RRDUtils/ ./rrd-utils/RRDUtils/

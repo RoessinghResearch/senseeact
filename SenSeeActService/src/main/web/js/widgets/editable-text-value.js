@@ -1,9 +1,13 @@
 /**
- * Properties that can be set before rendering:
+ * Properties that can be set before or after rendering:
  * 
  * - value: the current text value
+ * - placeholderValue: shown in view mode instead of the current text value,
+ *     which should be empty
  * - onEdit: function with this signature:
  *     jqXHR onEdit(String value)
+ * - onEditComplete: function with this signature:
+ *     void onEditComplete(String value)
  * 
  * Properties that can be obtained after rendering:
  * 
@@ -11,15 +15,18 @@
  * 
  * Private properties:
  * 
+ * - _value (String)
+ * - _placeholderValue (String)
  * - _viewDiv (jQuery element)
  * - _editDiv (jQuery element)
  * - _valueView (jQuery element)
  * - _input (jQuery element)
- * - _currentValue (String)
  */
 class EditableTextValue {
 	constructor(root) {
 		this._root = root;
+		this._value = '';
+		this._placeholderValue = '';
 	}
 
 	render() {
@@ -83,11 +90,45 @@ class EditableTextValue {
 		this._errorDiv = errorDiv;
 		editDiv.append(errorDiv);
 		
-		this._setValue(this.value);
+		this.value = this._value;
 	}
 
 	get input() {
 		return this._input;
+	}
+
+	set value(value) {
+		if (!value)
+			value = '';
+		value = value.trim();
+		this._value = value;
+		this._updateValueViews();
+	}
+
+	set placeholderValue(placeholderValue) {
+		this._placeholderValue = placeholderValue;
+		this._updateValueViews();
+	}
+
+	_updateValueViews() {
+		if (!this._valueView) {
+			// not rendered yet
+			return;
+		}
+		let valueView = this._valueView;
+		valueView.removeClass('placeholder not-filled');
+		let value = this._value;
+		let placeholderValue = this._placeholderValue;
+		if (value) {
+			valueView.text(value);
+		} else if (placeholderValue) {
+			valueView.text(placeholderValue);
+			valueView.addClass('placeholder');
+		} else {
+			valueView.text(i18next.t('not_filled'));
+			valueView.addClass('not-filled');
+		}
+		this._input.val(value);
 	}
 
 	showError(error) {
@@ -110,7 +151,7 @@ class EditableTextValue {
 
 	_onCancelClick() {
 		this.hideError();
-		this._setValue(this._currentValue);
+		this.value = this._value;
 		this._editDiv.hide();
 		this._viewDiv.show();
 	}
@@ -119,18 +160,24 @@ class EditableTextValue {
 		this.hideError();
 		let newValue = this._input.val().trim();
 		var self = this;
-		this.onEdit(newValue)
-			.done(function(result) {
-				self._onConfirmDone(newValue);
-			})
-			.fail(function(xhr, status, error) {
-				self._onConfirmFail();
-			});
+		if (this.onEdit) {
+			this.onEdit(newValue)
+				.done(function(result) {
+					self._onConfirmDone(newValue);
+				})
+				.fail(function(xhr, status, error) {
+					self._onConfirmFail();
+				});
+		} else {
+			this._onConfirmDone(newValue);
+		}
 	}
 
 	_onConfirmDone(newValue) {
-		this._setValue(newValue);
+		this.value = newValue;
 		this._onConfirmComplete();
+		if (this.onEditComplete)
+			this.onEditComplete(newValue);
 	}
 
 	_onConfirmFail() {
@@ -141,21 +188,5 @@ class EditableTextValue {
 	_onConfirmComplete() {
 		this._editDiv.hide();
 		this._viewDiv.show();
-	}
-
-	_setValue(value) {
-		if (!value)
-			value = '';
-		value = value.trim();
-		this._currentValue = value;
-		let valueView = this._valueView;
-		if (value) {
-			valueView.text(value);
-			valueView.removeClass('not-filled');
-		} else {
-			valueView.text(i18next.t('not_filled'));
-			valueView.addClass('not-filled');
-		}
-		this._input.val(value);
 	}
 }
