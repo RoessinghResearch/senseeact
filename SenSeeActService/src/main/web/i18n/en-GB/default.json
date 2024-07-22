@@ -47,6 +47,7 @@
 	"current_password": "Current password",
 	"new_password": "New password",
 	"repeat_new_password": "Repeat new password",
+	"no_repeat_new_password_match": "The new passwords are not the same",
 	"first_name": "First name",
 	"last_name": "Last name",
 	"download": "Download",

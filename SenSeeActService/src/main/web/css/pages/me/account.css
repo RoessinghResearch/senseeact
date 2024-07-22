@@ -89,12 +89,21 @@
 	font-size: 15px;
 }
 
+#password-value input.error {
+	border: 2px solid #be2b2b;
+	color: #be2b2b;
+}
+
 #password-value input::placeholder {
 	font-family: 'Open Sans', sans-serif;
 	font-weight: 300;
 	font-style: italic;
 	font-size: 15px;
 	color: #7f7f7f;
+}
+
+#password-value .password-error {
+	display: none;
 }
 
 #password-value .form-button-row {

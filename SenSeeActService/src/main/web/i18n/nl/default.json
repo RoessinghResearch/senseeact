@@ -47,6 +47,7 @@
 	"current_password": "Huidig wachtwoord",
 	"new_password": "Nieuw wachtwoord",
 	"repeat_new_password": "Nieuw wachtwoord opnieuw",
+	"no_repeat_new_password_match": "De nieuwe wachtwoorden zijn niet hetzelfde",
 	"first_name": "Voornaam",
 	"last_name": "Achternaam",
 	"download": "Downloaden",

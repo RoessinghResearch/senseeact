@@ -178,23 +178,27 @@ class MyAccountPage {
 		valueDiv.empty();
 		let form = $('<form></form>');
 		valueDiv.append(form);
+		let oldInput = null;
 		if (!temporary) {
-			let input = $('<input></input>');
-			input.attr('name', 'old-password');
-			input.attr('type', 'password');
-			input.attr('placeholder', i18next.t('current_password'));
-			form.append(input);
+			oldInput = $('<input></input>')
+				.attr('name', 'old-password')
+				.attr('type', 'password')
+				.attr('placeholder', i18next.t('current_password'));
+			form.append(oldInput);
 		}
-		let input = $('<input></input>');
-		input.attr('name', 'new-password');
-		input.attr('type', 'password');
-		input.attr('placeholder', i18next.t('new_password'));
-		form.append(input);
-		input = $('<input></input>');
-		input.attr('name', 'repeat-new-password');
-		input.attr('type', 'password');
-		input.attr('placeholder', i18next.t('repeat_new_password'));
-		form.append(input);
+		let newInput = $('<input></input>')
+			.attr('name', 'new-password')
+			.attr('type', 'password')
+			.attr('placeholder', i18next.t('new_password'));
+		form.append(newInput);
+		let repeatInput = $('<input></input>')
+			.attr('name', 'repeat-new-password')
+			.attr('type', 'password')
+			.attr('placeholder', i18next.t('repeat_new_password'));
+		form.append(repeatInput);
+		let errorDiv = $('<div></div>')
+			.addClass('password-error error');
+		form.append(errorDiv);
 		let buttonsDiv = $('<div></div>')
 			.addClass('form-button-row');
 		form.append(buttonsDiv);
@@ -215,9 +219,12 @@ class MyAccountPage {
 			.addClass('small')
 			.text(i18next.t('ok'));
 		animator.addAnimatedClickHandler(button, button, 'animate-button-click',
-			null,
-			() => {
-				self._onChangePasswordOkClick();
+			(clickId) => {
+				self._onChangePasswordOkClick(clickId, oldInput, newInput,
+					repeatInput);
+			},
+			(result) => {
+				self._onChangePasswordOkComplete(result);
 			}
 		);
 		buttonsDiv.append(button);
@@ -228,8 +235,56 @@ class MyAccountPage {
 		this._showPasswordChangeButton();
 	}
 
-	_onChangePasswordOkClick() {
+	_onChangePasswordOkClick(clickId, oldInput, newInput, repeatInput) {
+		let valueDiv = $('#password-value');
+		valueDiv.find('input').removeClass('error');
+		let errorDiv = valueDiv.find('.password-error');
+		errorDiv.hide();
+		let error = false;
+		let errorMessage = null;
+		let oldPassword = null;
+		if (oldInput)
+			oldPassword = oldInput.val();
+		let newPassword = newInput.val();
+		let repeatPassword = repeatInput.val();
+		if (repeatPassword.length < 6) {
+			error = true;
+			if (repeatPassword.length > 0)
+				errorMessage = i18next.t('password_too_short');
+			repeatInput.addClass('error');
+			repeatInput.focus();
+		}
+		if (newPassword.length < 6) {
+			error = true;
+			if (newPassword.length > 0)
+				errorMessage = i18next.t('password_too_short');
+			newInput.addClass('error');
+			newInput.focus();
+		}
+		if (!error && repeatPassword != newPassword) {
+			error = true;
+			errorMessage = i18next.t('no_repeat_new_password_match');
+			repeatInput.addClass('error');
+			newInput.addClass('error');
+			newInput.focus();
+		}
+		if (oldInput && !oldPassword) {
+			error = true;
+			oldInput.addClass('error');
+			oldInput.focus();
+		}
+		if (errorMessage) {
+			errorDiv.text(errorMessage);
+			errorDiv.show();
+		}
+		animator.onAnimatedClickHandlerCompleted(clickId, {
+			success: !error
+		});
+	}
 
+	_onChangePasswordOkComplete(result) {
+		if (result.success)
+			this._showPasswordChangeButton();
 	}
 
 	_onFirstNameEdit(value) {
