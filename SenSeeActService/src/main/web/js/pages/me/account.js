@@ -277,8 +277,34 @@ class MyAccountPage {
 			errorDiv.text(errorMessage);
 			errorDiv.show();
 		}
-		animator.onAnimatedClickHandlerCompleted(clickId, {
-			success: !error
+		if (error) {
+			animator.onAnimatedClickHandlerCompleted(clickId, {
+				success: false
+			});
+			return;
+		}
+		let data = {};
+		if (oldInput)
+			data.oldPassword = oldPassword;
+		data.newPassword = newPassword;
+		data.tokenExpiration = 1440;
+		data.cookie = true;
+		data.autoExtendCookie = true;
+		$.ajax( {
+			type: 'POST',
+			url: servicePath + '/auth/change-password',
+			data: JSON.stringify(data),
+			contentType: 'application/json'
+		})
+		.done(() => {
+			animator.onAnimatedClickHandlerCompleted(clickId, {
+				success: true
+			});
+		})
+		.fail(() => {
+			animator.onAnimatedClickHandlerCompleted(clickId, {
+				success: false
+			});
 		});
 	}
 
