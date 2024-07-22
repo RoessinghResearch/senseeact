@@ -5,10 +5,14 @@
  * - onEdit: function with this signature:
  *     jqXHR onEdit(String value)
  * 
+ * Properties that can be obtained after rendering:
+ * 
+ * - input (jQuery element)
+ * 
  * Private properties:
  * 
  * - _viewDiv (jQuery element)
- * - _editForm (jQuery element)
+ * - _editDiv (jQuery element)
  * - _valueView (jQuery element)
  * - _input (jQuery element)
  * - _currentValue (String)
@@ -21,32 +25,43 @@ class EditableTextValue {
 	render() {
 		let root = this._root;
 		root.addClass('editable-text-value');
+
 		let viewDiv = $('<div></div>')
 			.addClass('view');
 		this._viewDiv = viewDiv;
 		root.append(viewDiv);
+
+		let viewRowDiv = $('<div></div>')
+			.addClass('view-row');
+		viewDiv.append(viewRowDiv);
 		let valueView = $('<div></div>')
 			.addClass('value');
 		this._valueView = valueView;
-		viewDiv.append(valueView);
+		viewRowDiv.append(valueView);
 		let icon = $('<button></button>')
 			.addClass('icon icon-edit');
 		var self = this;
 		icon.on('click', function() {
 			self._onEditClick();
 		});
-		viewDiv.append(icon);
-		let editForm = $('<form></form>')
+		viewRowDiv.append(icon);
+
+		let editDiv = $('<div></div>')
 			.addClass('edit');
+		this._editDiv = editDiv;
+		root.append(editDiv);
+
+		let editForm = $('<form></form>')
+			.addClass('edit-form');
 		editForm.submit(function(e) {
 			e.preventDefault();
 		});
-		this._editForm = editForm;
-		root.append(editForm);
-		let edit = $('<input></input>')
+		editDiv.append(editForm);
+		let input = $('<input></input>')
 			.attr('name', root.attr('id'));
-		this._input = edit;
-		editForm.append(edit);
+		this._input = input;
+		editForm.append(input);
+		
 		icon = $('<button></button>')
 			.attr('type', 'button')
 			.addClass('icon icon-cancel');
@@ -61,22 +76,47 @@ class EditableTextValue {
 			self._onConfirmClick();
 		});
 		editForm.append(icon);
+
+		let errorDiv = $('<div></div>')
+			.addClass('error');
+		errorDiv.text('Error');
+		this._errorDiv = errorDiv;
+		editDiv.append(errorDiv);
+		
 		this._setValue(this.value);
 	}
 
+	get input() {
+		return this._input;
+	}
+
+	showError(error) {
+		let errorDiv = this._errorDiv;
+		errorDiv.text(error);
+		errorDiv.show();
+		this._input.addClass('error');
+	}
+
+	hideError() {
+		this._errorDiv.hide();
+		this._input.removeClass('error');
+	}
+
 	_onEditClick() {
-		this._viewDiv.css('visibility', 'hidden');
-		this._editForm.css('visibility', 'visible');
+		this._viewDiv.hide();
+		this._editDiv.show();
 		this._input.focus();
 	}
 
 	_onCancelClick() {
+		this.hideError();
 		this._setValue(this._currentValue);
-		this._editForm.css('visibility', 'hidden');
-		this._viewDiv.css('visibility', 'visible');
+		this._editDiv.hide();
+		this._viewDiv.show();
 	}
 
 	_onConfirmClick() {
+		this.hideError();
 		let newValue = this._input.val().trim();
 		var self = this;
 		this.onEdit(newValue)
@@ -94,14 +134,13 @@ class EditableTextValue {
 	}
 
 	_onConfirmFail() {
-		this._setValue(this._currentValue);
-		showToast(i18next.t('unexpected_error'));
-		this._onConfirmComplete();
+		this._input.addClass('error');
+		this._input.focus();
 	}
 
 	_onConfirmComplete() {
-		this._editForm.css('visibility', 'hidden');
-		this._viewDiv.css('visibility', 'visible');
+		this._editDiv.hide();
+		this._viewDiv.show();
 	}
 
 	_setValue(value) {

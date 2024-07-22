@@ -1,21 +1,28 @@
 .editable-text-value {
-	height: 32px;
+	display: grid;
 }
 
 .editable-text-value .view {
-	position: relative;
+	grid-column: 1;
+	grid-row: 1;
+}
+
+.editable-text-value .view-row {
 	display: flex;
 	height: 32px;
 	align-items: center;
 }
 
 .editable-text-value .edit {
-	position: relative;
+	grid-column: 1;
+	grid-row: 1;
+	display: none;
+}
+
+.editable-text-value .edit-form {
 	height: 32px;
-	top: -32px;
 	display: flex;
 	align-items: center;
-	visibility: hidden;
 }
 
 .editable-text-value .view .value {
@@ -41,17 +48,22 @@
 	cursor: pointer;
 }
 
-.editable-text-value .edit input {
+.editable-text-value .edit-form input {
 	flex-grow: 1;
 	width: 0px;
 	height: 32px;
 	border: 0.5px solid #757575;
-	border-radius: 14px;
+	border-radius: 16px;
 	padding: 0px 12px;
 	color: #373844;
 	font-family: 'Open Sans', sans-serif;
 	font-weight: 600;
 	font-size: 15px;
+}
+
+.editable-text-value .edit-form input.error {
+	border: 0.5px solid #be2b2b;
+	color: #be2b2b;
 }
 
 .editable-text-value .icon.icon-edit {
@@ -67,4 +79,10 @@
 .editable-text-value .icon.icon-confirm {
 	mask-image: url('../../images/icon_check.svg');
 	-webkit-mask-image: url('../../images/icon_check.svg');
+}
+
+.editable-text-value div.error {
+	display: none;
+	padding-left: 12px;
+	margin-top: 4px;
 }

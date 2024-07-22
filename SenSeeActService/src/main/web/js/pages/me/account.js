@@ -29,23 +29,33 @@ class MyAccountPage {
 		header.backUrl = basePath + '/me';
 		header.render();
 
+		let emailLabel = $('#email-label');
+		emailLabel.text(i18next.t('email_address') + ':');
+		let emailEdit = new EditableTextValue($('#email-value'));
+		emailEdit.value = user.email;
+		emailEdit.onEdit = function(value) {
+			return self._onEmailEdit(emailEdit, value);
+		}
+		emailEdit.render();
+		emailEdit.input.attr('type', 'email');
+
 		let firstNameLabel = $('#first-name-label');
 		firstNameLabel.text(i18next.t('first_name') + ':');
-		let firstNameValue = new EditableTextValue($('#first-name-value'));
-		firstNameValue.value = user.firstName;
-		firstNameValue.onEdit = function(value) {
+		let firstNameEdit = new EditableTextValue($('#first-name-value'));
+		firstNameEdit.value = user.firstName;
+		firstNameEdit.onEdit = function(value) {
 			return self._onFirstNameEdit(value);
 		}
-		firstNameValue.render();
+		firstNameEdit.render();
 
 		let lastNameLabel = $('#last-name-label');
 		lastNameLabel.text(i18next.t('last_name') + ':');
-		let lastNameValue = new EditableTextValue($('#last-name-value'));
-		lastNameValue.value = user.lastName;
-		lastNameValue.onEdit = function(value) {
+		let lastNameEdit = new EditableTextValue($('#last-name-value'));
+		lastNameEdit.value = user.lastName;
+		lastNameEdit.onEdit = function(value) {
 			return self._onLastNameEdit(value);
 		}
-		lastNameValue.render();
+		lastNameEdit.render();
 
 		menuController.showSidebar();
 		menuController.selectMenuItem('me-account');
@@ -55,14 +65,44 @@ class MyAccountPage {
 		content.css('visibility', 'visible');
 	}
 
+	_onEmailEdit(edit, value) {
+		let xhr = this._updateUser(function(user) {
+			user.email = value;
+		});
+		var self = this;
+		xhr.fail(function(xhr, status, error) {
+			console.log(xhr);
+			if (self._isInvalidInputField('email', xhr)) {
+				edit.showError(i18next.t('invalid_email_address'));
+			} else if (self._isUserAlreadyExists(xhr)) {
+				edit.showError(i18next.t('create_account_email_exists'));
+			} else {
+				showToast(i18next.t('unexpected_error'));
+			}
+		});
+		return xhr;
+	}
+
+	_isInvalidInputField(field, xhr) {
+		if (xhr.status != 400)
+			return false;
+		return true;
+	}
+
+	_isUserAlreadyExists(xhr) {
+		if (xhr.status != 403)
+			return false;
+		return true;
+	}
+
 	_onFirstNameEdit(value) {
-		return this._updateUser(function(user) {
+		return this._updateUserFailUnexpected(function(user) {
 			user.firstName = value;
 		});
 	}
 
 	_onLastNameEdit(value) {
-		return this._updateUser(function(user) {
+		return this._updateUserFailUnexpected(function(user) {
 			user.lastName = value;
 		});
 	}
@@ -75,6 +115,14 @@ class MyAccountPage {
 		var self = this;
 		xhr.done(function() {
 			self._user = newUser;
+		});
+		return xhr;
+	}
+
+	_updateUserFailUnexpected(updateUserFunction) {
+		let xhr = this._updateUser(updateUserFunction);
+		xhr.fail(function() {
+			showToast(i18next.t('unexpected_error'));
 		});
 		return xhr;
 	}

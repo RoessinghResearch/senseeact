@@ -1030,27 +1030,27 @@ public class User extends BaseDatabaseObject {
 	 * @return the real name
 	 */
 	public String toRealName() {
-		if (fullName != null && fullName.trim().length() > 0)
+		if (fullName != null && !fullName.trim().isEmpty())
 			return fullName.trim();
 		String lastName = null;
-		if (this.lastName != null && this.lastName.trim().length() > 0) {
+		if (this.lastName != null && !this.lastName.trim().isEmpty()) {
 			lastName = this.lastName.trim();
 		} else if (officialLastNames != null &&
-				officialLastNames.trim().length() > 0) {
+				!officialLastNames.trim().isEmpty()) {
 			lastName = officialLastNames.trim();
 		}
 		if (lastName != null && prefixes != null &&
-				prefixes.trim().length() > 0) {
+				!prefixes.trim().isEmpty()) {
 			lastName = prefixes.trim() + " " + lastName;
 		}
 		String initials = null;
-		if (this.initials != null && this.initials.trim().length() > 0)
+		if (this.initials != null && !this.initials.trim().isEmpty())
 			initials = this.initials.trim();
 		String firstName = null;
-		if (this.firstName != null && this.firstName.trim().length() > 0) {
+		if (this.firstName != null && !this.firstName.trim().isEmpty()) {
 			firstName = this.firstName.trim();
 		} else if (officialFirstNames != null &&
-				officialFirstNames.trim().length() > 0) {
+				!officialFirstNames.trim().isEmpty()) {
 			firstName = officialFirstNames.trim();
 		}
 		if (firstName != null && lastName != null)
