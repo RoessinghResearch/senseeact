@@ -2,6 +2,10 @@
 	height: 0px;
 }
 
+#email-verification-value {
+	margin-bottom: 8px;
+}
+
 .email-verification-line {
 	display: flex;
 }
@@ -57,4 +61,52 @@
 	margin-left: 12px;
 	margin-top: 4px;
 	color: #7f7f7f;
+}
+
+#password-value .change-button {
+	margin-left: 12px;
+	margin-top: 2px;
+	min-width: 114px;
+	width: auto;
+}
+
+#password-value form {
+	display: flex;
+	margin: 0px 32px 0px 12px;
+	flex-direction: column;
+}
+
+#password-value input {
+	margin: 4px 0px;
+	box-sizing: border-box;
+	height: 32px;
+	border: 0.5px solid #757575;
+	border-radius: 16px;
+	padding: 0px 12px;
+	color: #373844;
+	font-family: 'Open Sans', sans-serif;
+	font-weight: 600;
+	font-size: 15px;
+}
+
+#password-value input::placeholder {
+	font-family: 'Open Sans', sans-serif;
+	font-weight: 300;
+	font-style: italic;
+	font-size: 15px;
+	color: #7f7f7f;
+}
+
+#password-value .form-button-row {
+	display: flex;
+	margin-top: 4px;
+	justify-content: center;
+}
+
+#password-value .form-button-row button {
+	margin-left: 12px;
+}
+
+#password-value .form-button-row button:first-child {
+	margin-left: 0px;
 }

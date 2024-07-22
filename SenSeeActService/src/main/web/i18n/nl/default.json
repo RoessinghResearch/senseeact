@@ -1,4 +1,6 @@
 {
+	"cancel": "Annuleren",
+	"ok": "OK",
 	"about": "Over",
 	"documentation": "Documentatie",
 	"save": "Opslaan",
@@ -41,6 +43,10 @@
 	"email_address_not_verified": "E-mailadres niet gecontroleerd",
 	"email_address_pending_verification_1": "U heeft uw e-mailadres gewijzigd en er is een bevestigingsmail gestuurd naar uw nieuwe adres:",
 	"email_address_pending_verification_2": "De wijziging wordt pas actief nadat u het nieuwe adres heeft bevestigd.",
+	"change": "Wijzigen",
+	"current_password": "Huidig wachtwoord",
+	"new_password": "Nieuw wachtwoord",
+	"repeat_new_password": "Nieuw wachtwoord opnieuw",
 	"first_name": "Voornaam",
 	"last_name": "Achternaam",
 	"download": "Downloaden",

@@ -7,7 +7,7 @@ class MyAccountPage {
 	 */
 	constructor() {
 		var self = this;
-		checkLogin(function(data) {
+		checkLogin((data) => {
 			self._onGetUserDone(data);
 		})
 	}
@@ -32,21 +32,25 @@ class MyAccountPage {
 		let emailLabel = $('#email-label');
 		emailLabel.text(i18next.t('email_address') + ':');
 		let emailEdit = new EditableTextValue($('#email-value'));
-		emailEdit.onEdit = function(value) {
+		emailEdit.onEdit = (value) => {
 			return self._onEmailEdit(emailEdit, value);
 		};
-		emailEdit.onEditComplete = function(value) {
+		emailEdit.onEditComplete = (value) => {
 			self._showEmail(emailEdit);
 		};
 		emailEdit.render();
 		emailEdit.input.attr('type', 'email');
 		this._showEmail(emailEdit);
 
+		let passwordLabel = $('#password-label');
+		passwordLabel.text(i18next.t('password') + ':');
+		this._showPasswordChangeButton();
+
 		let firstNameLabel = $('#first-name-label');
 		firstNameLabel.text(i18next.t('first_name') + ':');
 		let firstNameEdit = new EditableTextValue($('#first-name-value'));
 		firstNameEdit.value = user.firstName;
-		firstNameEdit.onEdit = function(value) {
+		firstNameEdit.onEdit = (value) => {
 			return self._onFirstNameEdit(value);
 		}
 		firstNameEdit.render();
@@ -55,7 +59,7 @@ class MyAccountPage {
 		lastNameLabel.text(i18next.t('last_name') + ':');
 		let lastNameEdit = new EditableTextValue($('#last-name-value'));
 		lastNameEdit.value = user.lastName;
-		lastNameEdit.onEdit = function(value) {
+		lastNameEdit.onEdit = (value) => {
 			return self._onLastNameEdit(value);
 		}
 		lastNameEdit.render();
@@ -121,11 +125,11 @@ class MyAccountPage {
 	}
 
 	_onEmailEdit(edit, value) {
-		let xhr = this._updateUser(function(user) {
+		let xhr = this._updateUser((user) => {
 			user.email = value;
 		});
 		var self = this;
-		xhr.fail(function(xhr, status, error) {
+		xhr.fail((xhr, status, error) => {
 			if (self._isInvalidInputField('email', xhr)) {
 				edit.showError(i18next.t('invalid_email_address'));
 			} else if (self._isUserAlreadyExists(xhr)) {
@@ -149,14 +153,93 @@ class MyAccountPage {
 		return true;
 	}
 
+	_onChangePasswordClick() {
+		this._showPasswordChangeForm(this._user.hasTemporaryPassword);
+	}
+
+	_showPasswordChangeButton() {
+		let valueDiv = $('#password-value');
+		valueDiv.empty();
+		let button = $('<button></button>');
+		button.addClass('button small change-button');
+		valueDiv.append(button);
+		button.text(i18next.t('change'));
+		var self = this;
+		animator.addAnimatedClickHandler(button, button,
+			'animate-button-click', null,
+			() => {
+				self._onChangePasswordClick();
+			}
+		);
+	}
+
+	_showPasswordChangeForm(temporary) {
+		let valueDiv = $('#password-value');
+		valueDiv.empty();
+		let form = $('<form></form>');
+		valueDiv.append(form);
+		if (!temporary) {
+			let input = $('<input></input>');
+			input.attr('name', 'old-password');
+			input.attr('type', 'password');
+			input.attr('placeholder', i18next.t('current_password'));
+			form.append(input);
+		}
+		let input = $('<input></input>');
+		input.attr('name', 'new-password');
+		input.attr('type', 'password');
+		input.attr('placeholder', i18next.t('new_password'));
+		form.append(input);
+		input = $('<input></input>');
+		input.attr('name', 'repeat-new-password');
+		input.attr('type', 'password');
+		input.attr('placeholder', i18next.t('repeat_new_password'));
+		form.append(input);
+		let buttonsDiv = $('<div></div>')
+			.addClass('form-button-row');
+		form.append(buttonsDiv);
+		let button = $('<button></button>')
+			.attr('type', 'button')
+			.addClass('small')
+			.text(i18next.t('cancel'));
+		let self = this;
+		animator.addAnimatedClickHandler(button, button, 'animate-button-click',
+			null,
+			() => {
+				self._onChangePasswordCancelClick();
+			}
+		);
+		buttonsDiv.append(button);
+		button = $('<button></button>')
+			.attr('type', 'submit')
+			.addClass('small')
+			.text(i18next.t('ok'));
+		animator.addAnimatedClickHandler(button, button, 'animate-button-click',
+			null,
+			() => {
+				self._onChangePasswordOkClick();
+			}
+		);
+		buttonsDiv.append(button);
+		form.find('input').eq(0).focus();
+	}
+
+	_onChangePasswordCancelClick() {
+		this._showPasswordChangeButton();
+	}
+
+	_onChangePasswordOkClick() {
+
+	}
+
 	_onFirstNameEdit(value) {
-		return this._updateUserFailUnexpected(function(user) {
+		return this._updateUserFailUnexpected((user) => {
 			user.firstName = value;
 		});
 	}
 
 	_onLastNameEdit(value) {
-		return this._updateUserFailUnexpected(function(user) {
+		return this._updateUserFailUnexpected((user) => {
 			user.lastName = value;
 		});
 	}
@@ -167,7 +250,7 @@ class MyAccountPage {
 		let client = new SenSeeActClient();
 		let xhr = client.updateUser(null, newUser);
 		var self = this;
-		xhr.done(function(result) {
+		xhr.done((result) => {
 			self._user = result;
 		});
 		return xhr;
@@ -175,7 +258,7 @@ class MyAccountPage {
 
 	_updateUserFailUnexpected(updateUserFunction) {
 		let xhr = this._updateUser(updateUserFunction);
-		xhr.fail(function() {
+		xhr.fail(() => {
 			showToast(i18next.t('unexpected_error'));
 		});
 		return xhr;

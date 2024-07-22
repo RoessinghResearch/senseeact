@@ -1,4 +1,6 @@
 {
+	"cancel": "Cancel",
+	"ok": "OK",
 	"about": "About",
 	"documentation": "Documentation",
 	"save": "Save",
@@ -41,6 +43,10 @@
 	"email_address_not_verified": "Email address not verified",
 	"email_address_pending_verification_1": "You have changed your email address and a confirmation mail was sent to your new address:",
 	"email_address_pending_verification_2": "The change will only become active after you have confirmed the new address.",
+	"change": "Change",
+	"current_password": "Current password",
+	"new_password": "New password",
+	"repeat_new_password": "Repeat new password",
 	"first_name": "First name",
 	"last_name": "Last name",
 	"download": "Download",
