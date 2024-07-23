@@ -21,7 +21,7 @@ button:hover, a.button:hover {
 
 button.small, a.button.small {
 	height: 32px;
-	line-height: 30px;
+	line-height: 32px;
 	border-radius: 12px;
 	width: 114px;
 	font-size: 16px;

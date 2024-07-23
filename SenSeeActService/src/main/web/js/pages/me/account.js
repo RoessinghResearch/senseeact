@@ -128,29 +128,17 @@ class MyAccountPage {
 		let xhr = this._updateUser((user) => {
 			user.email = value;
 		});
-		var self = this;
+		let client = new SenSeeActClient();
 		xhr.fail((xhr, status, error) => {
-			if (self._isInvalidInputField('email', xhr)) {
+			if (client.hasInvalidInputField(xhr, 'email')) {
 				edit.showError(i18next.t('invalid_email_address'));
-			} else if (self._isUserAlreadyExists(xhr)) {
+			} else if (client.hasErrorCode(xhr, 403, 'USER_ALREADY_EXISTS')) {
 				edit.showError(i18next.t('create_account_email_exists'));
 			} else {
 				showToast(i18next.t('unexpected_error'));
 			}
 		});
 		return xhr;
-	}
-
-	_isInvalidInputField(field, xhr) {
-		if (xhr.status != 400)
-			return false;
-		return true;
-	}
-
-	_isUserAlreadyExists(xhr) {
-		if (xhr.status != 403)
-			return false;
-		return true;
 	}
 
 	_onChangePasswordClick() {
@@ -236,6 +224,25 @@ class MyAccountPage {
 	}
 
 	_onChangePasswordOkClick(clickId, oldInput, newInput, repeatInput) {
+		let validation = this._validateChangePasswordInput(oldInput, newInput,
+			repeatInput);
+		if (!validation.success) {
+			animator.onAnimatedClickHandlerCompleted(clickId,
+				{ success: false });
+			return;
+		}
+		var self = this;
+		let client = new SenSeeActClient();
+		client.changePassword(validation.oldPassword, validation.newPassword)
+		.done(() => {
+			self._onChangePasswordDone(clickId);
+		})
+		.fail((xhr, status, error) => {
+			self._onChangePasswordFail(clickId, oldInput, xhr);
+		});
+	}
+
+	_validateChangePasswordInput(oldInput, newInput, repeatInput) {
 		let valueDiv = $('#password-value');
 		valueDiv.find('input').removeClass('error');
 		let errorDiv = valueDiv.find('.password-error');
@@ -277,40 +284,59 @@ class MyAccountPage {
 			errorDiv.text(errorMessage);
 			errorDiv.show();
 		}
-		if (error) {
-			animator.onAnimatedClickHandlerCompleted(clickId, {
-				success: false
-			});
-			return;
+		return {
+			success: !error,
+			oldPassword: oldPassword,
+			newPassword: newPassword,
+			repeatPassword: repeatPassword
+		};
+	}
+
+	_onChangePasswordFail(clickId, oldInput, xhr) {
+		let valueDiv = $('#password-value');
+		valueDiv.find('input').removeClass('error');
+		let errorDiv = valueDiv.find('.password-error');
+		let client = new SenSeeActClient();
+		if (client.hasInvalidInputField(xhr, 'oldPassword')) {
+			oldInput.addClass('error');
+			oldInput.focus();
+			errorDiv.text(i18next.t('old_password_incorrect'));
+			errorDiv.show();
+		} else {
+			showToast(i18next.t('unexpected_error'));
 		}
-		let data = {};
-		if (oldInput)
-			data.oldPassword = oldPassword;
-		data.newPassword = newPassword;
-		data.tokenExpiration = 1440;
-		data.cookie = true;
-		data.autoExtendCookie = true;
-		$.ajax( {
-			type: 'POST',
-			url: servicePath + '/auth/change-password',
-			data: JSON.stringify(data),
-			contentType: 'application/json'
+		animator.onAnimatedClickHandlerCompleted(clickId, { success: false });
+	}
+
+	_onChangePasswordDone(clickId) {
+		var self = this;
+		let client = new SenSeeActClient();
+		client.getUser()
+		.done((result) => {
+			self._onChangePasswordGetUserDone(clickId, result);
 		})
-		.done(() => {
-			animator.onAnimatedClickHandlerCompleted(clickId, {
-				success: true
-			});
-		})
-		.fail(() => {
-			animator.onAnimatedClickHandlerCompleted(clickId, {
-				success: false
-			});
+		.fail((xhr, status, error) => {
+			self._onChangePasswordGetUserFail(clickId);
 		});
 	}
 
+	_onChangePasswordGetUserDone(clickId, user) {
+		this._user = user;
+		animator.onAnimatedClickHandlerCompleted(clickId,
+			{ success: true });
+	}
+
+	_onChangePasswordGetUserFail(clickId) {
+		showToast(i18next.t('unexpected_error'));
+		animator.onAnimatedClickHandlerCompleted(clickId,
+			{ success: false });
+	}
+	
 	_onChangePasswordOkComplete(result) {
-		if (result.success)
+		if (result.success) {
 			this._showPasswordChangeButton();
+			showToast(i18next.t('password_changed'));
+		}
 	}
 
 	_onFirstNameEdit(value) {

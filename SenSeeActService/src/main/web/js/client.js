@@ -47,6 +47,25 @@ class SenSeeActClient {
 	}
 
 	/**
+	 * Calls endpoint PUT /auth/change-password
+	 */
+	changePassword(oldPassword, newPassword) {
+		let data = {};
+		if (oldPassword)
+			data.oldPassword = oldPassword;
+		data.newPassword = newPassword;
+		data.tokenExpiration = 1440;
+		data.cookie = true;
+		data.autoExtendCookie = true;
+		return $.ajax({
+			type: 'POST',
+			url: servicePath + '/auth/change-password',
+			data: JSON.stringify(data),
+			contentType: 'application/json'
+		});
+	}
+
+	/**
 	 * Calls endpoint GET /user/.
 	 */
 	getUser(user = null) {
@@ -117,5 +136,34 @@ class SenSeeActClient {
 			url: url,
 			mimeType: 'text/plain'
 		});
+	}
+
+	hasInvalidInputField(xhr, field) {
+		if (xhr.status != 400)
+			return false;
+		let response = xhr.responseJSON;
+		if (response === null || typeof response !== 'object')
+			return false;
+		if (response.code != 'INVALID_INPUT')
+			return false;
+		if (!Array.isArray(response.fieldErrors))
+			return false;
+		for (let i = 0; i < response.fieldErrors.length; i++) {
+			let fieldError = response.fieldErrors[i];
+			if (fieldError !== null && typeof fieldError === 'object' &&
+					fieldError.field == field) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	hasErrorCode(xhr, status, code) {
+		if (xhr.status != status)
+			return false;
+		let response = xhr.responseJSON;
+		if (response === null || typeof response !== 'object')
+			return false;
+		return response.code == code;
 	}
 }

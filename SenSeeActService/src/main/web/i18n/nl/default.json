@@ -48,6 +48,8 @@
 	"new_password": "Nieuw wachtwoord",
 	"repeat_new_password": "Nieuw wachtwoord opnieuw",
 	"no_repeat_new_password_match": "De nieuwe wachtwoorden zijn niet hetzelfde",
+	"old_password_incorrect": "Het oude wachtwoord is onjuist",
+	"password_changed": "Uw wachtwoord is gewijzigd",
 	"first_name": "Voornaam",
 	"last_name": "Achternaam",
 	"download": "Downloaden",

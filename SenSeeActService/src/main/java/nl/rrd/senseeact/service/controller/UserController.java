@@ -37,6 +37,8 @@ import nl.rrd.utils.datetime.DateTimeUtils;
 import nl.rrd.utils.exception.DatabaseException;
 import nl.rrd.utils.exception.ParseException;
 import nl.rrd.utils.validation.TypeConversion;
+import nl.rrd.utils.validation.Validation;
+import nl.rrd.utils.validation.ValidationException;
 import org.slf4j.Logger;
 import org.springframework.web.bind.annotation.*;
 
@@ -578,6 +580,11 @@ public class UserController {
 		if (newEmail == null)
 			return result;
 		newEmail = newEmail.toLowerCase();
+		try {
+			Validation.validateEmail(newEmail);
+		} catch (ValidationException ex) {
+			ModelValidation.throwFieldError("email", ex);
+		}
 		EmailChangedState state = setUserEmailGetState(newEmail, setUser);
 		if (state == EmailChangedState.NOT_CHANGED)
 			return result;
