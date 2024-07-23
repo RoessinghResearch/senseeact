@@ -81,6 +81,8 @@ class MyAccountPage {
 			edit.value = user.email;
 			edit.placeholderValue = '';
 		}
+		let emailVerifyLabel = $('#email-verification-label');
+		emailVerifyLabel.addClass('empty');
 		let emailVerifyDiv = $('#email-verification-value');
 		emailVerifyDiv.empty();
 		let valueRow = emailVerifyDiv.parent();
