@@ -123,3 +123,21 @@
 	animation-timing-function: ease;
 	animation-duration: 200ms;
 }
+
+@keyframes animation-header-submenu-item-click {
+	0% {
+		background: #cde3ea;
+	}
+	50% {
+		background: #bad9e3;
+	}
+	100% {
+		background: #cde3ea;
+	}
+}
+
+.animate-header-submenu-item-click {
+	animation-name: animation-header-submenu-item-click;
+	animation-timing-function: ease;
+	animation-duration: 200ms;
+}

@@ -17,6 +17,7 @@ class HeaderController {
 		let menuItems = $('.header-menu-item');
 		for (let i = 0; i < menuItems.length; i++) {
 			let menuItem = menuItems.eq(i);
+			let title = menuItem.find('.header-title');
 			let submenu = menuItem.find('.header-submenu-container');
 			if (submenu.length == 0)
 				continue;
@@ -27,7 +28,34 @@ class HeaderController {
 			menuItem.on('mouseout', () => {
 				submenu.hide();
 			});
+			title.on('touchstart', (ev) => {
+				self._toggleSubmenu(menuItem);
+				ev.preventDefault();
+			});
 		}
+		let submenuItems = $('.header-submenu-title');
+		for (let i = 0; i < submenuItems.length; i++) {
+			let submenuItem = submenuItems.eq(i);
+			submenuItem.on('click', (ev) => {
+				ev.preventDefault();
+			});
+			animator.addAnimatedClickHandler(submenuItem, submenuItem,
+				'animate-header-submenu-item-click',
+				null,
+				() => {
+					self._onSubmenuItemClick(submenuItem);
+				}
+			);
+		}
+	}
+
+	_toggleSubmenu(menuItem) {
+		let submenu = menuItem.find('.header-submenu-container');
+		let wasVisible = submenu.is(':visible');
+		let allMenus = $('#header-menu').find('.header-submenu-container');
+		allMenus.hide();
+		if (!wasVisible)
+			this._showSubmenu(menuItem);
 	}
 
 	_showSubmenu(menuItem) {
@@ -50,6 +78,10 @@ class HeaderController {
 		$('#menu').show();
 		animator.startAnimation(background, 'animate-menu-background-show');
 		animator.onAnimatedClickHandlerCompleted(clickId, null);
+	}
+
+	_onSubmenuItemClick(item) {
+		window.location = item.attr('href');
 	}
 }
 
