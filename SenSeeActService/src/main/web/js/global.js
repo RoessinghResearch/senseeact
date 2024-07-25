@@ -32,6 +32,10 @@ function initPage() {
 	};
 	let html = Handlebars.templates.header(context);
 	$('#header').append(html);
+	html = Handlebars.templates.footer(context);
+	$('#footer').append(html);
+	html = Handlebars.templates.menu(context);
+	$('#menu').append(html);
 	let template = findPageTemplate(pagePath);
 	if (!template) {
 		window.location.href = basePath + '/';
@@ -39,10 +43,6 @@ function initPage() {
 	}
 	html = template(context);
 	$('#content').append(html);
-	html = Handlebars.templates.footer(context);
-	$('#footer').append(html);
-	html = Handlebars.templates.menu(context);
-	$('#menu').append(html);
 	menuController = new MenuController();
 	$('body').localize();
 	checkLogin(function() {
