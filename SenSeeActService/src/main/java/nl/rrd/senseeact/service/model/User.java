@@ -366,6 +366,36 @@ public class User extends nl.rrd.senseeact.client.model.User {
 	}
 
 	/**
+	 * Returns all users that were added as a subject to the specified user. It
+	 * is possible to filter by active status. This method should not be called
+	 * for users with role PATIENT.
+	 *
+	 * @param authDb the authentication database
+	 * @param user the user for whom accessible users should be retrieved
+	 * @param includeInactive true if inactive subjects should be included,
+	 * false if only active subjects should be returned
+	 * @return the subjects
+	 * @throws DatabaseException if a database error occurs
+	 */
+	public static List<User> findSubjectUsers(Database authDb, User user,
+			boolean includeInactive) throws DatabaseException {
+		Set<String> accessUserids = new HashSet<>(user.findGroupUserids(
+				authDb, Group.Type.USER_ACCESS));
+		UserCache.UserFilter subjectFilter = (subject) -> {
+			if (!accessUserids.contains(subject.getUserid()))
+				return false;
+			if (subject.getRole().ordinal() < user.getRole().ordinal())
+				return false;
+			if (!includeInactive && !subject.isActive())
+				return false;
+			return true;
+		};
+		UserCache cache = UserCache.getInstance();
+		return cache.getUsers(subjectFilter, Comparator.comparing(
+				User::getEmail));
+	}
+
+	/**
 	 * Returns all users that occur in the specified project and that can be
 	 * accessed by the specified user. It is possible to filter by role and
 	 * active status.
@@ -376,8 +406,8 @@ public class User extends nl.rrd.senseeact.client.model.User {
 	 * retrieved
 	 * @param role if set, it only returns users that were added to the project
 	 * with the specified role. This can be set to null.
-	 * @param includeInactive true if inactive subjects should be included, false
-	 * if only active subjects should be returned
+	 * @param includeInactive true if inactive subjects should be included,
+	 * false if only active subjects should be returned
 	 * @return the user IDs of the subjects
 	 * @throws DatabaseException if a database error occurs
 	 */

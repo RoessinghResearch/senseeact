@@ -8,6 +8,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import nl.rrd.senseeact.client.model.ProjectDataModule;
 import nl.rrd.senseeact.client.model.ProjectUserAccessRule;
+import nl.rrd.senseeact.dao.DatabaseObject;
 import nl.rrd.senseeact.service.QueryRunner;
 import nl.rrd.senseeact.service.exception.HttpException;
 import org.springframework.web.bind.annotation.*;
@@ -58,7 +59,7 @@ public class AccessController {
 
 	@RequestMapping(value="/project/{project}/subject/list",
 			method=RequestMethod.GET)
-	public List<ProjectUserAccessRule> getSubjectList(
+	public List<ProjectUserAccessRule> getProjectSubjectList(
 			HttpServletRequest request,
 			HttpServletResponse response,
 			@PathVariable("version")
@@ -70,7 +71,8 @@ public class AccessController {
 			String grantee) throws HttpException, Exception {
 		return QueryRunner.runProjectQuery(
 				(version, authDb, projectDb, user, srvProject) ->
-				exec.getSubjectList(version, authDb, user, project, grantee),
+				exec.getProjectSubjectList(version, authDb, user, project,
+						grantee),
 				versionName, project, request, response);
 	}
 
@@ -124,6 +126,24 @@ public class AccessController {
 							grantee, subject),
 					versionName, project, request, response);
 		}
+	}
+
+	@RequestMapping(value="/subject/list", method=RequestMethod.GET)
+	public List<DatabaseObject> getSubjectList(
+			HttpServletRequest request,
+			HttpServletResponse response,
+			@PathVariable("version")
+			@Parameter(hidden = true)
+			String versionName,
+			@RequestParam(value="user", required=false, defaultValue="")
+			final String user,
+			@RequestParam(value="includeInactive", required=false, defaultValue="true")
+			final String includeInactive) throws HttpException, Exception {
+		return QueryRunner.runAuthQuery(
+				(version, authDb, currUser) ->
+				exec.getSubjectList(version, authDb, currUser, user,
+						includeInactive),
+				versionName, request, response);
 	}
 
 	@RequestMapping(value="/subject", method=RequestMethod.POST)

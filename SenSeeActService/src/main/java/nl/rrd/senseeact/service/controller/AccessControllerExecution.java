@@ -76,7 +76,7 @@ public class AccessControllerExecution {
 		return rules;
 	}
 
-	public List<ProjectUserAccessRule> getSubjectList(
+	public List<ProjectUserAccessRule> getProjectSubjectList(
 			ProtocolVersion version, Database authDb, User user, String project,
 			String grantee) throws HttpException, Exception {
 		User granteeUser = User.findAccessibleUser(version, grantee, authDb,
@@ -176,6 +176,19 @@ public class AccessControllerExecution {
 		);
 		authDb.delete(new ProjectUserAccessTable(), criteria);
 		return null;
+	}
+
+	public List<DatabaseObject> getSubjectList(ProtocolVersion version,
+			Database authDb, User user, String forUserid,
+			String includeInactiveStr) throws HttpException, Exception {
+		if (user.getRole() == Role.PATIENT)
+			throw new ForbiddenException();
+		UserController.GetSubjectListInput input =
+				UserController.getSubjectListInput(version, authDb, user,
+				forUserid, null, includeInactiveStr);
+		List<User> subjects = User.findSubjectUsers(authDb, input.getForUser(),
+				input.isIncludeInactive());
+		return UserController.getCompatUserList(version, subjects);
 	}
 
 	public Object addSubject(ProtocolVersion version, Database authDb,

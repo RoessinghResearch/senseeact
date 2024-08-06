@@ -323,38 +323,11 @@ public class ProjectControllerExecution {
 			Database authDb, User user, BaseProject project, String forUserid,
 			String roleStr, String includeInactiveStr) throws HttpException,
 			Exception {
-		User forUser = User.findAccessibleUser(version, forUserid, authDb,
-				user);
-		if (!forUser.getUserid().equals(user.getUserid()) &&
-				user.getRole() != Role.ADMIN) {
-			throw new ForbiddenException();
-		}
-		List<HttpFieldError> fieldErrors = new ArrayList<>();
-		Role role = null;
-		if (roleStr != null && !roleStr.isEmpty()) {
-			try {
-				role = TypeConversion.getEnum(roleStr, Role.class);
-			} catch (ParseException ex) {
-				fieldErrors.add(new HttpFieldError("role",
-						"Invalid role: " + roleStr));
-			}
-		}
-		boolean includeInactive = false;
-		try {
-			includeInactive = TypeConversion.getBoolean(includeInactiveStr);
-		} catch (ParseException ex) {
-			fieldErrors.add(new HttpFieldError("includeInactive",
-					ex.getMessage()));
-		}
-		if (!fieldErrors.isEmpty())
-			throw BadRequestException.withInvalidInput(fieldErrors);
-		if (role != null && role.ordinal() < forUser.getRole().ordinal()) {
-			throw new ForbiddenException(new HttpError(String.format(
-					"Role %s is higher than role %s of requested user %s",
-					role, forUser.getRole(), forUser.getUserid(version))));
-		}
+		UserController.GetSubjectListInput input =
+				UserController.getSubjectListInput(version, authDb, user,
+				forUserid, roleStr, includeInactiveStr);
 		List<User> users = User.findProjectUsers(project.getCode(), authDb,
-				forUser, role, includeInactive);
+				input.getForUser(), input.getRole(), input.isIncludeInactive());
 		return UserController.getCompatUserList(version, users);
 	}
 

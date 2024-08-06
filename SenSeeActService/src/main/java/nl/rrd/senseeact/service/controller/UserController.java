@@ -301,6 +301,62 @@ public class UserController {
 		return getCompatUser(version, getUser);
 	}
 
+	public static class GetSubjectListInput {
+		private User forUser;
+		private Role role = null;
+		private boolean includeInactive = false;
+
+		public User getForUser() {
+			return forUser;
+		}
+
+		public Role getRole() {
+			return role;
+		}
+
+		public boolean isIncludeInactive() {
+			return includeInactive;
+		}
+	}
+
+	public static GetSubjectListInput getSubjectListInput(ProtocolVersion version,
+			Database authDb, User user, String forUserid, String roleStr,
+			String includeInactiveStr) throws HttpException, Exception {
+		GetSubjectListInput result = new GetSubjectListInput();
+		result.forUser = User.findAccessibleUser(version, forUserid, authDb,
+				user);
+		if (!result.forUser.getUserid().equals(user.getUserid()) &&
+				user.getRole() != Role.ADMIN) {
+			throw new ForbiddenException();
+		}
+		List<HttpFieldError> fieldErrors = new ArrayList<>();
+		if (roleStr != null && !roleStr.isEmpty()) {
+			try {
+				result.role = TypeConversion.getEnum(roleStr, Role.class);
+			} catch (ParseException ex) {
+				fieldErrors.add(new HttpFieldError("role",
+						"Invalid role: " + roleStr));
+			}
+		}
+		try {
+			result.includeInactive = TypeConversion.getBoolean(
+					includeInactiveStr);
+		} catch (ParseException ex) {
+			fieldErrors.add(new HttpFieldError("includeInactive",
+					ex.getMessage()));
+		}
+		if (!fieldErrors.isEmpty())
+			throw BadRequestException.withInvalidInput(fieldErrors);
+		if (result.role != null && result.role.ordinal() <
+				result.forUser.getRole().ordinal()) {
+			throw new ForbiddenException(new HttpError(String.format(
+					"Role %s is higher than role %s of requested user %s",
+					result.role, result.forUser.getRole(),
+					result.forUser.getUserid(version))));
+		}
+		return result;
+	}
+
 	public static DatabaseObject getCompatUser(ProtocolVersion version,
 			User user) {
 		if (version.ordinal() >= ProtocolVersion.V6_0_7.ordinal())
