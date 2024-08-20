@@ -4,12 +4,14 @@ import nl.rrd.utils.AppComponents;
 import nl.rrd.senseeact.dao.DatabaseFactory;
 import nl.rrd.senseeact.service.ApplicationInit;
 import nl.rrd.senseeact.service.Configuration;
+import org.springdoc.core.customizers.OperationCustomizer;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
 import org.springframework.context.ApplicationListener;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
@@ -51,6 +53,11 @@ ApplicationListener<ContextClosedEvent> {
 	protected SpringApplicationBuilder configure(
 			SpringApplicationBuilder builder) {
 		return builder.sources(Application.class);
+	}
+
+	@Bean
+	public OperationCustomizer operationCustomizer() {
+		return appInit.getOperationCustomizer();
 	}
 
 	public static void main(String[] args) {

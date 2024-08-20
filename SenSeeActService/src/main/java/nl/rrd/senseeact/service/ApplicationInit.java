@@ -16,6 +16,7 @@ import nl.rrd.utils.exception.ParseException;
 import nl.rrd.utils.schedule.DefaultTaskScheduler;
 import nl.rrd.utils.schedule.TaskScheduler;
 import org.slf4j.Logger;
+import org.springdoc.core.customizers.OperationCustomizer;
 import org.springframework.context.event.ContextClosedEvent;
 
 import java.net.URL;
@@ -188,5 +189,20 @@ public abstract class ApplicationInit {
 		DatabaseLoader.getInstance().close();
 		Logger logger = AppComponents.getLogger(SenSeeActContext.LOGTAG);
 		logger.info("Shutdown SenSeeAct");
+	}
+
+	public OperationCustomizer getOperationCustomizer() {
+		return (operation, handlerMethod) -> {
+			String controller = handlerMethod.getMethod().getDeclaringClass()
+					.getSimpleName().toLowerCase();
+			String suffix = "controller";
+			if (controller.endsWith("controller")) {
+				controller = controller.substring(0,
+						controller.length() - suffix.length());
+			}
+			operation.setOperationId(controller + "_" +
+					handlerMethod.getMethod().getName());
+			return operation;
+		};
 	}
 }
