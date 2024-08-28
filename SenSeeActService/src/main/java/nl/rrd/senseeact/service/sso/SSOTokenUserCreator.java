@@ -22,37 +22,46 @@ import nl.rrd.utils.exception.DatabaseException;
 import nl.rrd.utils.validation.ValidationException;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.UUID;
 
 public class SSOTokenUserCreator {
 	public static TokenResult create(ProtocolVersion version,
-			HttpServletResponse response, Database authDb, String project,
-			String email) throws HttpException, Exception {
+			HttpServletResponse response, Database authDb,
+			List<String> projects, String email) throws HttpException,
+			Exception {
 		synchronized (AuthControllerExecution.AUTH_LOCK) {
 			UserCache userCache = UserCache.getInstance();
 			User user = userCache.findByEmail(email);
 			if (user == null) {
-				return createNewUser(version, response, authDb, project, email);
-			} else if (project != null) {
-				return addUserToProject(version, response, authDb, project,
-						user);
+				return createNewUser(version, response, authDb, projects,
+						email);
 			} else {
+				for (String project : projects) {
+					addUserToProject(authDb, project, user);
+				}
 				return createToken(version, response, user);
 			}
 		}
 	}
 
 	private static TokenResult createNewUser(ProtocolVersion version,
-			HttpServletResponse response, Database authDb, String project,
-			String email) throws HttpException, Exception {
+			HttpServletResponse response, Database authDb,
+			List<String> projects, String email) throws HttpException,
+			Exception {
 		String password = UUID.randomUUID().toString().toLowerCase()
 				.replaceAll("-", "");
-		return AuthControllerExecution.signupSSO(version, response, email,
-				password, project, authDb);
+		TokenResult result = AuthControllerExecution.signupSSO(version,
+				response, email, password, null, authDb);
+		UserCache userCache = UserCache.getInstance();
+		User user = userCache.findByEmail(email);
+		for (String project : projects) {
+			addUserToProject(authDb, project, user);
+		}
+		return result;
 	}
 
-	private static TokenResult addUserToProject(ProtocolVersion version,
-			HttpServletResponse response, Database authDb, String projectCode,
+	private static void addUserToProject(Database authDb, String projectCode,
 			User user) throws HttpException, DatabaseException {
 		ProjectRepository projects = AppComponents.get(ProjectRepository.class);
 		BaseProject project = projects.findProjectByCode(projectCode);
@@ -71,7 +80,6 @@ public class SSOTokenUserCreator {
 			UserListenerRepository.getInstance().notifyUserAddedToProject(
 					user, project.getCode(), Role.PATIENT);
 		}
-		return createToken(version, response, user);
 	}
 
 	private static TokenResult createToken(ProtocolVersion version,

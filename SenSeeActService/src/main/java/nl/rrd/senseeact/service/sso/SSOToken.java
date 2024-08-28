@@ -7,6 +7,8 @@ import nl.rrd.senseeact.service.ProtocolVersion;
 import nl.rrd.senseeact.service.ValidateTokenResult;
 import nl.rrd.senseeact.service.exception.HttpException;
 
+import java.util.List;
+
 /**
  * Implementations of this class can check whether a HTTP request contains a
  * matching SSO token and check whether the token is valid.
@@ -14,29 +16,25 @@ import nl.rrd.senseeact.service.exception.HttpException;
  * @author Dennis Hofs (RRD)
  */
 public abstract class SSOToken {
-	private String project;
+	private List<String> projects;
 
 	/**
-	 * Constructs a new instance. If SSO tokens for this instance should only be
-	 * valid for a specific project, then you should specify the project code.
-	 * If you set the project code to null, the tokens will be valid for any
-	 * project.
+	 * Constructs a new instance. SSO tokens for this instance will only be
+	 * valid for the specified projects.
 	 *
-	 * @param project the project code or null
+	 * @param projects the project codes
 	 */
-	public SSOToken(String project) {
-		this.project = project;
+	public SSOToken(List<String> projects) {
+		this.projects = projects;
 	}
 
 	/**
-	 * If SSO tokens for this instance should only be valid for a specific
-	 * project, then this method returns the project code. If the tokens are
-	 * valid for any project, then it returns null.
+	 * The project codes for which SSO tokens of this instance are valid.
 	 *
-	 * @return the project code or null
+	 * @return the project codes
 	 */
-	public String getProject() {
-		return project;
+	public List<String> getProjects() {
+		return projects;
 	}
 
 	/**

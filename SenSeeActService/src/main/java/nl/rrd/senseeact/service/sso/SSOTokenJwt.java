@@ -47,34 +47,31 @@ public class SSOTokenJwt extends SSOToken {
 	private List<String> publicKeys = new ArrayList<>();
 
 	/**
-	 * Constructs a new instance. If SSO tokens for this instance should only be
-	 * valid for a specific project, then you should specify the project code.
-	 * If you set the project code to null, the tokens will be valid for any
-	 * project.
+	 * Constructs a new instance. SSO tokens for this instance will only be
+	 * valid for the specified projects.
 	 *
 	 * <p>After calling this constructor, you should call {@link
 	 * #addPublicKey(String) addPublicKey()} to add one or more public keys.</p>
 	 *
-	 * @param project the project code or null
+	 * @param projects the project codes
 	 * @param tokenHeader the token header name
 	 */
-	public SSOTokenJwt(String project, String tokenHeader) {
-		super(project);
+	public SSOTokenJwt(List<String> projects, String tokenHeader) {
+		super(projects);
 		this.tokenHeader = tokenHeader;
 	}
 
 	/**
-	 * Constructs a new instance. If SSO tokens for this instance should only be
-	 * valid for a specific project, then you should specify the project code.
-	 * If you set the project code to null, the tokens will be valid for any
-	 * project.
+	 * Constructs a new instance. SSO tokens for this instance will only be
+	 * valid for the specified projects.
 	 *
-	 * @param project the project code or null
+	 * @param projects the project codes
 	 * @param tokenHeader the token header name
 	 * @param publicKey the public key
 	 */
-	public SSOTokenJwt(String project, String tokenHeader, String publicKey) {
-		super(project);
+	public SSOTokenJwt(List<String> projects, String tokenHeader,
+			String publicKey) {
+		super(projects);
 		this.tokenHeader = tokenHeader;
 		this.publicKeys.add(publicKey);
 	}
@@ -236,6 +233,6 @@ public class SSOTokenJwt extends SSOToken {
 	 * @return the user validator
 	 */
 	protected SSOUserValidator getValidator(String requestedProject) {
-		return new SSOProjectUserValidator(getProject(), requestedProject);
+		return new SSOProjectUserValidator(getProjects(), requestedProject);
 	}
 }

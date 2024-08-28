@@ -8,14 +8,16 @@ import nl.rrd.senseeact.service.exception.HttpException;
 import nl.rrd.senseeact.service.model.User;
 import nl.rrd.senseeact.service.model.UserCache;
 
+import java.util.List;
+
 public abstract class SSOCreateProjectUserValidator
 		implements SSOUserValidator {
-	private String tokenProject;
+	private List<String> tokenProjects;
 	private String requestedProject;
 
-	public SSOCreateProjectUserValidator(String tokenProject,
+	public SSOCreateProjectUserValidator(List<String> tokenProjects,
 			String requestedProject) {
-		this.tokenProject = tokenProject;
+		this.tokenProjects = tokenProjects;
 		this.requestedProject = requestedProject;
 	}
 
@@ -25,15 +27,15 @@ public abstract class SSOCreateProjectUserValidator
 	public User findAuthenticatedUser(ProtocolVersion version,
 			HttpServletResponse response, Database authDb, String subject)
 			throws HttpException, Exception {
-		if (tokenProject != null && requestedProject != null &&
-				!requestedProject.equals(tokenProject)) {
+		if (requestedProject != null && !tokenProjects.contains(
+				requestedProject)) {
 			return null;
 		}
 		String email = getSubjectEmail(subject);
 		if (email == null)
 			return null;
 		TokenResult tokenResult = SSOTokenUserCreator.create(version,
-				response, authDb, tokenProject, email);
+				response, authDb, tokenProjects, email);
 		UserCache userCache = UserCache.getInstance();
 		return userCache.findByUserid(tokenResult.getUser());
 	}

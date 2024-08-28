@@ -8,37 +8,38 @@ import nl.rrd.senseeact.service.exception.HttpException;
 import nl.rrd.senseeact.service.model.User;
 import nl.rrd.senseeact.service.model.UserCache;
 
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 /**
- * This validator is used for tokens that grant complete access within a
- * project (the "tokenProject") or any project. It checks the following
- * constraints:
+ * This validator is used for tokens that grant complete access within certain
+ * projects (the "tokenProjects"). It checks the following constraints:
  *
  * <p><ul>
  * <li>A user with the specified user ID or email address exists</li>
  * <li>The user is not an admin.</li>
- * <li>If the endpoint is related to a project and the token project is set,
- * then the requested project must equal the token project.</li>
- * <li>If a token project is set, the user must be a member of the specified
- * project.</li>
+ * <li>If the endpoint is related to a project, then it must be one of the
+ * token projects.</li>
+ * <li>The user must be a member of the token projects.</li>
  * </ul></p>
  *
  * @author Dennis Hofs (RRD)
  */
 public class SSOProjectUserValidator implements SSOUserValidator {
-	private String tokenProject;
+	private List<String> tokenProjects;
 	private String requestedProject;
 
 	/**
 	 * Constructs a new validator.
 	 *
-	 * @param tokenProject the token project or null (if the token is valid for
-	 * any project)
+	 * @param tokenProjects the token projects
 	 * @param requestedProject the requested project or null (if the request is
 	 * not related to a project)
 	 */
-	public SSOProjectUserValidator(String tokenProject,
+	public SSOProjectUserValidator(List<String> tokenProjects,
 			String requestedProject) {
-		this.tokenProject = tokenProject;
+		this.tokenProjects = tokenProjects;
 		this.requestedProject = requestedProject;
 	}
 
@@ -46,8 +47,8 @@ public class SSOProjectUserValidator implements SSOUserValidator {
 	public User findAuthenticatedUser(ProtocolVersion version,
 			HttpServletResponse response, Database authDb, String subject)
 			throws HttpException, Exception {
-		if (tokenProject != null && requestedProject != null &&
-				!requestedProject.equals(tokenProject)) {
+		if (requestedProject != null && !tokenProjects.contains(
+				requestedProject)) {
 			return null;
 		}
 		UserCache userCache = UserCache.getInstance();
@@ -62,14 +63,13 @@ public class SSOProjectUserValidator implements SSOUserValidator {
 			return null;
 		if (user.getRole() == Role.ADMIN)
 			return null;
-		if (user.getRole() == Role.PROFESSIONAL && (tokenProject == null ||
-				requestedProject == null)) {
+		if (user.getRole() == Role.PROFESSIONAL && requestedProject == null) {
 			return null;
 		}
-		if (tokenProject != null && !user.findProjects(authDb).contains(
-				tokenProject)) {
+		Set<String> matchProjects = new HashSet<>(user.findProjects(authDb));
+		matchProjects.retainAll(tokenProjects);
+		if (matchProjects.isEmpty())
 			return null;
-		}
 		return user;
 	}
 }
