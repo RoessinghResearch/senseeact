@@ -2,6 +2,8 @@ package nl.rrd.senseeact.service.controller;
 
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import nl.rrd.senseeact.client.model.LoginParams;
@@ -12,8 +14,12 @@ import nl.rrd.senseeact.service.QueryRunner;
 import nl.rrd.senseeact.service.controller.model.ChangePasswordParams;
 import nl.rrd.senseeact.service.controller.model.ResetPasswordParams;
 import nl.rrd.senseeact.service.exception.HttpException;
+import nl.rrd.senseeact.service.model.PublicMfaRecord;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @RestController
 @RequestMapping("/v{version}/auth")
@@ -345,5 +351,36 @@ public class AuthController {
 							null, authDb),
 					versionName, null, response);
 		}
+	}
+
+	@RequestMapping(value="/mfa/add", method=RequestMethod.POST)
+	@io.swagger.v3.oas.annotations.parameters.RequestBody(
+		content = {
+			@Content(
+				mediaType = "application/json",
+				schema = @Schema(type = "string")
+			)
+		}
+	)
+	public PublicMfaRecord addMfaRecord(
+			HttpServletRequest request,
+			HttpServletResponse response,
+			@PathVariable("version")
+			@Parameter(hidden = true)
+			String versionName,
+			@RequestParam(value="type")
+			String type) throws HttpException, Exception {
+		synchronized (AuthControllerExecution.AUTH_LOCK) {
+			return QueryRunner.runAuthQuery((version, authDb, user) ->
+					exec.addMfaRecord(request, type, authDb, user),
+					versionName, request, response);
+		}
+	}
+
+	public void deleteMfaRecord() {
+	}
+
+	public List<PublicMfaRecord> getMfaRecords() {
+		return new ArrayList<>();
 	}
 }

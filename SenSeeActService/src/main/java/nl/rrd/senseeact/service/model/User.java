@@ -58,7 +58,10 @@ public class User extends nl.rrd.senseeact.client.model.User {
 
 	@DatabaseField(value=DatabaseType.TEXT, json=true)
 	@JsonIgnore
-	private List<Object> mfa = new ArrayList<>();
+	private String mfa;
+
+	@JsonIgnore
+	private List<Object> mfaList = new ArrayList<>();
 
 	public User() {
 	}
@@ -155,12 +158,35 @@ public class User extends nl.rrd.senseeact.client.model.User {
 		this.verifyEmailRequestTime = verifyEmailRequestTime;
 	}
 
-	public List<Object> getMfa() {
-		return mfa;
+	/**
+	 * Returns the JSON code for the multi-factor authentication list. This
+	 * method is used for the DAO. Users can call {@link #getMfaList()
+	 * getMfaList()}.
+	 *
+	 * @return the JSON code for the multi-factor authentication list
+	 */
+	public String getMfa() {
+		return JsonMapper.generate(mfaList);
 	}
 
-	public void setMfa(List<Object> mfa) {
-		this.mfa = mfa;
+	/**
+	 * Sets the JSON code for the multi-factor authentication list. This method
+	 * is used for the DAO. Users can call {@link #setMfaList(List)
+	 * setMfaList(List)}.
+	 *
+	 * @param mfa the JSON code for the multi-factor authentication list
+	 * @throws ParseException if the JSON code is invalid
+	 */
+	public void setMfa(String mfa) throws ParseException {
+		mfaList = JsonMapper.parse(mfa, new TypeReference<>() {});
+	}
+
+	public List<Object> getMfaList() {
+		return mfaList;
+	}
+
+	public void setMfaList(List<Object> mfaList) {
+		this.mfaList = mfaList;
 	}
 
 	/**

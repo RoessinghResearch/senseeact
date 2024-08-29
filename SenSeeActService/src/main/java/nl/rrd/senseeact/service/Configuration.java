@@ -30,6 +30,10 @@ public class Configuration extends BaseConfiguration {
 	public static final String MAIL_PASSWORD = "mailPassword";
 	public static final String MAIL_SMTP_TLS = "mailSmtpTls";
 	public static final String MAIL_FROM = "mailFrom";
+
+	public static final String TWILIO_ACCOUNT_SID = "twilioAccountSid";
+	public static final String TWILIO_AUTH_TOKEN = "twilioAuthToken";
+	public static final String TWILIO_VERIFY_SERVICE_SID = "twilioVerifyServiceSid";
 	
 	public static final String WEB_URL = "webUrl";
 

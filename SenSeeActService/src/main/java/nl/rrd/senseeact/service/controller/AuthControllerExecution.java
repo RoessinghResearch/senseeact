@@ -1,5 +1,6 @@
 package nl.rrd.senseeact.service.controller;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -20,15 +21,17 @@ import nl.rrd.senseeact.service.mail.EmailTemplate;
 import nl.rrd.senseeact.service.mail.EmailTemplateCollection;
 import nl.rrd.senseeact.service.mail.EmailTemplateRepository;
 import nl.rrd.senseeact.service.model.User;
-import nl.rrd.senseeact.service.model.UserCache;
-import nl.rrd.senseeact.service.model.UserProject;
-import nl.rrd.senseeact.service.model.UserProjectTable;
+import nl.rrd.senseeact.service.model.*;
 import nl.rrd.senseeact.service.validation.ModelValidation;
 import nl.rrd.utils.AppComponents;
 import nl.rrd.utils.datetime.DateTimeUtils;
 import nl.rrd.utils.exception.DatabaseException;
 import nl.rrd.utils.exception.ParseException;
+import nl.rrd.utils.http.HttpClient2;
 import nl.rrd.utils.http.URLParameters;
+import nl.rrd.utils.io.FileUtils;
+import nl.rrd.utils.json.JsonMapper;
+import nl.rrd.utils.validation.MapReader;
 import nl.rrd.utils.validation.Validation;
 import nl.rrd.utils.validation.ValidationException;
 import org.slf4j.Logger;
@@ -36,6 +39,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -772,6 +776,81 @@ public class AuthControllerExecution {
 		user.setResetPasswordRequestTime(null);
 		userCache.updateUser(authDb, user);
 		return null;
+	}
+
+	public PublicMfaRecord addMfaRecord(HttpServletRequest request, String type,
+			Database authDb, User user) throws HttpException, Exception {
+		if (type.equals(MfaRecord.TYPE_SMS)) {
+			return addMfaRecordSms(request, authDb, user);
+		} else {
+			HttpFieldError error = new HttpFieldError("type",
+					"Unknown MFA type: " + type);
+			throw BadRequestException.withInvalidInput(error);
+		}
+	}
+
+	private PublicMfaRecord addMfaRecordSms(HttpServletRequest request,
+			Database authDb, User user) throws HttpException, Exception {
+		String json;
+		try (InputStream input = request.getInputStream()) {
+			json = FileUtils.readFileString(input);
+		}
+		Map<String,Object> map;
+		try {
+			map = JsonMapper.parse(json, new TypeReference<>() {});
+		} catch (ParseException ex) {
+			throw new BadRequestException("Invalid JSON content");
+		}
+		MapReader mapReader = new MapReader(map);
+		String phone;
+		try {
+			phone = mapReader.readStringRegex(MfaRecord.KEY_SMS_PHONE_NUMBER,
+					"\\+[0-9]+");
+		} catch (ParseException ex) {
+			throw new BadRequestException("Invalid input: " + ex);
+		}
+		ZonedDateTime now = DateTimeUtils.nowMs();
+		Configuration config = AppComponents.get(Configuration.class);
+		String serviceSid = config.get(Configuration.TWILIO_VERIFY_SERVICE_SID);
+		String accountSid = config.get(Configuration.TWILIO_ACCOUNT_SID);
+		String authToken = config.get(Configuration.TWILIO_AUTH_TOKEN);
+		String auth = accountSid + ":" + authToken;
+		String base64Auth = Base64.getEncoder().encodeToString(auth.getBytes());
+		String url = String.format(
+				"https://verify.twilio.com/v2/Services/%s/Verifications",
+				serviceSid);
+		Map<String,String> params = new LinkedHashMap<>();
+		params.put("To", phone);
+		params.put("Channel", "sms");
+		Map<String,Object> response;
+		try (HttpClient2 httpClient = new HttpClient2(url)) {
+			response = httpClient
+				.setMethod("POST")
+				.addHeader("Authorization", "Basic " + base64Auth)
+				.writePostParams(params)
+				.readJson(new TypeReference<>() {});
+		}
+		Object status = response.get("status");
+		if (status instanceof Integer statusCode) {
+			if (statusCode == 400)
+				throw new BadRequestException("Invalid phone number: " + phone);
+		}
+		if (!"pending".equals(status)) {
+			throw new Exception("Unexpected verify response");
+		}
+		MfaRecord record = new MfaRecord();
+		record.setId(UUID.randomUUID().toString().toLowerCase()
+				.replaceAll("-", ""));
+		record.setType(MfaRecord.TYPE_SMS);
+		record.setCreated(now);
+		record.setPaired(false);
+		Map<String,Object> data = new LinkedHashMap<>();
+		data.put(MfaRecord.KEY_SMS_PHONE_NUMBER, phone);
+		record.setAttemptPairData(data);
+		user.getMfaList().add(record);
+		UserCache cache = UserCache.getInstance();
+		cache.updateUser(authDb, user);
+		return PublicMfaRecord.fromMfaRecord(record);
 	}
 
 	private static EmailTemplate findEmailTemplate(
