@@ -10,7 +10,7 @@ import java.util.Map;
 public class UserTable extends DatabaseTableDef<User> {
 	public static final String NAME = "user";
 	
-	private static final int VERSION = 14;
+	private static final int VERSION = 15;
 
 	public UserTable() {
 		super(NAME, User.class, VERSION, false);
@@ -47,8 +47,10 @@ public class UserTable extends DatabaseTableDef<User> {
 			return upgradeTableV12(db, physTable);
 		else if (version == 13)
 			return upgradeTableV13(db, physTable);
+		else if (version == 14)
+			return upgradeTableV14(db, physTable);
 		else
-			return 14;
+			return 15;
 	}
 	
 	private int upgradeTableV0(Database db, String physTable)
@@ -186,5 +188,15 @@ public class UserTable extends DatabaseTableDef<User> {
 			db.update(physTable, null, criteria, values);
 		}
 		return 14;
+	}
+
+	private int upgradeTableV14(Database db, String physTable)
+			throws DatabaseException {
+		db.addColumn(physTable, new DatabaseColumnDef("mfa",
+				DatabaseType.TEXT));
+		Map<String,Object> values = new LinkedHashMap<>();
+		values.put("mfa", "{}");
+		db.update(physTable, null, null, values);
+		return 15;
 	}
 }

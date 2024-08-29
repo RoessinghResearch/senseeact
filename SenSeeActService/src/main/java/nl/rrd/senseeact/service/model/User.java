@@ -1,6 +1,7 @@
 package nl.rrd.senseeact.service.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.core.type.TypeReference;
 import nl.rrd.senseeact.service.access.ProjectUserAccessControl;
 import nl.rrd.senseeact.service.access.ProjectUserAccessControlRepository;
 import nl.rrd.utils.AppComponents;
@@ -14,6 +15,8 @@ import nl.rrd.senseeact.client.project.ProjectRepository;
 import nl.rrd.senseeact.dao.*;
 import nl.rrd.senseeact.service.ProtocolVersion;
 import nl.rrd.senseeact.service.exception.ForbiddenException;
+import nl.rrd.utils.exception.ParseException;
+import nl.rrd.utils.json.JsonMapper;
 
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
@@ -53,6 +56,10 @@ public class User extends nl.rrd.senseeact.client.model.User {
 	@JsonIgnore
 	private ZonedDateTime verifyEmailRequestTime = null;
 
+	@DatabaseField(value=DatabaseType.TEXT, json=true)
+	@JsonIgnore
+	private Map<String,Object> mfa = new LinkedHashMap<>();
+
 	public User() {
 	}
 
@@ -73,6 +80,14 @@ public class User extends nl.rrd.senseeact.client.model.User {
 		resetPasswordRequestTime = otherUser.resetPasswordRequestTime;
 		verifyEmailRequestCode = otherUser.verifyEmailRequestCode;
 		verifyEmailRequestTime = otherUser.verifyEmailRequestTime;
+		try {
+			mfa = JsonMapper.parse(JsonMapper.generate(otherUser.mfa),
+					new TypeReference<>() {
+					});
+		} catch (ParseException ex) {
+			throw new RuntimeException("Failed to parse JSON code: " +
+					ex.getMessage(), ex);
+		}
 	}
 
 	public String getPassword() {
@@ -138,6 +153,14 @@ public class User extends nl.rrd.senseeact.client.model.User {
 
 	public void setVerifyEmailRequestTime(ZonedDateTime verifyEmailRequestTime) {
 		this.verifyEmailRequestTime = verifyEmailRequestTime;
+	}
+
+	public Map<String,Object> getMfa() {
+		return mfa;
+	}
+
+	public void setMfa(Map<String,Object> mfa) {
+		this.mfa = mfa;
 	}
 
 	/**
