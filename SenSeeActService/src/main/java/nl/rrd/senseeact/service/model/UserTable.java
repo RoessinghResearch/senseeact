@@ -195,7 +195,7 @@ public class UserTable extends DatabaseTableDef<User> {
 		db.addColumn(physTable, new DatabaseColumnDef("mfa",
 				DatabaseType.TEXT));
 		Map<String,Object> values = new LinkedHashMap<>();
-		values.put("mfa", "{}");
+		values.put("mfa", "[]");
 		db.update(physTable, null, null, values);
 		return 15;
 	}

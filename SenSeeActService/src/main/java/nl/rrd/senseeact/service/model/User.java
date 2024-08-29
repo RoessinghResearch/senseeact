@@ -58,7 +58,7 @@ public class User extends nl.rrd.senseeact.client.model.User {
 
 	@DatabaseField(value=DatabaseType.TEXT, json=true)
 	@JsonIgnore
-	private Map<String,Object> mfa = new LinkedHashMap<>();
+	private List<Object> mfa = new ArrayList<>();
 
 	public User() {
 	}
@@ -155,11 +155,11 @@ public class User extends nl.rrd.senseeact.client.model.User {
 		this.verifyEmailRequestTime = verifyEmailRequestTime;
 	}
 
-	public Map<String,Object> getMfa() {
+	public List<Object> getMfa() {
 		return mfa;
 	}
 
-	public void setMfa(Map<String,Object> mfa) {
+	public void setMfa(List<Object> mfa) {
 		this.mfa = mfa;
 	}
 
