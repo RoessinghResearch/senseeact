@@ -187,11 +187,8 @@ public class UserCache {
 			int sep = email.indexOf('@');
 			String emailLocal = email.substring(0, sep);
 			emailMap.put(email, user);
-			List<User> emailLocalUsers = emailLocalMap.get(emailLocal);
-			if (emailLocalUsers == null) {
-				emailLocalUsers = new ArrayList<>();
-				emailLocalMap.put(emailLocal, emailLocalUsers);
-			}
+			List<User> emailLocalUsers = emailLocalMap.computeIfAbsent(
+					emailLocal, key -> new ArrayList<>());
 			emailLocalUsers.add(user);
 		}
 	}
