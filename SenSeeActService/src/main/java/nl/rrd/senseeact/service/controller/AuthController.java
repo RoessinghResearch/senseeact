@@ -18,7 +18,6 @@ import nl.rrd.senseeact.service.model.PublicMfaRecord;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -377,10 +376,51 @@ public class AuthController {
 		}
 	}
 
-	public void deleteMfaRecord() {
+	@RequestMapping(value="/mfa/add/verify", method=RequestMethod.POST)
+	public PublicMfaRecord verifyAddMfaRecord(
+			HttpServletRequest request,
+			HttpServletResponse response,
+			@PathVariable("version")
+			@Parameter(hidden = true)
+			String versionName,
+			@RequestParam(value="id")
+			String id,
+			@RequestParam(value="code")
+			String code) throws HttpException, Exception {
+		synchronized (AuthControllerExecution.AUTH_LOCK) {
+			return QueryRunner.runAuthQuery((version, authDb, user) ->
+					exec.confirmAddMfaRecord(id, code, authDb, user),
+					versionName, request, response);
+		}
 	}
 
-	public List<PublicMfaRecord> getMfaRecords() {
-		return new ArrayList<>();
+	@RequestMapping(value="/mfa", method=RequestMethod.DELETE)
+	public void deleteMfaRecord(
+			HttpServletRequest request,
+			HttpServletResponse response,
+			@PathVariable("version")
+			@Parameter(hidden = true)
+			String versionName,
+			@RequestParam(value="id")
+			String id) throws HttpException, Exception {
+		synchronized (AuthControllerExecution.AUTH_LOCK) {
+			QueryRunner.runAuthQuery((version, authDb, user) ->
+					exec.deleteMfaRecord(id, authDb, user),
+					versionName, request, response);
+		}
+	}
+
+	@RequestMapping(value="/mfa/list", method=RequestMethod.GET)
+	public List<PublicMfaRecord> getMfaRecords(
+			HttpServletRequest request,
+			HttpServletResponse response,
+			@PathVariable("version")
+			@Parameter(hidden = true)
+			String versionName) throws HttpException, Exception {
+		synchronized (AuthControllerExecution.AUTH_LOCK) {
+			return QueryRunner.runAuthQuery((version, authDb, user) ->
+					exec.getMfaRecords(user),
+					versionName, request, response);
+		}
 	}
 }

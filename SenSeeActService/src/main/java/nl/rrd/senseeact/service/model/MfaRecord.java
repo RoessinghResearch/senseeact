@@ -1,5 +1,7 @@
 package nl.rrd.senseeact.service.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import nl.rrd.utils.json.DateTimeFromIsoDateTimeDeserializer;
@@ -14,6 +16,7 @@ import java.util.Map;
  *
  * @author Dennis Hofs (d.hofs@rrd.nl)
  */
+@JsonIgnoreProperties(ignoreUnknown=true)
 public class MfaRecord {
 	public static final String TYPE_SMS = "sms";
 	public static final String TYPE_TOTP = "totp";

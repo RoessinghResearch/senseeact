@@ -812,10 +812,6 @@ public class AuthControllerExecution {
 		ZonedDateTime now = DateTimeUtils.nowMs();
 		Configuration config = AppComponents.get(Configuration.class);
 		String serviceSid = config.get(Configuration.TWILIO_VERIFY_SERVICE_SID);
-		String accountSid = config.get(Configuration.TWILIO_ACCOUNT_SID);
-		String authToken = config.get(Configuration.TWILIO_AUTH_TOKEN);
-		String auth = accountSid + ":" + authToken;
-		String base64Auth = Base64.getEncoder().encodeToString(auth.getBytes());
 		String url = String.format(
 				"https://verify.twilio.com/v2/Services/%s/Verifications",
 				serviceSid);
@@ -824,9 +820,8 @@ public class AuthControllerExecution {
 		params.put("Channel", "sms");
 		Map<String,Object> response;
 		try (HttpClient2 httpClient = new HttpClient2(url)) {
-			response = httpClient
-				.setMethod("POST")
-				.addHeader("Authorization", "Basic " + base64Auth)
+			addTwilioAuthHeader(httpClient);
+			response = httpClient.setMethod("POST")
 				.writePostParams(params)
 				.readJson(new TypeReference<>() {});
 		}
@@ -851,6 +846,96 @@ public class AuthControllerExecution {
 		UserCache cache = UserCache.getInstance();
 		cache.updateUser(authDb, user);
 		return PublicMfaRecord.fromMfaRecord(record);
+	}
+
+	public PublicMfaRecord confirmAddMfaRecord(String mfaId, String code,
+			Database authDb, User user) throws HttpException, Exception {
+		MfaRecord record = findMfaRecord(mfaId, user);
+		if (record == null)
+			throw new NotFoundException("MFA record not found");
+		if (record.isPaired())
+			return PublicMfaRecord.fromMfaRecord(record);
+		if (record.getType().equals(MfaRecord.TYPE_SMS)) {
+			return confirmAddMfaRecordSms(record, code, authDb, user);
+		} else {
+			HttpFieldError error = new HttpFieldError("type",
+					"MFA type not implemented: " + record.getType());
+			throw BadRequestException.withInvalidInput(error);
+		}
+	}
+
+	private PublicMfaRecord confirmAddMfaRecordSms(MfaRecord record,
+			String code, Database authDb, User user) throws HttpException,
+			Exception {
+		Configuration config = AppComponents.get(Configuration.class);
+		String serviceSid = config.get(Configuration.TWILIO_VERIFY_SERVICE_SID);
+		String url = String.format(
+				"https://verify.twilio.com/v2/Services/%s/VerificationCheck",
+				serviceSid);
+		String phone = (String)record.getAttemptPairData().get(
+				MfaRecord.KEY_SMS_PHONE_NUMBER);
+		Map<String,String> params = new LinkedHashMap<>();
+		params.put("To", phone);
+		params.put("Code", code);
+		Map<String,Object> response;
+		try (HttpClient2 httpClient = new HttpClient2(url)) {
+			addTwilioAuthHeader(httpClient);
+			response = httpClient.setMethod("POST")
+					.writePostParams(params)
+					.readJson(new TypeReference<>() {});
+		}
+		Object status = response.get("status");
+		if (!(status instanceof String)) {
+			throw new Exception("Unexpected verify response");
+		}
+		if (!"approved".equals(status)) {
+			HttpFieldError error = new HttpFieldError("code",
+					"Invalid verification code");
+			throw BadRequestException.withInvalidInput(error);
+		}
+		record.setPaired(true);
+		record.getPublicPairData().put(MfaRecord.KEY_SMS_PHONE_NUMBER, phone);
+		record.getAttemptPairData().clear();
+		UserCache cache = UserCache.getInstance();
+		cache.updateUser(authDb, user);
+		return PublicMfaRecord.fromMfaRecord(record);
+	}
+
+	private void addTwilioAuthHeader(HttpClient2 httpClient) {
+		Configuration config = AppComponents.get(Configuration.class);
+		String accountSid = config.get(Configuration.TWILIO_ACCOUNT_SID);
+		String authToken = config.get(Configuration.TWILIO_AUTH_TOKEN);
+		String auth = accountSid + ":" + authToken;
+		String base64Auth = Base64.getEncoder().encodeToString(auth.getBytes());
+		httpClient.addHeader("Authorization", "Basic " + base64Auth);
+	}
+
+	private MfaRecord findMfaRecord(String id, User user) {
+		for (MfaRecord record : user.getMfaList()) {
+			if (id.equals(record.getId()))
+				return record;
+		}
+		return null;
+	}
+
+	public Object deleteMfaRecord(String id, Database authDb, User user)
+			throws HttpException, Exception {
+		MfaRecord record = findMfaRecord(id, user);
+		if (record == null)
+			return null;
+		user.getMfaList().remove(record);
+		UserCache cache = UserCache.getInstance();
+		cache.updateUser(authDb, user);
+		return null;
+	}
+
+	public List<PublicMfaRecord> getMfaRecords(User user) {
+		List<PublicMfaRecord> result = new ArrayList<>();
+		for (MfaRecord record : user.getMfaList()) {
+			if (record.isPaired())
+				result.add(PublicMfaRecord.fromMfaRecord(record));
+		}
+		return result;
 	}
 
 	private static EmailTemplate findEmailTemplate(

@@ -223,11 +223,8 @@ public class UserCache {
 				prevEmailLocalUsers.remove(prevUser);
 				if (prevEmailLocalUsers.isEmpty())
 					emailLocalMap.remove(prevEmailLocal);
-				List<User> emailLocalUsers = emailLocalMap.get(emailLocal);
-				if (emailLocalUsers == null) {
-					emailLocalUsers = new ArrayList<>();
-					emailLocalMap.put(emailLocal, emailLocalUsers);
-				}
+				List<User> emailLocalUsers = emailLocalMap.computeIfAbsent(
+						emailLocal, key -> new ArrayList<>());
 				emailLocalUsers.add(user);
 			}
 		}

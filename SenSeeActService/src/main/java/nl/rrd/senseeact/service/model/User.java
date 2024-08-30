@@ -61,7 +61,7 @@ public class User extends nl.rrd.senseeact.client.model.User {
 	private String mfa;
 
 	@JsonIgnore
-	private List<Object> mfaList = new ArrayList<>();
+	private List<MfaRecord> mfaList = new ArrayList<>();
 
 	public User() {
 	}
@@ -84,9 +84,8 @@ public class User extends nl.rrd.senseeact.client.model.User {
 		verifyEmailRequestCode = otherUser.verifyEmailRequestCode;
 		verifyEmailRequestTime = otherUser.verifyEmailRequestTime;
 		try {
-			mfa = JsonMapper.parse(JsonMapper.generate(otherUser.mfa),
-					new TypeReference<>() {
-					});
+			mfaList = JsonMapper.parse(JsonMapper.generate(otherUser.mfaList),
+					new TypeReference<>() {});
 		} catch (ParseException ex) {
 			throw new RuntimeException("Failed to parse JSON code: " +
 					ex.getMessage(), ex);
@@ -181,11 +180,11 @@ public class User extends nl.rrd.senseeact.client.model.User {
 		mfaList = JsonMapper.parse(mfa, new TypeReference<>() {});
 	}
 
-	public List<Object> getMfaList() {
+	public List<MfaRecord> getMfaList() {
 		return mfaList;
 	}
 
-	public void setMfaList(List<Object> mfaList) {
+	public void setMfaList(List<MfaRecord> mfaList) {
 		this.mfaList = mfaList;
 	}
 
