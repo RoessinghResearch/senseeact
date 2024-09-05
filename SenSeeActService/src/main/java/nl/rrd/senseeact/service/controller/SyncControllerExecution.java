@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import nl.rrd.senseeact.client.SenSeeActClient;
+import nl.rrd.senseeact.client.exception.ErrorCode;
 import nl.rrd.senseeact.client.model.SyncWatchResult;
 import nl.rrd.senseeact.client.model.SyncWatchResult.ResultCode;
 import nl.rrd.senseeact.client.project.BaseProject;
@@ -83,8 +84,8 @@ public class SyncControllerExecution {
 				}
 			}
 		} catch (ParseException ex) {
-			throw new BadRequestException("Invalid content: " +
-					ex.getMessage());
+			throw new BadRequestException(ErrorCode.INVALID_INPUT,
+					"Invalid content: " + ex.getMessage());
 		}
 		DatabaseSynchronizer sync = new DatabaseSynchronizer(
 				subjectUser.getUserid(), true);
@@ -148,8 +149,8 @@ public class SyncControllerExecution {
 				}
 			}
 		} catch (ParseException ex) {
-			throw new BadRequestException("Invalid content: " +
-					ex.getMessage());
+			throw new BadRequestException(ErrorCode.INVALID_INPUT,
+					"Invalid content: " + ex.getMessage());
 		}
 		DatabaseSynchronizer sync = new DatabaseSynchronizer(
 				subjectUser.getUserid(), true);
@@ -393,8 +394,8 @@ public class SyncControllerExecution {
 						new TypeReference<>() {}, null);
 			}
 		} catch (ParseException ex) {
-			throw new BadRequestException("Invalid content: " +
-					ex.getMessage());
+			throw new BadRequestException(ErrorCode.INVALID_INPUT,
+					"Invalid content: " + ex.getMessage());
 		}
 		DatabaseSynchronizer sync = new DatabaseSynchronizer(
 				subjectUser.getUserid(), false);
@@ -432,7 +433,8 @@ public class SyncControllerExecution {
 			excludeTables = paramReader.readJson("excludeTables",
 					new TypeReference<>() {}, null);
 		} catch (ParseException ex) {
-			throw new BadRequestException("Invalid content: " + ex.getMessage());
+			throw new BadRequestException(ErrorCode.INVALID_INPUT,
+					"Invalid content: " + ex.getMessage());
 		}
 		if (actions.isEmpty())
 			return null;

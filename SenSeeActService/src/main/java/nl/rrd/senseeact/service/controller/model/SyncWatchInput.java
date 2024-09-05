@@ -3,6 +3,7 @@ package nl.rrd.senseeact.service.controller.model;
 import com.fasterxml.jackson.core.type.TypeReference;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import nl.rrd.senseeact.client.exception.ErrorCode;
 import nl.rrd.utils.exception.ParseException;
 import nl.rrd.utils.validation.MapReader;
 import nl.rrd.senseeact.dao.Database;
@@ -240,8 +241,8 @@ public class SyncWatchInput {
 			}
 			return result;
 		} catch (ParseException ex) {
-			throw new BadRequestException("Invalid content: " +
-					ex.getMessage());
+			throw new BadRequestException(ErrorCode.INVALID_INPUT,
+					"Invalid content: " + ex.getMessage());
 		}
 	}
 }

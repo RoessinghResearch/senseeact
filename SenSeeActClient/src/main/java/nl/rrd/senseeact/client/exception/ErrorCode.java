@@ -13,6 +13,7 @@ public class ErrorCode {
 	public static final String AUTH_MFA_TYPE_MAX = "AUTH_MFA_TYPE_MAX";
 	public static final String AUTH_MFA_ADD_MAX = "AUTH_MFA_ADD_MAX";
 	public static final String AUTH_MFA_VERIFY_MAX = "AUTH_MFA_VERIFY_MAX";
+	public static final String AUTH_MFA_SMS_ALREADY_EXISTS = "AUTH_MFA_SMS_ALREADY_EXISTS";
 
 	public static final String INVALID_INPUT = "INVALID_INPUT";
 

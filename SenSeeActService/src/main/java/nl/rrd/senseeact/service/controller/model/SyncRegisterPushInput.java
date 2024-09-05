@@ -7,6 +7,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 
 import jakarta.servlet.http.HttpServletRequest;
 import nl.rrd.senseeact.client.SyncTableRestriction;
+import nl.rrd.senseeact.client.exception.ErrorCode;
 import nl.rrd.senseeact.dao.Database;
 import nl.rrd.senseeact.service.HttpContentReader;
 import nl.rrd.senseeact.service.ProtocolVersion;
@@ -159,8 +160,8 @@ public class SyncRegisterPushInput {
 					null));
 			return result;
 		} catch (ParseException ex) {
-			throw new BadRequestException("Invalid content: " +
-					ex.getMessage());
+			throw new BadRequestException(ErrorCode.INVALID_INPUT,
+					"Invalid content: " + ex.getMessage());
 		}
 	}
 }

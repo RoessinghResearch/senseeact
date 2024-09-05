@@ -398,6 +398,7 @@ public class AuthControllerExecution {
 			throw new UnauthorizedException(ErrorCode.INVALID_CREDENTIALS,
 					invalidError);
 		}
+		cleanMfaRecords(authDb, user);
 		ZonedDateTime now = DateTimeUtils.nowMs();
 		ZonedDateTime blocked = user.getAccountBlockedUntil();
 		if (blocked != null && !now.isAfter(blocked)) {
@@ -456,11 +457,12 @@ public class AuthControllerExecution {
 			params = URLParameters.parseParameterString(
 					request.getQueryString());
 		} catch (ParseException ex) {
-			throw new BadRequestException(ex.getMessage());
+			throw new BadRequestException(ErrorCode.INVALID_INPUT,
+					ex.getMessage());
 		}
 		for (String name : paramNames) {
 			if (params.containsKey(name)) {
-				throw new BadRequestException(
+				throw new BadRequestException(ErrorCode.INVALID_INPUT,
 						"Query parameters not accepted, parameters must be set in the request body");
 			}
 		}
@@ -803,11 +805,12 @@ public class AuthControllerExecution {
 			Database authDb, User user) throws HttpException, Exception {
 		checkMaxMfaType(user, MfaRecord.TYPE_SMS, MAX_MFA_SMS_COUNT);
 		MfaRecordSmsInput input = readMfaRecordSmsInput(request);
+		checkExistingMfaSms(user, input.phone);
 		ZonedDateTime now = DateTimeUtils.nowMs();
 		boolean verifyResult = twilioRequestSmsVerification(input.phone);
 		if (!verifyResult) {
-			throw new BadRequestException("Invalid phone number: " +
-					input.phone);
+			throw new BadRequestException(ErrorCode.INVALID_INPUT,
+					"Invalid phone number: " + input.phone);
 		}
 		MfaRecord record = new MfaRecord();
 		record.setId(UUID.randomUUID().toString().toLowerCase()
@@ -838,7 +841,8 @@ public class AuthControllerExecution {
 		try {
 			map = JsonMapper.parse(json, new TypeReference<>() {});
 		} catch (ParseException ex) {
-			throw new BadRequestException("Invalid JSON content");
+			throw new BadRequestException(ErrorCode.INVALID_INPUT,
+					"Invalid JSON content");
 		}
 		MapReader mapReader = new MapReader(map);
 		MfaRecordSmsInput result = new MfaRecordSmsInput();
@@ -846,9 +850,28 @@ public class AuthControllerExecution {
 			result.phone = mapReader.readStringRegex(
 					MfaRecord.KEY_SMS_PHONE_NUMBER, "\\+[0-9]+");
 		} catch (ParseException ex) {
-			throw new BadRequestException("Invalid input: " + ex);
+			throw new BadRequestException(ErrorCode.INVALID_INPUT,
+					"Invalid input: " + ex.getMessage());
 		}
 		return result;
+	}
+
+	private void checkExistingMfaSms(User user, String phone)
+			throws BadRequestException {
+		for (MfaRecord record : user.getMfaList()) {
+			if (!record.getType().equals(MfaRecord.TYPE_SMS) ||
+					record.getStatus() != MfaRecord.Status.VERIFY_SUCCESS) {
+				continue;
+			}
+			String recordPhone = (String)record.getPrivateData().get(
+					MfaRecord.KEY_SMS_PHONE_NUMBER);
+			if (recordPhone.equals(phone)) {
+				String msg = "MFA records with phone number already exists: " +
+						phone;
+				throw new BadRequestException(
+						ErrorCode.AUTH_MFA_SMS_ALREADY_EXISTS, msg);
+			}
+		}
 	}
 
 	private void cleanMfaRecords(Database authDb, User user)
@@ -916,7 +939,7 @@ public class AuthControllerExecution {
 
 	private void checkMaxMfaType(User user, String type, int max)
 			throws BadRequestException {
-		if (getMfaTypeCount(user, type) == max) {
+		if (getVerifiedMfaTypeCount(user, type) == max) {
 			String msg = String.format(
 					"Already reached maximum number (%s) of MFA records with type \"%s\"",
 					max, type);
@@ -926,11 +949,13 @@ public class AuthControllerExecution {
 		}
 	}
 
-	private int getMfaTypeCount(User user, String type) {
+	private int getVerifiedMfaTypeCount(User user, String type) {
 		int count = 0;
 		for (MfaRecord record : user.getMfaList()) {
-			if (type.equals(record.getType()))
+			if (record.getStatus() == MfaRecord.Status.VERIFY_SUCCESS &&
+					type.equals(record.getType())) {
 				count++;
+			}
 		}
 		return count;
 	}
