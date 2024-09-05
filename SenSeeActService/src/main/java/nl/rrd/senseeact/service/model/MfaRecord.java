@@ -25,6 +25,7 @@ public class MfaRecord {
 	public static final String KEY_SMS_PHONE_NUMBER = "phoneNumber";
 	public static final String KEY_SMS_PARTIAL_PHONE_NUMBER = "partialPhoneNumber";
 	public static final String KEY_TOTP_FACTOR_SID = "factorSid";
+	public static final String KEY_TOTP_BINDING_URI = "bindingUri";
 
 	private String id;
 	private String type;
@@ -183,12 +184,14 @@ public class MfaRecord {
 	 * <p><b>TOTP, status: CREATED</b></p>
 	 *
 	 * <p><ul>
-	 * <li>{@link #KEY_TOTP_FACTOR_SID KEY_TOTP_FACTOR_SID}</li>
+	 * <li>{@link #KEY_TOTP_BINDING_URI KEY_TOTP_BINDING_URI}</li>
 	 * </ul></p>
 	 *
 	 * <p><b>TOTP, status: VERIFY_SUCCESS</b></p>
 	 *
-	 * <p>Empty map</p>
+	 * <p><ul>
+	 * <li>{@link #KEY_TOTP_BINDING_URI KEY_TOTP_BINDING_URI}</li>
+	 * </ul></p>
 	 *
 	 * <p><b>SMS, status: CREATED</b></p>
 	 *
@@ -217,6 +220,7 @@ public class MfaRecord {
 	 * <p><b>TOTP</b></p>
 	 *
 	 * <p><ul>
+	 * <li>{@link #KEY_TOTP_BINDING_URI KEY_TOTP_BINDING_URI}</li>
 	 * <li>{@link #KEY_TOTP_FACTOR_SID KEY_TOTP_FACTOR_SID}</li>
 	 * </ul></p>
 	 *

@@ -794,6 +794,8 @@ public class AuthControllerExecution {
 		checkMaxMfaAddCount(user);
 		if (type.equals(MfaRecord.TYPE_SMS)) {
 			return addMfaRecordSms(request, authDb, user);
+		} else if (type.equals(MfaRecord.TYPE_TOTP)) {
+			return addMfaRecordTotp(authDb, user);
 		} else {
 			HttpFieldError error = new HttpFieldError("type",
 					"Unknown MFA type: " + type);
@@ -872,6 +874,28 @@ public class AuthControllerExecution {
 						ErrorCode.AUTH_MFA_SMS_ALREADY_EXISTS, msg);
 			}
 		}
+	}
+
+	private PublicMfaRecord addMfaRecordTotp(Database authDb, User user)
+			throws HttpException, Exception {
+		checkMaxMfaType(user, MfaRecord.TYPE_TOTP, MAX_MFA_TOTP_COUNT);
+		ZonedDateTime now = DateTimeUtils.nowMs();
+		TwilioTotpData totpData = twilioCreateTotpFactor(user);
+		MfaRecord record = new MfaRecord();
+		record.setId(UUID.randomUUID().toString().toLowerCase()
+				.replaceAll("-", ""));
+		record.setType(MfaRecord.TYPE_TOTP);
+		record.setCreated(now);
+		Map<String,Object> publicData = new LinkedHashMap<>();
+		publicData.put(MfaRecord.KEY_TOTP_BINDING_URI, totpData.bindingUri);
+		record.setPublicData(publicData);
+		Map<String,Object> privateData = new LinkedHashMap<>(publicData);
+		privateData.put(MfaRecord.KEY_TOTP_FACTOR_SID, totpData.factorSid);
+		record.setPrivateData(privateData);
+		user.getMfaList().add(record);
+		UserCache cache = UserCache.getInstance();
+		cache.updateUser(authDb, user);
+		return PublicMfaRecord.fromMfaRecord(record);
 	}
 
 	private void cleanMfaRecords(Database authDb, User user)
@@ -1068,6 +1092,38 @@ public class AuthControllerExecution {
 			throw new ParseException("Unexpected verify response");
 		}
 		return "approved".equals(status);
+	}
+
+	private TwilioTotpData twilioCreateTotpFactor(User user) throws HttpClientException,
+			ParseException, IOException {
+		Configuration config = AppComponents.get(Configuration.class);
+		String serviceSid = config.get(Configuration.TWILIO_VERIFY_SERVICE_SID);
+		String url = String.format(
+				"https://verify.twilio.com/v2/Services/%s/Entities/%s/Factors",
+				serviceSid, user.getUserid());
+		Map<String,String> params = new LinkedHashMap<>();
+		params.put("FriendlyName", user.getEmail());
+		params.put("FactorType", "totp");
+		Map<String,Object> response;
+		try (HttpClient2 httpClient = new HttpClient2(url)) {
+			addTwilioAuthHeader(httpClient);
+			response = httpClient.setMethod("POST")
+					.writePostParams(params)
+					.readJson(new TypeReference<>() {});
+		}
+		TwilioTotpData result = new TwilioTotpData();
+		MapReader reader = new MapReader(response);
+		result.factorSid = reader.readString("sid");
+		Map<String,Object> binding = reader.readJson("binding",
+				new TypeReference<>() {});
+		MapReader bindingReader = new MapReader(binding);
+		result.bindingUri = bindingReader.readString("uri");
+		return result;
+	}
+
+	private static class TwilioTotpData {
+		public String factorSid;
+		public String bindingUri;
 	}
 
 	private void addTwilioAuthHeader(HttpClient2 httpClient) {
