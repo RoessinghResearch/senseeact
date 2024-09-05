@@ -22,7 +22,7 @@ public class PublicMfaRecord {
 		result.id = record.getId();
 		result.type = record.getType();
 		result.created = record.getCreated();
-		result.data = record.getPublicPairData();
+		result.data = record.getPublicData();
 		return result;
 	}
 

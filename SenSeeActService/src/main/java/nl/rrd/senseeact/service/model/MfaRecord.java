@@ -7,7 +7,9 @@ import nl.rrd.utils.json.DateTimeFromIsoDateTimeDeserializer;
 import nl.rrd.utils.json.IsoDateTimeSerializer;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -21,6 +23,7 @@ public class MfaRecord {
 	public static final String TYPE_TOTP = "totp";
 
 	public static final String KEY_SMS_PHONE_NUMBER = "phoneNumber";
+	public static final String KEY_SMS_PARTIAL_PHONE_NUMBER = "partialPhoneNumber";
 	public static final String KEY_TOTP_FACTOR_SID = "factorSid";
 
 	private String id;
@@ -28,10 +31,16 @@ public class MfaRecord {
 	@JsonDeserialize(using=DateTimeFromIsoDateTimeDeserializer.class)
 	@JsonSerialize(using=IsoDateTimeSerializer.class)
 	private ZonedDateTime created;
-	private boolean paired;
-	private Map<String,Object> attemptPairData = new LinkedHashMap<>();
-	private Map<String,Object> publicPairData = new LinkedHashMap<>();
-	private Map<String,Object> privatePairData = new LinkedHashMap<>();
+	private Status status = Status.CREATED;
+	private List<Long> verifyTimes = new ArrayList<>();
+	private Map<String,Object> publicData = new LinkedHashMap<>();
+	private Map<String,Object> privateData = new LinkedHashMap<>();
+
+	public enum Status {
+		CREATED,
+		VERIFY_FAIL,
+		VERIFY_SUCCESS
+	}
 
 	/**
 	 * Returns the UUID that identifies this MFA record.
@@ -70,8 +79,7 @@ public class MfaRecord {
 	}
 
 	/**
-	 * Returns the system time when this record was created. That is when the
-	 * user started the pair attempt.
+	 * Returns the system time when this record was created.
 	 *
 	 * @return the system time when this record was created
 	 */
@@ -80,8 +88,7 @@ public class MfaRecord {
 	}
 
 	/**
-	 * Sets the system time when this record was created. That is when the user
-	 * started the pair attempt.
+	 * Sets the system time when this record was created.
 	 *
 	 * @param created the system time when this record was created
 	 */
@@ -90,28 +97,122 @@ public class MfaRecord {
 	}
 
 	/**
-	 * Returns true if the pairing has been completed, false otherwise.
+	 * Returns the status of this record. The default is {@link
+	 * MfaRecord.Status#CREATED CREATED}.
 	 *
-	 * @return true if the pairing hass been completed, false otherwise
+	 * @return the status
 	 */
-	public boolean isPaired() {
-		return paired;
+	public Status getStatus() {
+		return status;
 	}
 
 	/**
-	 * Sets the paired status. It should be true if the pairing has been
-	 * completed, false otherwise.
+	 * Sets the status of this record. The default is {@link
+	 * MfaRecord.Status#CREATED CREATED}.
 	 *
-	 * @param paired true if the pairing hass been completed, false otherwise
+	 * @param status the status
 	 */
-	public void setPaired(boolean paired) {
-		this.paired = paired;
+	public void setStatus(Status status) {
+		this.status = status;
 	}
 
 	/**
-	 * Returns data related to the pairing attempt. This is only defined if
-	 * {@link #isPaired() isPaired()} is false. Otherwise it should be an empty
-	 * map. The keys depend on the type.
+	 * Returns the Unix timestamps in milliseconds when a verification was
+	 * performed (with or without success). This can be used to check the
+	 * maximum number of verification attempts.
+	 *
+	 * @return the verification times
+	 */
+	public List<Long> getVerifyTimes() {
+		return verifyTimes;
+	}
+
+	/**
+	 * Sets the Unix timestamps in milliseconds when a verification was
+	 * performed (with or without success). This can be used to check the
+	 * maximum number of verification attempts.
+	 *
+	 * @param verifyTimes the verification times
+	 */
+	public void setVerifyTimes(List<Long> verifyTimes) {
+		this.verifyTimes = verifyTimes;
+	}
+
+	/**
+	 * Returns the public data associated with this record. This depends on the
+	 * status and type. A record with status CREATED is only returned right
+	 * after the user created it. When the user requests a list of MFA records,
+	 * only the verified records are returned. Therefore "created" records
+	 * contain more public data than verified records.
+	 *
+	 * <p><b>TOTP, status: CREATED</b></p>
+	 *
+	 * <p><ul>
+	 * <li>{@link #KEY_TOTP_FACTOR_SID KEY_TOTP_FACTOR_SID}</li>
+	 * </ul></p>
+	 *
+	 * <p><b>TOTP, status: VERIFY_SUCCESS</b></p>
+	 *
+	 * <p>Empty map</p>
+	 *
+	 * <p><b>SMS, status: CREATED</b></p>
+	 *
+	 * <p><ul>
+	 * <li>{@link #KEY_SMS_PHONE_NUMBER KEY_SMS_PHONE_NUMBER}</li>
+	 * </ul></p>
+	 *
+	 * <p><b>SMS, status: VERIFY_SUCCESS</b></p>
+	 *
+	 * <p><ul>
+	 * <li>{@link #KEY_SMS_PARTIAL_PHONE_NUMBER KEY_SMS_PARTIAL_PHONE_NUMBER}</li>
+	 * </ul></p>
+	 *
+	 * @return the public data
+	 */
+	public Map<String,Object> getPublicData() {
+		return publicData;
+	}
+
+	/**
+	 * Sets the public data associated with this record. This depends on the
+	 * status and type. A record with status CREATED is only returned right
+	 * after the user created it. When the user requests a list of MFA records,
+	 * only the verified records are returned.Therefore "created" records
+	 * contain more public data than verified records.
+	 *
+	 * <p><b>TOTP, status: CREATED</b></p>
+	 *
+	 * <p><ul>
+	 * <li>{@link #KEY_TOTP_FACTOR_SID KEY_TOTP_FACTOR_SID}</li>
+	 * </ul></p>
+	 *
+	 * <p><b>TOTP, status: VERIFY_SUCCESS</b></p>
+	 *
+	 * <p>Empty map</p>
+	 *
+	 * <p><b>SMS, status: CREATED</b></p>
+	 *
+	 * <p><ul>
+	 * <li>{@link #KEY_SMS_PHONE_NUMBER KEY_SMS_PHONE_NUMBER}</li>
+	 * </ul></p>
+	 *
+	 * <p><b>SMS, status: VERIFY_SUCCESS</b></p>
+	 *
+	 * <p><ul>
+	 * <li>{@link #KEY_SMS_PARTIAL_PHONE_NUMBER KEY_SMS_PARTIAL_PHONE_NUMBER}</li>
+	 * </ul></p>
+	 *
+	 * @param publicData the public data
+	 */
+	public void setPublicData(Map<String,Object> publicData) {
+		this.publicData = publicData;
+	}
+
+	/**
+	 * Returns the private data associated with this record. That is all data,
+	 * including public data and data that is too sensitive to return to the
+	 * user when they request a list of MFA records. The keys depend on the type
+	 * of record.
 	 *
 	 * <p><b>TOTP</b></p>
 	 *
@@ -125,16 +226,17 @@ public class MfaRecord {
 	 * <li>{@link #KEY_SMS_PHONE_NUMBER KEY_SMS_PHONE_NUMBER}</li>
 	 * </ul></p>
 	 *
-	 * @return the data related to the pairing attempt
+	 * @return the private data
 	 */
-	public Map<String,Object> getAttemptPairData() {
-		return attemptPairData;
+	public Map<String,Object> getPrivateData() {
+		return privateData;
 	}
 
 	/**
-	 * Sets data related to the pairing attempt. This is only defined if {@link
-	 * #isPaired() isPaired()} is false. Otherwise it should be an empty map.
-	 * The keys depend on the type.
+	 * Sets the private data associated with this record. That is all data,
+	 * including public data and data that is too sensitive to return to the
+	 * user when they request a list of MFA records. The keys depend on the type
+	 * of record.
 	 *
 	 * <p><b>TOTP</b></p>
 	 *
@@ -148,93 +250,9 @@ public class MfaRecord {
 	 * <li>{@link #KEY_SMS_PHONE_NUMBER KEY_SMS_PHONE_NUMBER}</li>
 	 * </ul></p>
 	 *
-	 * @param attemptPairData the data related to the pairing attempt
+	 * @param privateData the private data
 	 */
-	public void setAttemptPairData(Map<String,Object> attemptPairData) {
-		this.attemptPairData = attemptPairData;
-	}
-
-	/**
-	 * Returns the public pair data. That is data that can be shown to the user.
-	 * This is only defined if {@link #isPaired() isPaired()} is true. Otherwise
-	 * it should be an empty map. The keys depend on the type.
-	 *
-	 * <p><b>TOTP</b></p>
-	 *
-	 * <p>Empty map</p>
-	 *
-	 * <p><b>SMS</b></p>
-	 *
-	 * <p><ul>
-	 * <li>{@link #KEY_SMS_PHONE_NUMBER KEY_SMS_PHONE_NUMBER}</li>
-	 * </ul></p>
-	 *
-	 * @return the public pair data
-	 */
-	public Map<String,Object> getPublicPairData() {
-		return publicPairData;
-	}
-
-	/**
-	 * Sets the public pair data. That is data that can be shown to the user.
-	 * This is only defined if {@link #isPaired() isPaired()} is true. Otherwise
-	 * it should be an empty map. The keys depend on the type.
-	 *
-	 * <p><b>TOTP</b></p>
-	 *
-	 * <p>Empty map</p>
-	 *
-	 * <p><b>SMS</b></p>
-	 *
-	 * <p><ul>
-	 * <li>{@link #KEY_SMS_PHONE_NUMBER KEY_SMS_PHONE_NUMBER}</li>
-	 * </ul></p>
-	 *
-	 * @param publicPairData the public pair data
-	 */
-	public void setPublicPairData(Map<String,Object> publicPairData) {
-		this.publicPairData = publicPairData;
-	}
-
-	/**
-	 * Returns the private pair data. That is data that should not be shown to
-	 * the user. This is only defined if {@link #isPaired() isPaired()} is true.
-	 * Otherwise it should be an empty map. The keys depend on the type.
-	 *
-	 * <p><b>TOTP</b></p>
-	 *
-	 * <p><ul>
-	 * <li>{@link #KEY_TOTP_FACTOR_SID KEY_TOTP_FACTOR_SID}</li>
-	 * </ul></p>
-	 *
-	 * <p><b>SMS</b></p>
-	 *
-	 * <p>Empty map</p>
-	 *
-	 * @return the private pair data
-	 */
-	public Map<String,Object> getPrivatePairData() {
-		return privatePairData;
-	}
-
-	/**
-	 * Sets the private pair data. That is data that should not be shown to the
-	 * user. This is only defined if {@link #isPaired() isPaired()} is true.
-	 * Otherwise it should be an empty map. The keys depend on the type.
-	 *
-	 * <p><b>TOTP</b></p>
-	 *
-	 * <p><ul>
-	 * <li>{@link #KEY_TOTP_FACTOR_SID KEY_TOTP_FACTOR_SID}</li>
-	 * </ul></p>
-	 *
-	 * <p><b>SMS</b></p>
-	 *
-	 * <p>Empty map</p>
-	 *
-	 * @param privatePairData the private pair data
-	 */
-	public void setPrivatePairData(Map<String,Object> privatePairData) {
-		this.privatePairData = privatePairData;
+	public void setPrivateData(Map<String,Object> privateData) {
+		this.privateData = privateData;
 	}
 }

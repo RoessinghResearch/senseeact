@@ -28,6 +28,7 @@ import nl.rrd.utils.datetime.DateTimeUtils;
 import nl.rrd.utils.exception.DatabaseException;
 import nl.rrd.utils.exception.ParseException;
 import nl.rrd.utils.http.HttpClient2;
+import nl.rrd.utils.http.HttpClientException;
 import nl.rrd.utils.http.URLParameters;
 import nl.rrd.utils.io.FileUtils;
 import nl.rrd.utils.json.JsonMapper;
@@ -55,6 +56,13 @@ public class AuthControllerExecution {
 	private static final int MAX_FAILED_LOGINS = 10;
 	private static final int ACCOUNT_BLOCK_DURATION = 60; // seconds
 	private static final int EMAIL_CODE_VALID_DURATION = 24; // hours
+
+	private static final int MAX_MFA_SMS_COUNT = 2;
+	private static final int MAX_MFA_TOTP_COUNT = 1;
+	private static final int MAX_MFA_ADD_COUNT = 10;
+	private static final int MAX_MFA_ADD_MINUTES = 60;
+	private static final int MAX_MFA_VERIFY_COUNT = 5;
+	private static final int MAX_MFA_VERIFY_MINUTES = 15;
 
 	/**
 	 * Runs the signup query.
@@ -780,6 +788,8 @@ public class AuthControllerExecution {
 
 	public PublicMfaRecord addMfaRecord(HttpServletRequest request, String type,
 			Database authDb, User user) throws HttpException, Exception {
+		cleanMfaRecords(authDb, user);
+		checkMaxMfaAddCount(user);
 		if (type.equals(MfaRecord.TYPE_SMS)) {
 			return addMfaRecordSms(request, authDb, user);
 		} else {
@@ -791,6 +801,35 @@ public class AuthControllerExecution {
 
 	private PublicMfaRecord addMfaRecordSms(HttpServletRequest request,
 			Database authDb, User user) throws HttpException, Exception {
+		checkMaxMfaType(user, MfaRecord.TYPE_SMS, MAX_MFA_SMS_COUNT);
+		MfaRecordSmsInput input = readMfaRecordSmsInput(request);
+		ZonedDateTime now = DateTimeUtils.nowMs();
+		boolean verifyResult = twilioRequestSmsVerification(input.phone);
+		if (!verifyResult) {
+			throw new BadRequestException("Invalid phone number: " +
+					input.phone);
+		}
+		MfaRecord record = new MfaRecord();
+		record.setId(UUID.randomUUID().toString().toLowerCase()
+				.replaceAll("-", ""));
+		record.setType(MfaRecord.TYPE_SMS);
+		record.setCreated(now);
+		Map<String,Object> data = new LinkedHashMap<>();
+		data.put(MfaRecord.KEY_SMS_PHONE_NUMBER, input.phone);
+		record.setPublicData(data);
+		record.setPrivateData(new LinkedHashMap<>(data));
+		user.getMfaList().add(record);
+		UserCache cache = UserCache.getInstance();
+		cache.updateUser(authDb, user);
+		return PublicMfaRecord.fromMfaRecord(record);
+	}
+
+	private static class MfaRecordSmsInput {
+		public String phone;
+	}
+
+	private MfaRecordSmsInput readMfaRecordSmsInput(HttpServletRequest request)
+			throws BadRequestException, IOException {
 		String json;
 		try (InputStream input = request.getInputStream()) {
 			json = FileUtils.readFileString(input);
@@ -802,14 +841,160 @@ public class AuthControllerExecution {
 			throw new BadRequestException("Invalid JSON content");
 		}
 		MapReader mapReader = new MapReader(map);
-		String phone;
+		MfaRecordSmsInput result = new MfaRecordSmsInput();
 		try {
-			phone = mapReader.readStringRegex(MfaRecord.KEY_SMS_PHONE_NUMBER,
-					"\\+[0-9]+");
+			result.phone = mapReader.readStringRegex(
+					MfaRecord.KEY_SMS_PHONE_NUMBER, "\\+[0-9]+");
 		} catch (ParseException ex) {
 			throw new BadRequestException("Invalid input: " + ex);
 		}
+		return result;
+	}
+
+	private void cleanMfaRecords(Database authDb, User user)
+			throws DatabaseException {
 		ZonedDateTime now = DateTimeUtils.nowMs();
+		ZonedDateTime minAddTime = now.minusMinutes(MAX_MFA_ADD_MINUTES);
+		ZonedDateTime minVerifyTime = now.minusMinutes(MAX_MFA_VERIFY_MINUTES);
+		long minVerifyMs = minVerifyTime.toInstant().toEpochMilli();
+		boolean changed = false;
+		Iterator<MfaRecord> it = user.getMfaList().iterator();
+		while (it.hasNext()) {
+			MfaRecord record = it.next();
+			if (record.getStatus() == MfaRecord.Status.VERIFY_SUCCESS) {
+				if (cleanMfaRecordVerifyTimes(record, minVerifyMs))
+					changed = true;
+			} else if (record.getCreated().isBefore(minAddTime)) {
+				it.remove();
+				changed = true;
+			}
+		}
+		if (!changed)
+			return;
+		UserCache cache = UserCache.getInstance();
+		cache.updateUser(authDb, user);
+	}
+
+	private boolean cleanMfaRecordVerifyTimes(MfaRecord record,
+			long minVerifyMs) {
+		boolean changed = false;
+		Iterator<Long> it = record.getVerifyTimes().iterator();
+		while (it.hasNext()) {
+			long time = it.next();
+			if (time < minVerifyMs) {
+				it.remove();
+				changed = true;
+			}
+		}
+		return changed;
+	}
+
+	private void checkMaxMfaAddCount(User user) throws BadRequestException {
+		int count = 0;
+		for (MfaRecord record : user.getMfaList()) {
+			if (record.getStatus() != MfaRecord.Status.VERIFY_SUCCESS)
+				count++;
+		}
+		if (count >= MAX_MFA_ADD_COUNT) {
+			String msg = String.format(
+					"Reached maximum number of add MFA attempts (%s in %s minutes)",
+					MAX_MFA_ADD_COUNT, MAX_MFA_ADD_MINUTES);
+			throw new BadRequestException(ErrorCode.AUTH_MFA_ADD_MAX, msg);
+		}
+	}
+
+	private void checkMaxMfaVerifyCount(MfaRecord record)
+			throws BadRequestException {
+		int count = record.getVerifyTimes().size();
+		if (count >= MAX_MFA_VERIFY_COUNT) {
+			String msg = String.format(
+					"Reached maximum number of MFA verification attempts (%s in %s minutes)",
+					MAX_MFA_VERIFY_COUNT, MAX_MFA_VERIFY_MINUTES);
+			throw new BadRequestException(ErrorCode.AUTH_MFA_VERIFY_MAX, msg);
+		}
+	}
+
+	private void checkMaxMfaType(User user, String type, int max)
+			throws BadRequestException {
+		if (getMfaTypeCount(user, type) == max) {
+			String msg = String.format(
+					"Already reached maximum number (%s) of MFA records with type \"%s\"",
+					max, type);
+			HttpError error = new HttpError(ErrorCode.AUTH_MFA_TYPE_MAX, msg);
+			error.addFieldError(new HttpFieldError("type", msg));
+			throw new BadRequestException(error);
+		}
+	}
+
+	private int getMfaTypeCount(User user, String type) {
+		int count = 0;
+		for (MfaRecord record : user.getMfaList()) {
+			if (type.equals(record.getType()))
+				count++;
+		}
+		return count;
+	}
+
+	public PublicMfaRecord verifyAddMfaRecord(String mfaId, String code,
+			Database authDb, User user) throws HttpException, Exception {
+		cleanMfaRecords(authDb, user);
+		MfaRecord record = findMfaRecord(mfaId, user);
+		if (record == null ||
+				record.getStatus() == MfaRecord.Status.VERIFY_FAIL) {
+			throw new NotFoundException("MFA record not found");
+		}
+		if (record.getStatus() == MfaRecord.Status.VERIFY_SUCCESS) {
+			return PublicMfaRecord.fromMfaRecord(record);
+		}
+		checkMaxMfaVerifyCount(record);
+		if (record.getType().equals(MfaRecord.TYPE_SMS)) {
+			return confirmAddMfaRecordSms(record, code, authDb, user);
+		} else {
+			HttpFieldError error = new HttpFieldError("type",
+					"MFA type not implemented: " + record.getType());
+			throw BadRequestException.withInvalidInput(error);
+		}
+	}
+
+	private PublicMfaRecord confirmAddMfaRecordSms(MfaRecord record,
+			String code, Database authDb, User user) throws HttpException,
+			Exception {
+		UserCache cache = UserCache.getInstance();
+		try {
+			checkMaxMfaType(user, MfaRecord.TYPE_SMS, MAX_MFA_SMS_COUNT);
+		} catch (BadRequestException ex) {
+			record.setStatus(MfaRecord.Status.VERIFY_FAIL);
+			cache.updateUser(authDb, user);
+			throw ex;
+		}
+		String phone = (String)record.getPrivateData().get(
+				MfaRecord.KEY_SMS_PHONE_NUMBER);
+		boolean verifyResult = twilioRequestSmsVerificationCheck(phone, code);
+		if (!verifyResult) {
+			record.setStatus(MfaRecord.Status.VERIFY_FAIL);
+			cache.updateUser(authDb, user);
+			HttpFieldError error = new HttpFieldError("code",
+					"Invalid verification code");
+			throw BadRequestException.withInvalidInput(error);
+		}
+		record.setStatus(MfaRecord.Status.VERIFY_SUCCESS);
+		record.getPublicData().remove(MfaRecord.KEY_SMS_PHONE_NUMBER);
+		record.getPublicData().put(MfaRecord.KEY_SMS_PARTIAL_PHONE_NUMBER,
+				getPartialPhoneNumber(phone));
+		cache.updateUser(authDb, user);
+		return PublicMfaRecord.fromMfaRecord(record);
+	}
+
+	private String getPartialPhoneNumber(String phone) {
+		if (phone.length() < 5)
+			return phone;
+		return phone.substring(0, 3) +
+				"*".repeat(phone.length() - 5) +
+				phone.substring(phone.length() - 2);
+	}
+
+	private boolean twilioRequestSmsVerification(String phone)
+			throws HttpClientException, ParseException, IOException {
 		Configuration config = AppComponents.get(Configuration.class);
 		String serviceSid = config.get(Configuration.TWILIO_VERIFY_SERVICE_SID);
 		String url = String.format(
@@ -828,52 +1013,21 @@ public class AuthControllerExecution {
 		Object status = response.get("status");
 		if (status instanceof Integer statusCode) {
 			if (statusCode == 400)
-				throw new BadRequestException("Invalid phone number: " + phone);
+				return false;
 		}
-		if (!"pending".equals(status)) {
-			throw new Exception("Unexpected verify response");
-		}
-		MfaRecord record = new MfaRecord();
-		record.setId(UUID.randomUUID().toString().toLowerCase()
-				.replaceAll("-", ""));
-		record.setType(MfaRecord.TYPE_SMS);
-		record.setCreated(now);
-		record.setPaired(false);
-		Map<String,Object> data = new LinkedHashMap<>();
-		data.put(MfaRecord.KEY_SMS_PHONE_NUMBER, phone);
-		record.setAttemptPairData(data);
-		user.getMfaList().add(record);
-		UserCache cache = UserCache.getInstance();
-		cache.updateUser(authDb, user);
-		return PublicMfaRecord.fromMfaRecord(record);
+		if (!"pending".equals(status))
+			throw new ParseException("Unexpected verify response");
+		return true;
 	}
 
-	public PublicMfaRecord confirmAddMfaRecord(String mfaId, String code,
-			Database authDb, User user) throws HttpException, Exception {
-		MfaRecord record = findMfaRecord(mfaId, user);
-		if (record == null)
-			throw new NotFoundException("MFA record not found");
-		if (record.isPaired())
-			return PublicMfaRecord.fromMfaRecord(record);
-		if (record.getType().equals(MfaRecord.TYPE_SMS)) {
-			return confirmAddMfaRecordSms(record, code, authDb, user);
-		} else {
-			HttpFieldError error = new HttpFieldError("type",
-					"MFA type not implemented: " + record.getType());
-			throw BadRequestException.withInvalidInput(error);
-		}
-	}
-
-	private PublicMfaRecord confirmAddMfaRecordSms(MfaRecord record,
-			String code, Database authDb, User user) throws HttpException,
-			Exception {
+	private boolean twilioRequestSmsVerificationCheck(String phone,
+			String code) throws HttpClientException, ParseException,
+			IOException {
 		Configuration config = AppComponents.get(Configuration.class);
 		String serviceSid = config.get(Configuration.TWILIO_VERIFY_SERVICE_SID);
 		String url = String.format(
 				"https://verify.twilio.com/v2/Services/%s/VerificationCheck",
 				serviceSid);
-		String phone = (String)record.getAttemptPairData().get(
-				MfaRecord.KEY_SMS_PHONE_NUMBER);
 		Map<String,String> params = new LinkedHashMap<>();
 		params.put("To", phone);
 		params.put("Code", code);
@@ -886,19 +1040,9 @@ public class AuthControllerExecution {
 		}
 		Object status = response.get("status");
 		if (!(status instanceof String)) {
-			throw new Exception("Unexpected verify response");
+			throw new ParseException("Unexpected verify response");
 		}
-		if (!"approved".equals(status)) {
-			HttpFieldError error = new HttpFieldError("code",
-					"Invalid verification code");
-			throw BadRequestException.withInvalidInput(error);
-		}
-		record.setPaired(true);
-		record.getPublicPairData().put(MfaRecord.KEY_SMS_PHONE_NUMBER, phone);
-		record.getAttemptPairData().clear();
-		UserCache cache = UserCache.getInstance();
-		cache.updateUser(authDb, user);
-		return PublicMfaRecord.fromMfaRecord(record);
+		return "approved".equals(status);
 	}
 
 	private void addTwilioAuthHeader(HttpClient2 httpClient) {
@@ -932,7 +1076,7 @@ public class AuthControllerExecution {
 	public List<PublicMfaRecord> getMfaRecords(User user) {
 		List<PublicMfaRecord> result = new ArrayList<>();
 		for (MfaRecord record : user.getMfaList()) {
-			if (record.isPaired())
+			if (record.getStatus() == MfaRecord.Status.VERIFY_SUCCESS)
 				result.add(PublicMfaRecord.fromMfaRecord(record));
 		}
 		return result;

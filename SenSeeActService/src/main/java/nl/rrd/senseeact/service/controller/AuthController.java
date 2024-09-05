@@ -389,7 +389,7 @@ public class AuthController {
 			String code) throws HttpException, Exception {
 		synchronized (AuthControllerExecution.AUTH_LOCK) {
 			return QueryRunner.runAuthQuery((version, authDb, user) ->
-					exec.confirmAddMfaRecord(id, code, authDb, user),
+					exec.verifyAddMfaRecord(id, code, authDb, user),
 					versionName, request, response);
 		}
 	}
