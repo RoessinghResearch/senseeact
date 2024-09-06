@@ -423,4 +423,20 @@ public class AuthController {
 					versionName, request, response);
 		}
 	}
+
+	@RequestMapping(value="/mfa/add/totp/qrcode", method=RequestMethod.GET)
+	public void getMfaTotpQRCode(
+			HttpServletRequest request,
+			HttpServletResponse response,
+			@PathVariable("version")
+			@Parameter(hidden = true)
+			String versionName,
+			@RequestParam(value="id")
+			String id) throws HttpException, Exception {
+		synchronized (AuthControllerExecution.AUTH_LOCK) {
+			QueryRunner.runAuthQuery((version, authDb, user) ->
+					exec.getMfaTotpQRCode(response, authDb, user, id),
+					versionName, request, response);
+		}
+	}
 }

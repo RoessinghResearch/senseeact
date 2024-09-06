@@ -1,6 +1,10 @@
 package nl.rrd.senseeact.service.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.google.zxing.BarcodeFormat;
+import com.google.zxing.client.j2se.MatrixToImageWriter;
+import com.google.zxing.common.BitMatrix;
+import com.google.zxing.qrcode.QRCodeWriter;
 import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -41,6 +45,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -998,6 +1003,8 @@ public class AuthControllerExecution {
 		checkMaxMfaVerifyCount(record);
 		if (record.getType().equals(MfaRecord.TYPE_SMS)) {
 			return confirmAddMfaRecordSms(record, code, authDb, user);
+		} else if (record.getType().equals(MfaRecord.TYPE_TOTP)) {
+			return confirmAddMfaRecordTotp(record, code, authDb, user);
 		} else {
 			HttpFieldError error = new HttpFieldError("type",
 					"MFA type not implemented: " + record.getType());
@@ -1030,6 +1037,33 @@ public class AuthControllerExecution {
 		record.getPublicData().remove(MfaRecord.KEY_SMS_PHONE_NUMBER);
 		record.getPublicData().put(MfaRecord.KEY_SMS_PARTIAL_PHONE_NUMBER,
 				getPartialPhoneNumber(phone));
+		cache.updateUser(authDb, user);
+		return PublicMfaRecord.fromMfaRecord(record);
+	}
+
+	private PublicMfaRecord confirmAddMfaRecordTotp(MfaRecord record,
+			String code, Database authDb, User user) throws HttpException,
+			Exception {
+		UserCache cache = UserCache.getInstance();
+		try {
+			checkMaxMfaType(user, MfaRecord.TYPE_SMS, MAX_MFA_TOTP_COUNT);
+		} catch (BadRequestException ex) {
+			record.setStatus(MfaRecord.Status.VERIFY_FAIL);
+			cache.updateUser(authDb, user);
+			throw ex;
+		}
+		String factorSid = (String)record.getPrivateData().get(
+				MfaRecord.KEY_TOTP_FACTOR_SID);
+		boolean verifyResult = twilioRequestTotpVerificationCheck(user,
+				factorSid, code);
+		if (!verifyResult) {
+			record.setStatus(MfaRecord.Status.VERIFY_FAIL);
+			cache.updateUser(authDb, user);
+			HttpFieldError error = new HttpFieldError("code",
+					"Invalid verification code");
+			throw BadRequestException.withInvalidInput(error);
+		}
+		record.setStatus(MfaRecord.Status.VERIFY_SUCCESS);
 		cache.updateUser(authDb, user);
 		return PublicMfaRecord.fromMfaRecord(record);
 	}
@@ -1126,6 +1160,30 @@ public class AuthControllerExecution {
 		public String bindingUri;
 	}
 
+	private boolean twilioRequestTotpVerificationCheck(User user,
+			String factorSid, String code) throws HttpClientException,
+			ParseException, IOException {
+		Configuration config = AppComponents.get(Configuration.class);
+		String serviceSid = config.get(Configuration.TWILIO_VERIFY_SERVICE_SID);
+		String url = String.format(
+				"https://verify.twilio.com/v2/Services/%s/Entities/%s/Factors/%s",
+				serviceSid, user.getUserid(), factorSid);
+		Map<String,String> params = new LinkedHashMap<>();
+		params.put("AuthPayload", code);
+		Map<String,Object> response;
+		try (HttpClient2 httpClient = new HttpClient2(url)) {
+			addTwilioAuthHeader(httpClient);
+			response = httpClient.setMethod("POST")
+					.writePostParams(params)
+					.readJson(new TypeReference<>() {});
+		}
+		Object status = response.get("status");
+		if (!(status instanceof String)) {
+			throw new ParseException("Unexpected verify response");
+		}
+		return "verified".equals(status);
+	}
+
 	private void addTwilioAuthHeader(HttpClient2 httpClient) {
 		Configuration config = AppComponents.get(Configuration.class);
 		String accountSid = config.get(Configuration.TWILIO_ACCOUNT_SID);
@@ -1137,17 +1195,21 @@ public class AuthControllerExecution {
 
 	private MfaRecord findMfaRecord(String id, User user) {
 		for (MfaRecord record : user.getMfaList()) {
-			if (id.equals(record.getId()))
+			if (id.equals(record.getId())) {
 				return record;
+			}
 		}
 		return null;
 	}
 
 	public Object deleteMfaRecord(String id, Database authDb, User user)
 			throws HttpException, Exception {
+		cleanMfaRecords(authDb, user);
 		MfaRecord record = findMfaRecord(id, user);
-		if (record == null)
+		if (record == null || record.getStatus() !=
+				MfaRecord.Status.VERIFY_SUCCESS) {
 			return null;
+		}
 		user.getMfaList().remove(record);
 		UserCache cache = UserCache.getInstance();
 		cache.updateUser(authDb, user);
@@ -1161,6 +1223,32 @@ public class AuthControllerExecution {
 				result.add(PublicMfaRecord.fromMfaRecord(record));
 		}
 		return result;
+	}
+
+	public Object getMfaTotpQRCode(HttpServletResponse response,
+			Database authDb, User user, String mfaId) throws HttpException,
+			Exception {
+		cleanMfaRecords(authDb, user);
+		MfaRecord record = findMfaRecord(mfaId, user);
+		if (record == null || record.getStatus() ==
+				MfaRecord.Status.VERIFY_FAIL) {
+			throw new NotFoundException("MFA record not found");
+		}
+		if (!MfaRecord.TYPE_TOTP.equals(record.getType())) {
+			throw new BadRequestException(String.format(
+					"MFA record does not have type \"%s\"",
+					MfaRecord.TYPE_TOTP));
+		}
+		String uri = (String)record.getPrivateData().get(
+				MfaRecord.KEY_TOTP_BINDING_URI);
+		QRCodeWriter qrWriter = new QRCodeWriter();
+		BitMatrix matrix = qrWriter.encode(uri, BarcodeFormat.QR_CODE, 500,
+				500);
+		response.setHeader("Content-Type", "image/png");
+		try (OutputStream out = response.getOutputStream()) {
+			MatrixToImageWriter.writeToStream(matrix, "png", out);
+		}
+		return null;
 	}
 
 	private static EmailTemplate findEmailTemplate(
