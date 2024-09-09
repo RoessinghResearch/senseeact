@@ -63,7 +63,7 @@ import java.util.regex.Pattern;
 public class SenSeeActClient {
 	public static final String DEFAULT_AUTH_HEADER = "X-Auth-Token";
 
-	public static final String PROTOCOL_VERSION = "6.0.8";
+	public static final String PROTOCOL_VERSION = "6.1.0";
 	public static final String SYNC_REMOTE_ID = "remote";
 	private static final int MAX_ACTION_LOG = 10;
 	

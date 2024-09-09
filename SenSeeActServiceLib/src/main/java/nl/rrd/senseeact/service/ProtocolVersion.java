@@ -20,7 +20,8 @@ public enum ProtocolVersion {
 	V6_0_5("6.0.5"),
 	V6_0_6("6.0.6"),
 	V6_0_7("6.0.7"),
-	V6_0_8("6.0.8");
+	V6_0_8("6.0.8"),
+	V6_1_0("6.1.0");
 
 	private final String versionName;
 	

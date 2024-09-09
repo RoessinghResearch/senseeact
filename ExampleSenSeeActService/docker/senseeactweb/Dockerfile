@@ -39,7 +39,7 @@ COPY senseeact/ExampleSenSeeActService/docker/senseeactweb/*.conf conf/extra/
 COPY --from=build /app/senseeact/ExampleSenSeeActService/build/web-src/ htdocs${WEB_PATH}/
 RUN sed -i \
 	-e "s|var basePath = '.*';|var basePath = '${WEB_PATH}';|" \
-	-e "s|var servicePath = '.*';|var servicePath = '/servlets/senseeact/v6.0.8';|" \
+	-e "s|var servicePath = '.*';|var servicePath = '/servlets/senseeact/v6.1.0';|" \
 	htdocs${WEB_PATH}/index.html && \
 	sed -i \
 	-e "s/\$WEB_PATH/$escapedWebPath/g" \
