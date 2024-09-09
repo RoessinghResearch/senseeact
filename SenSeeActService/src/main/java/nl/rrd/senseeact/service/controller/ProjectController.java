@@ -32,8 +32,10 @@ public class ProjectController {
 			@PathVariable("version")
 			@Parameter(hidden = true)
 			String versionName) throws HttpException, Exception {
-		return QueryRunner.runAuthQuery(exec::list, versionName, request,
-				response);
+		return QueryRunner.runAuthQuery(
+				(version, authDb, user, authDetails) ->
+				exec.list(version, authDb, user),
+				versionName, request, response);
 	}
 	
 	@RequestMapping(value="/list/all", method=RequestMethod.GET)
@@ -44,7 +46,7 @@ public class ProjectController {
 			@Parameter(hidden = true)
 			String versionName) throws HttpException, Exception {
 		return QueryRunner.runAuthQuery(
-				(version, authDb, user) -> exec.listAll(),
+				(version, authDb, user, authDetails) -> exec.listAll(),
 				versionName, request, response);
 	}
 	
@@ -124,7 +126,7 @@ public class ProjectController {
 			@RequestParam(value="asRole", defaultValue="PATIENT")
 			final String asRole) throws HttpException, Exception {
 		QueryRunner.runAuthQuery(
-				(version, authDb, user) ->
+				(version, authDb, user, authDetails) ->
 				exec.addUser(version, authDb, user, project, userid,
 						compatEmail, asRole),
 				versionName, request, response);
@@ -147,7 +149,7 @@ public class ProjectController {
 			@RequestParam(value="asRole", required=false, defaultValue="")
 			final String asRole) throws HttpException, Exception {
 		QueryRunner.runAuthQuery(
-				(version, authDb, user) ->
+				(version, authDb, user, authDetails) ->
 				exec.removeUser(version, authDb, user, project, userid,
 						compatEmail, asRole),
 				versionName, request, response);

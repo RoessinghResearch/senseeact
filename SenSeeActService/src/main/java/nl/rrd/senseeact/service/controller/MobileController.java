@@ -33,7 +33,7 @@ public class MobileController {
 			final long position,
 			@RequestParam(value="zip", defaultValue="false")
 			final boolean zip) throws HttpException, Exception {
-		QueryRunner.runAuthQuery((version, authDb, user) ->
+		QueryRunner.runAuthQuery((version, authDb, user, authDetails) ->
 				exec.writeMobileLogForAppCode(request, app, device, date,
 						position, zip, user),
 				versionName, request, response);
@@ -54,7 +54,7 @@ public class MobileController {
 			String fcmToken,
 			@RequestParam(value="interval")
 			int interval) throws HttpException, Exception {
-		QueryRunner.runAuthQuery((version, authDb, user) ->
+		QueryRunner.runAuthQuery((version, authDb, user, authDetails) ->
 				exec.registerMobileWakeRequest(version, authDb, user, subject,
 						deviceId, fcmToken, interval),
 				versionName, request, response);
@@ -71,7 +71,7 @@ public class MobileController {
 			String subject,
 			@RequestParam(value="deviceId")
 			String deviceId) throws HttpException, Exception {
-		QueryRunner.runAuthQuery((version, authDb, user) ->
+		QueryRunner.runAuthQuery((version, authDb, user, authDetails) ->
 				exec.unregisterMobileWakeRequest(version, authDb, user, subject,
 						deviceId),
 				versionName, request, response);

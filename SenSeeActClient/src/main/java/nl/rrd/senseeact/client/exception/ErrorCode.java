@@ -9,6 +9,7 @@ public class ErrorCode {
 	public static final String AUTH_TOKEN_NOT_FOUND = "AUTH_TOKEN_NOT_FOUND";
 	public static final String AUTH_TOKEN_INVALID = "AUTH_TOKEN_INVALID";
 	public static final String AUTH_TOKEN_EXPIRED = "AUTH_TOKEN_EXPIRED";
+	public static final String AUTH_TOKEN_INVALID_MFA = "AUTH_TOKEN_INVALID_MFA";
 
 	public static final String AUTH_MFA_TYPE_MAX = "AUTH_MFA_TYPE_MAX";
 	public static final String AUTH_MFA_ADD_MAX = "AUTH_MFA_ADD_MAX";

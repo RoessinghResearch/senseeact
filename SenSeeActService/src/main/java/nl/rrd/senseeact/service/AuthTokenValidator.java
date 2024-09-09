@@ -73,7 +73,7 @@ public class AuthTokenValidator {
 	 * empty or invalid
 	 * @throws DatabaseException if a database error occurs
 	 */
-	public static User validate(ProtocolVersion version,
+	public static ValidateTokenResult validate(ProtocolVersion version,
 			HttpServletRequest request, HttpServletResponse response,
 			Database authDb, QueryContext context) throws HttpException,
 			Exception {
@@ -96,7 +96,7 @@ public class AuthTokenValidator {
 		if (authDetails != null && authDetails.isAutoExtendCookie()) {
 			ZonedDateTime now = DateTimeUtils.nowMs();
 			AuthToken.createToken(version, result.getUser(),
-					authDetails.isPendingMfa(), now,
+					authDetails.isPendingMfa(), authDetails.getMfaId(), now,
 					authDetails.getAutoExtendCookieMinutes(), true, true,
 					response);
 		}
@@ -107,7 +107,7 @@ public class AuthTokenValidator {
 			user.setLastActive(now);
 			userCache.updateUser(authDb, user);
 		}
-		return user;
+		return result;
 	}
 
 	private static ValidateTokenResult getAuthenticatedUser(
@@ -203,6 +203,21 @@ public class AuthTokenValidator {
 			logger.info("Invalid auth token: Invalid salt hash");
 			throw new UnauthorizedException(ErrorCode.AUTH_TOKEN_INVALID,
 					"Authentication token invalid");
+		}
+		if (!user.getMfaList().isEmpty()) {
+			String mfaId = details.getMfaId();
+			if (mfaId == null) {
+				logger.info("Invalid auth token: Not authenticated with MFA");
+				throw new UnauthorizedException(
+						ErrorCode.AUTH_TOKEN_INVALID_MFA,
+						"Authentication token invalid");
+			}
+			if (user.findVerifiedMfaRecord(mfaId) != null) {
+				logger.info("Invalid auth token: MFA record ID not found");
+				throw new UnauthorizedException(
+						ErrorCode.AUTH_TOKEN_INVALID_MFA,
+						"Authentication token invalid");
+			}
 		}
 		return new ValidateTokenResult(user, details);
 	}

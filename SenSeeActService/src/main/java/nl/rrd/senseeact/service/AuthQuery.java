@@ -13,7 +13,6 @@ import nl.rrd.senseeact.service.model.User;
  * @param <T> the type of the query result
  */
 public interface AuthQuery<T> {
-	
 	/**
 	 * Runs the query. If a token was passed to the {@link QueryRunner
 	 * QueryRunner}, then the token has been validated and the parameter "user"
@@ -23,11 +22,13 @@ public interface AuthQuery<T> {
 	 * @param version the protocol version
 	 * @param authDb the authentication database
 	 * @param user the user or null
+	 * @param authDetails if a default token was provided, this is set to the
+	 * authentication details. Otherwise this is null.
 	 * @return the query result
 	 * @throws HttpException if the query should return an HTTP error status
 	 * @throws Exception if an unexpected error occurs. This results in HTTP
 	 * error status 500 Internal Server Error.
 	 */
-	T runQuery(ProtocolVersion version, Database authDb, User user)
-			throws HttpException, Exception;
+	T runQuery(ProtocolVersion version, Database authDb, User user,
+			AuthDetails authDetails) throws HttpException, Exception;
 }

@@ -96,11 +96,15 @@ public class QueryRunner {
 			conn = dbLoader.openConnection();
 			Database authDb = dbLoader.initAuthDatabase(conn);
 			User user = null;
+			AuthDetails authDetails = null;
 			if (request != null) {
-				user = AuthTokenValidator.validate(version, request, response,
+				ValidateTokenResult validateResult =
+						AuthTokenValidator.validate(version, request, response,
 						authDb, context);
+				user = validateResult.getUser();
+				authDetails = validateResult.getAuthDetails();
 			}
-			return query.runQuery(version, authDb, user);
+			return query.runQuery(version, authDb, user, authDetails);
 		} catch (UnauthorizedException ex) {
 			response.addHeader("WWW-Authenticate", "None");
 			throw ex;
@@ -183,8 +187,9 @@ public class QueryRunner {
 						logId, project);
 			}
 			QueryContext context = new QueryContext().setProject(project);
-			User user = AuthTokenValidator.validate(version, request, response,
-					authDb, context);
+			ValidateTokenResult validateResult = AuthTokenValidator.validate(
+					version, request, response, authDb, context);
+			User user = validateResult.getUser();
 			if (logId != null) {
 				logger.info("Run project query {} validated token, project {}, user {}",
 						logId, project, user.getUserid());

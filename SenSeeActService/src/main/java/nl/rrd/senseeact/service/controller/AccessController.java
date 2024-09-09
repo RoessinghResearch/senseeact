@@ -140,7 +140,7 @@ public class AccessController {
 			@RequestParam(value="includeInactive", required=false, defaultValue="true")
 			final String includeInactive) throws HttpException, Exception {
 		return QueryRunner.runAuthQuery(
-				(version, authDb, currUser) ->
+				(version, authDb, currUser, authDetails) ->
 				exec.getSubjectList(version, authDb, currUser, user,
 						includeInactive),
 				versionName, request, response);
@@ -158,7 +158,7 @@ public class AccessController {
 			@RequestParam(value="subject")
 			final String subject) throws HttpException, Exception {
 		QueryRunner.runAuthQuery(
-				(version, authDb, currUser) ->
+				(version, authDb, currUser, authDetails) ->
 				exec.addSubject(version, authDb, currUser, user, subject),
 				versionName, request, response);
 	}
@@ -175,7 +175,7 @@ public class AccessController {
 			@RequestParam(value="subject")
 			final String subject) throws HttpException, Exception {
 		QueryRunner.runAuthQuery(
-				(version, authDb, currUser) ->
+				(version, authDb, currUser, authDetails) ->
 				exec.removeSubject(version, authDb, currUser, user,
 						subject),
 				versionName, request, response);
@@ -190,7 +190,7 @@ public class AccessController {
 			String versionName,
 			@RequestParam(value="user", required=false, defaultValue="")
 			String subject) throws HttpException, Exception {
-		return QueryRunner.runAuthQuery((version, authDb, user) ->
+		return QueryRunner.runAuthQuery((version, authDb, user, authDetails) ->
 			exec.getPermissions(version, authDb, user, subject),
 			versionName, request, response
 		);
@@ -215,7 +215,7 @@ public class AccessController {
 			String subject,
 			@RequestParam(value="permission")
 			String permission) throws HttpException, Exception {
-		QueryRunner.runAuthQuery((version, authDb, user) ->
+		QueryRunner.runAuthQuery((version, authDb, user, authDetails) ->
 				exec.grantPermission(version, authDb, user, request, subject,
 						permission),
 				versionName, request, response);
@@ -240,7 +240,7 @@ public class AccessController {
 			String subject,
 			@RequestParam(value="permission")
 			String permission) throws HttpException, Exception {
-		QueryRunner.runAuthQuery((version, authDb, user) ->
+		QueryRunner.runAuthQuery((version, authDb, user, authDetails) ->
 				exec.revokePermission(version, authDb, user, request, subject,
 						permission),
 				versionName, request, response);
@@ -257,7 +257,7 @@ public class AccessController {
 			String subject,
 			@RequestParam(value="permission")
 			String permission) throws HttpException, Exception {
-		QueryRunner.runAuthQuery((version, authDb, user) ->
+		QueryRunner.runAuthQuery((version, authDb, user, authDetails) ->
 				exec.revokePermissionAll(version, authDb, user, subject,
 						permission),
 				versionName, request, response);

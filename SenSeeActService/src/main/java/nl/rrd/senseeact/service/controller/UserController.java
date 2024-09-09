@@ -69,8 +69,9 @@ public class UserController {
 			@PathVariable("version")
 			@Parameter(hidden = true)
 			String versionName) throws HttpException, Exception {
-		return QueryRunner.runAuthQuery((version, authDb, user) ->
-				doGetUserList(version, user),
+		return QueryRunner.runAuthQuery(
+				(version, authDb, user, authDetails) ->
+				doGetUserList(user),
 				versionName, request, response);
 	}
 
@@ -86,8 +87,8 @@ public class UserController {
 			@RequestParam(value="email", required=false, defaultValue="")
 			final String email) throws HttpException, Exception {
 		return QueryRunner.runAuthQuery(
-				(version, authDb, user) -> doGetUser(version, authDb, user,
-						userId, email),
+				(version, authDb, user, authDetails) ->
+				doGetUser(version, authDb, user, userId, email),
 				versionName, request, response);
 	}
 	
@@ -114,8 +115,9 @@ public class UserController {
 			@RequestParam(value="emailTemplate", required=false, defaultValue="")
 			String emailTemplate) throws HttpException, Exception {
 		return QueryRunner.runAuthQuery(
-				(version, authDb, user) -> doSetUser(version, authDb, user,
-						userId, compatEmail, emailTemplate, request),
+				(version, authDb, user, authDetails) ->
+				doSetUser(version, authDb, user, userId, compatEmail,
+						emailTemplate, request),
 				versionName, request, response);
 	}
 	
@@ -132,7 +134,7 @@ public class UserController {
 			@RequestParam(value="email", required=false, defaultValue="")
 			final String compatEmail) throws HttpException, Exception {
 		QueryRunner.runAuthQuery(
-				(version, authDb, user) ->
+				(version, authDb, user, authDetails) ->
 				doDeleteUser(version, authDb, user, userId, compatEmail),
 				versionName, request, response);
 	}
@@ -149,7 +151,7 @@ public class UserController {
 			@RequestParam(value="role")
 			final String role) throws HttpException, Exception {
 		QueryRunner.runAuthQuery(
-				(version, authDb, currUser) ->
+				(version, authDb, currUser, authDetails) ->
 				doSetRole(version, authDb, currUser, user, role),
 				versionName, request, response);
 	}
@@ -166,7 +168,7 @@ public class UserController {
 			@RequestParam(value="active")
 			final String active) throws HttpException, Exception {
 		QueryRunner.runAuthQuery(
-				(version, authDb, currUser) ->
+				(version, authDb, currUser, authDetails) ->
 				doSetActive(version, authDb, currUser, user, active),
 				versionName, request, response);
 	}
@@ -181,7 +183,7 @@ public class UserController {
 			@RequestParam(value="user", required=false, defaultValue="")
 			final String user) throws HttpException, Exception {
 		return QueryRunner.runAuthQuery(
-				(version, authDb, currUser) ->
+				(version, authDb, currUser, authDetails) ->
 				doGetGroups(version, authDb, currUser, user),
 				versionName, request, response);
 	}
@@ -275,8 +277,7 @@ public class UserController {
 		return null;
 	}
 
-	private List<ListUser> doGetUserList(
-			ProtocolVersion version, User user) throws HttpException,
+	private List<ListUser> doGetUserList(User user) throws HttpException,
 			Exception {
 		if (user.getRole() != Role.ADMIN)
 			throw new ForbiddenException();

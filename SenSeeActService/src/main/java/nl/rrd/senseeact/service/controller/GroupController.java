@@ -49,7 +49,7 @@ public class GroupController {
 			@RequestParam(value="name")
 			final String name) throws HttpException, Exception {
 		QueryRunner.runAuthQuery(
-				(version, authDb, user) ->
+				(version, authDb, user, authDetails) ->
 				doCreateGroup(version, authDb, user, name, request),
 				versionName, request, response);
 	}
@@ -66,7 +66,7 @@ public class GroupController {
 			@RequestParam(value="includeInactiveMembers", required=false, defaultValue="true")
 			final String includeInactiveMembers) throws HttpException, Exception {
 		return QueryRunner.runAuthQuery(
-				(version, authDb, user) ->
+				(version, authDb, user, authDetails) ->
 				doGetGroup(version, authDb, user, name, includeInactiveMembers),
 				versionName, request, response);
 	}
@@ -81,7 +81,8 @@ public class GroupController {
 			@RequestParam(value="domain", required=false, defaultValue="")
 			final String domain) throws HttpException, Exception {
 		return QueryRunner.runAuthQuery(
-				(version, authDb, user) -> doGetGroupList(authDb, user, domain),
+				(version, authDb, user, authDetails) ->
+				doGetGroupList(authDb, user, domain),
 				versionName, request, response);
 	}
 	
@@ -95,7 +96,8 @@ public class GroupController {
 			@RequestParam(value="name")
 			final String name) throws HttpException, Exception {
 		QueryRunner.runAuthQuery(
-				(version, authDb, user) -> doDeleteGroup(authDb, user, name),
+				(version, authDb, user, authDetails) ->
+				doDeleteGroup(authDb, user, name),
 				versionName, request, response);
 	}
 	
@@ -111,7 +113,7 @@ public class GroupController {
 			@RequestParam(value="member")
 			final String member) throws HttpException, Exception {
 		QueryRunner.runAuthQuery(
-				(version, authDb, user) ->
+				(version, authDb, user, authDetails) ->
 				doAddMember(version, authDb, user, group, member),
 				versionName, request, response);
 	}
@@ -128,7 +130,7 @@ public class GroupController {
 			@RequestParam(value="member")
 			final String member) throws HttpException, Exception {
 		QueryRunner.runAuthQuery(
-				(version, authDb, user) ->
+				(version, authDb, user, authDetails) ->
 				doDeleteMember(version, authDb, user, group, member),
 				versionName, request, response);
 	}

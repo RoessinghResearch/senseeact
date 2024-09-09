@@ -32,7 +32,8 @@ public class AuthController {
 			@RequestBody
 			SignupParams signupParams) throws HttpException, Exception {
 		synchronized (AuthControllerExecution.AUTH_LOCK) {
-			return QueryRunner.runAuthQuery((version, authDb, user) ->
+			return QueryRunner.runAuthQuery(
+					(version, authDb, user, authDetails) ->
 					exec.signup(version, request, response, null, null, null,
 							false, false, null, signupParams, authDb),
 					versionName, null, response);
@@ -59,7 +60,8 @@ public class AuthController {
 			@RequestParam(value="emailTemplate", required=false, defaultValue="")
 			String emailTemplate) throws HttpException, Exception {
 		synchronized (AuthControllerExecution.AUTH_LOCK) {
-			return QueryRunner.runAuthQuery((version, authDb, user) ->
+			return QueryRunner.runAuthQuery(
+					(version, authDb, user, authDetails) ->
 					exec.signup(version, request, response, email, password,
 							project, cookie, autoExtendCookie, emailTemplate,
 							null, authDb),
@@ -79,7 +81,8 @@ public class AuthController {
 			SignupTemporaryUserParams signupParams) throws HttpException,
 			Exception {
 		synchronized (AuthControllerExecution.AUTH_LOCK) {
-			return QueryRunner.runAuthQuery((version, authDb, user) ->
+			return QueryRunner.runAuthQuery(
+					(version, authDb, user, authDetails) ->
 					exec.signupTemporaryUser(version, request, response, null,
 					false, false, signupParams, authDb),
 					versionName, null, response);
@@ -100,7 +103,8 @@ public class AuthController {
 			@RequestParam(value="autoExtendCookie", required=false, defaultValue="false")
 			boolean autoExtendCookie) throws HttpException, Exception {
 		synchronized (AuthControllerExecution.AUTH_LOCK) {
-			return QueryRunner.runAuthQuery((version, authDb, user) ->
+			return QueryRunner.runAuthQuery(
+					(version, authDb, user, authDetails) ->
 					exec.signupTemporaryUser(version, request, response,
 							project, cookie, autoExtendCookie, null, authDb),
 					versionName, null, response);
@@ -116,7 +120,8 @@ public class AuthController {
 			@RequestParam(value="template", required=false, defaultValue="")
 			String template) throws HttpException, Exception {
 		synchronized (AuthControllerExecution.AUTH_LOCK) {
-			QueryRunner.runAuthQuery((version, authDb, user) ->
+			QueryRunner.runAuthQuery(
+					(version, authDb, user, authDetails) ->
 					exec.requestVerifyEmail(request, user, template, authDb),
 					versionName, request, response);
 		}
@@ -134,7 +139,8 @@ public class AuthController {
 			@RequestParam(value="code")
 			String code) throws HttpException, Exception {
 		synchronized (AuthControllerExecution.AUTH_LOCK) {
-			QueryRunner.runAuthQuery((version, authDb, user) ->
+			QueryRunner.runAuthQuery(
+					(version, authDb, user, authDetails) ->
 					exec.verifyEmail(request, userId, code, authDb),
 					versionName, null, response);
 		}
@@ -151,7 +157,8 @@ public class AuthController {
 			@RequestBody
 			LoginParams loginParams) throws HttpException, Exception {
 		synchronized (AuthControllerExecution.AUTH_LOCK) {
-			return QueryRunner.runAuthQuery((version, authDb, user) ->
+			return QueryRunner.runAuthQuery(
+					(version, authDb, user, authDetails) ->
 					exec.login(version, request, response, null, null, false,
 							false, loginParams, authDb),
 					versionName, null, response);
@@ -174,7 +181,8 @@ public class AuthController {
 			@RequestParam(value="autoExtendCookie", required=false, defaultValue="false")
 			boolean autoExtendCookie) throws HttpException, Exception {
 		synchronized (AuthControllerExecution.AUTH_LOCK) {
-			return QueryRunner.runAuthQuery((version, authDb, user) ->
+			return QueryRunner.runAuthQuery(
+					(version, authDb, user, authDetails) ->
 					exec.login(version, request, response, email, password,
 							cookie, autoExtendCookie, null, authDb),
 					versionName, null, response);
@@ -192,7 +200,8 @@ public class AuthController {
 			@RequestBody
 			LoginUsernameParams loginParams) throws HttpException, Exception {
 		synchronized (AuthControllerExecution.AUTH_LOCK) {
-			return QueryRunner.runAuthQuery((version, authDb, user) ->
+			return QueryRunner.runAuthQuery(
+					(version, authDb, user, authDetails) ->
 					exec.loginUsername(version, request, response, null, null,
 							false, false, loginParams, authDb),
 					versionName, null, response);
@@ -215,7 +224,8 @@ public class AuthController {
 			@RequestParam(value="autoExtendCookie", required=false, defaultValue="false")
 			boolean autoExtendCookie) throws HttpException, Exception {
 		synchronized (AuthControllerExecution.AUTH_LOCK) {
-			return QueryRunner.runAuthQuery((version, authDb, user) ->
+			return QueryRunner.runAuthQuery(
+					(version, authDb, user, authDetails) ->
 					exec.loginUsername(version, request, response, username,
 							password, cookie, autoExtendCookie, null, authDb),
 					versionName, null, response);
@@ -232,7 +242,8 @@ public class AuthController {
 			@RequestParam(value="user")
 			String asUser) throws HttpException, Exception {
 		synchronized (AuthControllerExecution.AUTH_LOCK) {
-			return QueryRunner.runAuthQuery((version, authDb, user) ->
+			return QueryRunner.runAuthQuery(
+					(version, authDb, user, authDetails) ->
 					exec.loginAs(version, asUser, authDb, user),
 					versionName, request, response);
 		}
@@ -258,9 +269,11 @@ public class AuthController {
 			@RequestBody
 			ChangePasswordParams params) throws HttpException, Exception {
 		synchronized (AuthControllerExecution.AUTH_LOCK) {
-			return QueryRunner.runAuthQuery((version, authDb, user) ->
+			return QueryRunner.runAuthQuery(
+					(version, authDb, user, authDetails) ->
 					exec.changePassword(version, request, response, null, null,
-							null, false, false, params, authDb, user),
+							null, false, false, params, authDb, user,
+							authDetails),
 					versionName, request, response);
 		}
 	}
@@ -283,10 +296,11 @@ public class AuthController {
 			@RequestParam(value="autoExtendCookie", required=false, defaultValue="false")
 			boolean autoExtendCookie) throws HttpException, Exception {
 		synchronized (AuthControllerExecution.AUTH_LOCK) {
-			return QueryRunner.runAuthQuery((version, authDb, user) ->
+			return QueryRunner.runAuthQuery(
+					(version, authDb, user, authDetails) ->
 					exec.changePassword(version, request, response, email,
 					oldPassword, newPassword, cookie, autoExtendCookie, null,
-					authDb, user),
+					authDb, user, authDetails),
 					versionName, request, response);
 		}
 	}
@@ -303,7 +317,8 @@ public class AuthController {
 			@RequestParam(value="template", required=false, defaultValue="")
 			String template) throws HttpException, Exception {
 		synchronized (AuthControllerExecution.AUTH_LOCK) {
-			QueryRunner.runAuthQuery((version, authDb, user) ->
+			QueryRunner.runAuthQuery(
+					(version, authDb, user, authDetails) ->
 					exec.requestResetPassword(request, email, template, authDb),
 					versionName, null, response);
 		}
@@ -320,7 +335,8 @@ public class AuthController {
 			@RequestBody
 			ResetPasswordParams params) throws HttpException, Exception {
 		synchronized (AuthControllerExecution.AUTH_LOCK) {
-			QueryRunner.runAuthQuery((version, authDb, user) ->
+			QueryRunner.runAuthQuery(
+					(version, authDb, user, authDetails) ->
 					exec.resetPassword(request, null, null, null, params,
 							authDb),
 					versionName, null, response);
@@ -341,7 +357,8 @@ public class AuthController {
 			@RequestParam(value="password", required=false, defaultValue="")
 			String password) throws HttpException, Exception {
 		synchronized (AuthControllerExecution.AUTH_LOCK) {
-			QueryRunner.runAuthQuery((version, authDb, user) ->
+			QueryRunner.runAuthQuery(
+					(version, authDb, user, authDetails) ->
 					exec.resetPassword(request, email, resetCode, password,
 							null, authDb),
 					versionName, null, response);
@@ -366,7 +383,8 @@ public class AuthController {
 			@RequestParam(value="type")
 			String type) throws HttpException, Exception {
 		synchronized (AuthControllerExecution.AUTH_LOCK) {
-			return QueryRunner.runAuthQuery((version, authDb, user) ->
+			return QueryRunner.runAuthQuery(
+					(version, authDb, user, authDetails) ->
 					exec.addMfaRecord(request, type, authDb, user),
 					versionName, request, response);
 		}
@@ -384,7 +402,8 @@ public class AuthController {
 			@RequestParam(value="code")
 			String code) throws HttpException, Exception {
 		synchronized (AuthControllerExecution.AUTH_LOCK) {
-			return QueryRunner.runAuthQuery((version, authDb, user) ->
+			return QueryRunner.runAuthQuery(
+					(version, authDb, user, authDetails) ->
 					exec.verifyAddMfaRecord(id, code, authDb, user),
 					versionName, request, response);
 		}
@@ -400,7 +419,8 @@ public class AuthController {
 			@RequestParam(value="id")
 			String id) throws HttpException, Exception {
 		synchronized (AuthControllerExecution.AUTH_LOCK) {
-			QueryRunner.runAuthQuery((version, authDb, user) ->
+			QueryRunner.runAuthQuery(
+					(version, authDb, user, authDetails) ->
 					exec.deleteMfaRecord(id, authDb, user),
 					versionName, request, response);
 		}
@@ -414,7 +434,8 @@ public class AuthController {
 			@Parameter(hidden = true)
 			String versionName) throws HttpException, Exception {
 		synchronized (AuthControllerExecution.AUTH_LOCK) {
-			return QueryRunner.runAuthQuery((version, authDb, user) ->
+			return QueryRunner.runAuthQuery(
+					(version, authDb, user, authDetails) ->
 					exec.getMfaRecords(user),
 					versionName, request, response);
 		}
@@ -430,7 +451,8 @@ public class AuthController {
 			@RequestParam(value="id")
 			String id) throws HttpException, Exception {
 		synchronized (AuthControllerExecution.AUTH_LOCK) {
-			QueryRunner.runAuthQuery((version, authDb, user) ->
+			QueryRunner.runAuthQuery(
+					(version, authDb, user, authDetails) ->
 					exec.getMfaTotpQRCode(response, authDb, user, id),
 					versionName, request, response);
 		}

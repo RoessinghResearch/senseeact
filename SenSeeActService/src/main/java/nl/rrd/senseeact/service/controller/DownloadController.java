@@ -9,7 +9,6 @@ import nl.rrd.senseeact.client.project.ProjectRepository;
 import nl.rrd.senseeact.dao.Database;
 import nl.rrd.senseeact.dao.DatabaseCriteria;
 import nl.rrd.senseeact.dao.DatabaseSort;
-import nl.rrd.senseeact.service.ProtocolVersion;
 import nl.rrd.senseeact.service.QueryRunner;
 import nl.rrd.senseeact.service.exception.HttpException;
 import nl.rrd.senseeact.service.exception.NotFoundException;
@@ -43,8 +42,10 @@ public class DownloadController {
 			@PathVariable("version")
 			@Parameter(hidden = true)
 			String versionName) throws HttpException, Exception {
-		return QueryRunner.runAuthQuery(this::doGetProjects, versionName,
-				request, response);
+		return QueryRunner.runAuthQuery(
+				(version, authDb, user, authDetails) ->
+				doGetProjects(authDb, user),
+				versionName, request, response);
 	}
 
 	@RequestMapping(value="/list", method=RequestMethod.GET)
@@ -54,8 +55,10 @@ public class DownloadController {
 			@PathVariable("version")
 			@Parameter(hidden = true)
 			String versionName) throws HttpException, Exception {
-		return QueryRunner.runAuthQuery(this::doGetDownloadList, versionName,
-				request, response);
+		return QueryRunner.runAuthQuery(
+				(version, authDb, user, authDetails) ->
+				doGetDownloadList(authDb, user),
+				versionName, request, response);
 	}
 
 	@RequestMapping(value="/start", method=RequestMethod.POST)
@@ -67,7 +70,7 @@ public class DownloadController {
 			String versionName,
 			@RequestParam(value="project")
 			String project) throws HttpException, Exception {
-		QueryRunner.runAuthQuery((version, authDb, user) ->
+		QueryRunner.runAuthQuery((version, authDb, user, authDetails) ->
 				doStartDownload(authDb, user, project),
 				versionName, request, response);
 	}
@@ -81,7 +84,7 @@ public class DownloadController {
 			String versionName,
 			@PathVariable("exportId")
 			String exportId) throws HttpException, Exception {
-		QueryRunner.runAuthQuery((version, authDb, user) ->
+		QueryRunner.runAuthQuery((version, authDb, user, authDetails) ->
 				doDownloadExport(authDb, user, exportId, response),
 				versionName, request, response);
 	}
@@ -95,13 +98,13 @@ public class DownloadController {
 			String versionName,
 			@PathVariable("exportId")
 			String exportId) throws HttpException, Exception {
-		QueryRunner.runAuthQuery((version, authDb, user) ->
+		QueryRunner.runAuthQuery((version, authDb, user, authDetails) ->
 				doDeleteExport(user, exportId),
 				versionName, request, response);
 	}
 
-	private List<Project> doGetProjects(ProtocolVersion version,
-			Database authDb, User user) throws HttpException, Exception {
+	private List<Project> doGetProjects(Database authDb, User user)
+			throws HttpException, Exception {
 		List<String> codes = user.findProjects(authDb);
 		DataExporterFactory exportFactory = AppComponents.get(
 				DataExporterFactory.class);
@@ -118,8 +121,8 @@ public class DownloadController {
 		return result;
 	}
 
-	private List<DataExportRecord> doGetDownloadList(ProtocolVersion version,
-			Database authDb, User user) throws HttpException, Exception {
+	private List<DataExportRecord> doGetDownloadList(Database authDb, User user)
+			throws HttpException, Exception {
 		DataExportTable table = new DataExportTable();
 		DatabaseCriteria criteria = new DatabaseCriteria.Equal(
 				"user", user.getUserid());

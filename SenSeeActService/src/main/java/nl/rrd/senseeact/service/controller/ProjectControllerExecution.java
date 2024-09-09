@@ -1502,7 +1502,7 @@ public class ProjectControllerExecution {
 			listener.clearTriggeredSubjects();
 		}
 		List<String> result = QueryRunner.runAuthQuery(
-				(version, authDb, user) -> {
+				(version, authDb, user, authDetails) -> {
 					if (version.ordinal() >= ProtocolVersion.V6_0_0.ordinal()) {
 						return triggeredSubjects;
 					} else {

@@ -188,6 +188,16 @@ public class User extends nl.rrd.senseeact.client.model.User {
 		this.mfaList = mfaList;
 	}
 
+	public PrivateMfaRecord findVerifiedMfaRecord(String id) {
+		for (PrivateMfaRecord record : mfaList) {
+			if (record.getStatus() == PrivateMfaRecord.Status.VERIFY_SUCCESS &&
+					id.equals(record.getId())) {
+				return record;
+			}
+		}
+		return null;
+	}
+
 	/**
 	 * Returns the user ID if the version is 6.0.0 or higher, or otherwise the
 	 * email address.

@@ -245,7 +245,7 @@ public class AuthControllerExecution {
 				AuthControllerExecution.class.getSimpleName());
 		logger.info("User signed up: userid: {}, email: {}", user.getUserid(),
 				user.getEmail());
-		String token = AuthToken.createToken(version, user, false, now,
+		String token = AuthToken.createToken(version, user, false, null, now,
 				expireMinutes, cookie, autoExtendCookie, response);
 		return new TokenResult(user.getUserid(), token);
 	}
@@ -452,7 +452,7 @@ public class AuthControllerExecution {
 		logger.info("User logged in: userid: {}, email: {}, pendingMfa: {}",
 				user.getUserid(), user.getEmail(), mfaRecord != null);
 		String token = AuthToken.createToken(version, user, mfaRecord != null,
-				now, expireMinutes, cookie, autoExtendCookie, response);
+				null, now, expireMinutes, cookie, autoExtendCookie, response);
 		return new TokenResult(user.getUserid(), token);
 	}
 
@@ -593,7 +593,10 @@ public class AuthControllerExecution {
 		Logger logger = AppComponents.getLogger(getClass().getSimpleName());
 		logger.info("User {} logged in as: userid: {}, email: {}",
 				user.getUserid(), asUser.getUserid(), asUser.getEmail());
-		String token = AuthToken.createToken(version, asUser, false, now,
+		String mfaId = null;
+		if (!asUser.getMfaList().isEmpty())
+			mfaId = asUser.getMfaList().get(0).getId();
+		String token = AuthToken.createToken(version, asUser, false, mfaId, now,
 				LoginParams.DEFAULT_EXPIRATION, false, false, null);
 		if (version.ordinal() >= ProtocolVersion.V6_0_0.ordinal())
 			return new TokenResult(asUser.getUserid(), token);
@@ -625,8 +628,8 @@ public class AuthControllerExecution {
 			HttpServletRequest request, HttpServletResponse response,
 			String email, String oldPassword, String newPassword,
 			boolean cookie, boolean autoExtendCookie,
-			ChangePasswordParams params, Database authDb, User user)
-			throws HttpException, Exception {
+			ChangePasswordParams params, Database authDb, User user,
+			AuthDetails authDetails) throws HttpException, Exception {
 		validateForbiddenQueryParams(request, "email", "oldPassword",
 				"newPassword");
 		String userid = null;
@@ -698,7 +701,8 @@ public class AuthControllerExecution {
 		ZonedDateTime now = DateTimeUtils.nowMs();
 		Logger logger = AppComponents.getLogger(getClass().getSimpleName());
 		logger.info("User {} changed password", changeUser.getUserid());
-		return AuthToken.createToken(version, changeUser, false, now,
+		String mfaId = authDetails == null ? null : authDetails.getMfaId();
+		return AuthToken.createToken(version, changeUser, false, mfaId, now,
 				expireMinutes, cookie, autoExtendCookie, response);
 	}
 

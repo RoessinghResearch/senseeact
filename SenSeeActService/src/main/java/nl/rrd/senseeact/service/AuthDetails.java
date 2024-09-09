@@ -23,6 +23,7 @@ public class AuthDetails {
 	private Date expiration;
 	private String hash;
 	private boolean pendingMfa = false;
+	private String mfaId = null;
 	private boolean autoExtendCookie = false;
 	private Integer autoExtendCookieMinutes = null;
 
@@ -43,6 +44,8 @@ public class AuthDetails {
 	 * @param pendingMfa true if the user enabled multi-factor authentication
 	 * and the user only entered the password, but didn't enter the second
 	 * factor yet
+	 * @param mfaId if the user authenticated with MFA, this should be set to
+	 * the used MFA record ID
 	 * @param autoExtendCookie true if the "authToken" cookie should be
 	 * automatically extended at every verification
 	 * @param autoExtendCookieMinutes if "autoExtendCookie" is true, this should
@@ -51,7 +54,7 @@ public class AuthDetails {
 	 * "autoExtendCookie" is false, this parameter is ignored and can be null.
 	 */
 	public static AuthDetails forUserid(String userid, Date issuedAt,
-			Date expiration, String hash, boolean pendingMfa,
+			Date expiration, String hash, boolean pendingMfa, String mfaId,
 			boolean autoExtendCookie, Integer autoExtendCookieMinutes) {
 		AuthDetails details = new AuthDetails();
 		details.userid = userid;
@@ -59,6 +62,7 @@ public class AuthDetails {
 		details.expiration = expiration;
 		details.hash = hash;
 		details.pendingMfa = pendingMfa;
+		details.mfaId = mfaId;
 		details.autoExtendCookie = autoExtendCookie;
 		if (autoExtendCookie)
 			details.autoExtendCookieMinutes = autoExtendCookieMinutes;
@@ -80,6 +84,8 @@ public class AuthDetails {
 	 * @param pendingMfa true if the user enabled multi-factor authentication
 	 * and the user only entered the password, but didn't enter the second
 	 * factor yet
+	 * @param mfaId if the user authenticated with MFA, this should be set to
+	 * the used MFA record ID
 	 * @param autoExtendCookie true if the "authToken" cookie should be
 	 * automatically extended at every verification
 	 * @param autoExtendCookieMinutes if "autoExtendCookie" is true, this should
@@ -88,7 +94,7 @@ public class AuthDetails {
 	 * "autoExtendCookie" is false, this parameter is ignored and can be null.
 	 */
 	public static AuthDetails forEmail(String email, Date issuedAt,
-			Date expiration, String hash, boolean pendingMfa,
+			Date expiration, String hash, boolean pendingMfa, String mfaId,
 			boolean autoExtendCookie, Integer autoExtendCookieMinutes) {
 		AuthDetails details = new AuthDetails();
 		details.email = email;
@@ -96,6 +102,7 @@ public class AuthDetails {
 		details.expiration = expiration;
 		details.hash = hash;
 		details.pendingMfa = pendingMfa;
+		details.mfaId = mfaId;
 		details.autoExtendCookie = autoExtendCookie;
 		if (autoExtendCookie)
 			details.autoExtendCookieMinutes = autoExtendCookieMinutes;
@@ -165,6 +172,16 @@ public class AuthDetails {
 	 */
 	public boolean isPendingMfa() {
 		return pendingMfa;
+	}
+
+	/**
+	 * If the user authenticated with MFA, then this method returns the used MFA
+	 * record ID.
+	 *
+	 * @return the MFA record ID or null
+	 */
+	public String getMfaId() {
+		return mfaId;
 	}
 
 	/**

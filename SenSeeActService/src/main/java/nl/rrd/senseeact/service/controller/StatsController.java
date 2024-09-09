@@ -41,7 +41,7 @@ public class StatsController {
 			@PathVariable("statName")
 			String statName) throws HttpException, Exception {
 		SystemStat stat = QueryRunner.runAuthQuery(
-				(version, authDb, user) ->
+				(version, authDb, user, authDetails) ->
 				doGetSystemStatLatest(authDb, user, statName),
 				versionName, request, response);
 		return new NullableResponse<>(stat);
@@ -61,7 +61,7 @@ public class StatsController {
 			@RequestParam(value="end", required=false, defaultValue="")
 			String end) throws HttpException, Exception {
 		return QueryRunner.runAuthQuery(
-				(version, authDb, user) ->
+				(version, authDb, user, authDetails) ->
 				doGetSystemStats(authDb, user, statName, start, end),
 				versionName, request, response);
 	}
@@ -87,28 +87,28 @@ public class StatsController {
 		List<HttpFieldError> fieldErrors = new ArrayList<>();
 		List<DatabaseCriteria> andCriteria = new ArrayList<>();
 		andCriteria.add(new DatabaseCriteria.Equal("name", statName));
-		if (start != null && start.length() > 0) {
+		if (start != null && !start.isEmpty()) {
 			try {
 				ZonedDateTime startTime = DateTimeUtils.parseDateTime(start,
 						ZonedDateTime.class);
 				andCriteria.add(new DatabaseCriteria.GreaterEqual("utcTime",
 						startTime.toInstant().toEpochMilli()));
 			} catch (ParseException ex) {
-				if (errorBuilder.length() > 0)
+				if (!errorBuilder.isEmpty())
 					errorBuilder.append("\n");
 				errorBuilder.append("Invalid value for parameter \"start\": " +
 					ex.getMessage());
 				fieldErrors.add(new HttpFieldError("start", ex.getMessage()));
 			}
 		}
-		if (end != null && end.length() > 0) {
+		if (end != null && !end.isEmpty()) {
 			try {
 				ZonedDateTime endTime = DateTimeUtils.parseDateTime(end,
 						ZonedDateTime.class);
 				andCriteria.add(new DatabaseCriteria.LessThan("utcTime",
 						endTime.toInstant().toEpochMilli()));
 			} catch (ParseException ex) {
-				if (errorBuilder.length() > 0)
+				if (!errorBuilder.isEmpty())
 					errorBuilder.append("\n");
 				errorBuilder.append("Invalid value for parameter \"end\": " +
 					ex.getMessage());
