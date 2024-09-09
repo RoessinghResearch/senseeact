@@ -66,7 +66,7 @@ public class AuthControllerExecution {
 	private static final int MAX_MFA_TOTP_COUNT = 1;
 	private static final int MAX_MFA_ADD_COUNT = 10;
 	private static final int MAX_MFA_ADD_MINUTES = 60;
-	private static final int MAX_MFA_VERIFY_COUNT = 5;
+	private static final int MAX_MFA_VERIFY_COUNT = 10;
 	private static final int MAX_MFA_VERIFY_MINUTES = 15;
 
 	/**
@@ -458,9 +458,7 @@ public class AuthControllerExecution {
 			throw new UnauthorizedException(ErrorCode.ACCOUNT_INACTIVE,
 					"Account has been deactivated");
 		}
-		PrivateMfaRecord mfaRecord = null;
-		if (!user.getMfaList().isEmpty())
-			mfaRecord = user.getMfaList().get(0);
+		PrivateMfaRecord mfaRecord = user.findDefaultMfaRecord();
 		logger.info("User logged in: userid: {}, email: {}, pendingMfa: {}",
 				user.getUserid(), user.getEmail(), mfaRecord != null);
 		String token = AuthToken.createToken(version, user, mfaRecord != null,
@@ -473,8 +471,37 @@ public class AuthControllerExecution {
 		result.setToken(token);
 		result.setMfaRecord(mfaRecord == null ? null :
 				mfaRecord.toPublicMfaRecord());
-		// TODO send verification code
+		if (mfaRecord != null)
+			requestMfaVerification(authDb, user, mfaRecord);
 		return result;
+	}
+
+	private void requestMfaVerification(Database authDb, User user,
+			PrivateMfaRecord record) throws HttpException, Exception {
+		checkMaxMfaVerifyCount(record);
+		String type = record.getType();
+		if (type.equals(MfaRecord.Constants.TYPE_SMS)) {
+			requestMfaVerificationSms(authDb, user, record);
+		} else if (!type.equals(MfaRecord.Constants.TYPE_TOTP)) {
+			HttpFieldError error = new HttpFieldError("type",
+					"Unknown MFA type: " + type);
+			throw BadRequestException.withInvalidInput(error);
+		}
+	}
+
+	private void requestMfaVerificationSms(Database authDb, User user,
+			PrivateMfaRecord record) throws HttpException, Exception {
+		UserCache cache = UserCache.getInstance();
+		ZonedDateTime time = DateTimeUtils.nowMs();
+		record.getVerifyTimes().add(time);
+		cache.updateUser(authDb, user);
+		String phone = (String)record.getPrivateData().get(
+				PrivateMfaRecord.Constants.KEY_SMS_PHONE_NUMBER);
+		boolean verifyResult = twilioRequestSmsVerification(phone);
+		if (!verifyResult) {
+			throw new InternalServerErrorException(
+					"Request SMS verification failed");
+		}
 	}
 
 	public static void validateForbiddenQueryParams(HttpServletRequest request,
@@ -626,9 +653,8 @@ public class AuthControllerExecution {
 		Logger logger = AppComponents.getLogger(getClass().getSimpleName());
 		logger.info("User {} logged in as: userid: {}, email: {}",
 				user.getUserid(), asUser.getUserid(), asUser.getEmail());
-		String mfaId = null;
-		if (!asUser.getMfaList().isEmpty())
-			mfaId = asUser.getMfaList().get(0).getId();
+		PrivateMfaRecord mfaRecord = user.findDefaultMfaRecord();
+		String mfaId = mfaRecord == null ? null : mfaRecord.getId();
 		String token = AuthToken.createToken(version, asUser, false, mfaId, now,
 				LoginParams.DEFAULT_EXPIRATION, false, false, null);
 		if (version.ordinal() >= ProtocolVersion.V6_0_0.ordinal())
@@ -905,9 +931,8 @@ public class AuthControllerExecution {
 
 	private void checkExistingMfaSms(User user, String phone)
 			throws BadRequestException {
-		for (PrivateMfaRecord record : user.getMfaList()) {
-			if (!record.getType().equals(MfaRecord.Constants.TYPE_SMS) ||
-					record.getStatus() != PrivateMfaRecord.Status.VERIFY_SUCCESS) {
+		for (PrivateMfaRecord record : user.findVerifiedMfaRecords()) {
+			if (!record.getType().equals(MfaRecord.Constants.TYPE_SMS)) {
 				continue;
 			}
 			String recordPhone = (String)record.getPrivateData().get(
@@ -951,13 +976,12 @@ public class AuthControllerExecution {
 		ZonedDateTime now = DateTimeUtils.nowMs();
 		ZonedDateTime minAddTime = now.minusMinutes(MAX_MFA_ADD_MINUTES);
 		ZonedDateTime minVerifyTime = now.minusMinutes(MAX_MFA_VERIFY_MINUTES);
-		long minVerifyMs = minVerifyTime.toInstant().toEpochMilli();
 		boolean changed = false;
 		Iterator<PrivateMfaRecord> it = user.getMfaList().iterator();
 		while (it.hasNext()) {
 			PrivateMfaRecord record = it.next();
 			if (record.getStatus() == PrivateMfaRecord.Status.VERIFY_SUCCESS) {
-				if (cleanMfaRecordVerifyTimes(record, minVerifyMs))
+				if (cleanMfaRecordVerifyTimes(record, minVerifyTime))
 					changed = true;
 			} else if (record.getCreated().isBefore(minAddTime)) {
 				it.remove();
@@ -971,12 +995,12 @@ public class AuthControllerExecution {
 	}
 
 	private boolean cleanMfaRecordVerifyTimes(PrivateMfaRecord record,
-			long minVerifyMs) {
+			ZonedDateTime minVerifyTime) {
 		boolean changed = false;
-		Iterator<Long> it = record.getVerifyTimes().iterator();
+		Iterator<ZonedDateTime> it = record.getVerifyTimes().iterator();
 		while (it.hasNext()) {
-			long time = it.next();
-			if (time < minVerifyMs) {
+			ZonedDateTime time = it.next();
+			if (time.isBefore(minVerifyTime)) {
 				it.remove();
 				changed = true;
 			}
@@ -1023,11 +1047,9 @@ public class AuthControllerExecution {
 
 	private int getVerifiedMfaTypeCount(User user, String type) {
 		int count = 0;
-		for (PrivateMfaRecord record : user.getMfaList()) {
-			if (record.getStatus() == PrivateMfaRecord.Status.VERIFY_SUCCESS &&
-					type.equals(record.getType())) {
+		for (PrivateMfaRecord record : user.findVerifiedMfaRecords()) {
+			if (type.equals(record.getType()))
 				count++;
-			}
 		}
 		return count;
 	}
@@ -1269,9 +1291,8 @@ public class AuthControllerExecution {
 
 	public List<MfaRecord> getMfaRecords(User user) {
 		List<MfaRecord> result = new ArrayList<>();
-		for (PrivateMfaRecord record : user.getMfaList()) {
-			if (record.getStatus() == PrivateMfaRecord.Status.VERIFY_SUCCESS)
-				result.add(record.toPublicMfaRecord());
+		for (PrivateMfaRecord record : user.findVerifiedMfaRecords()) {
+			result.add(record.toPublicMfaRecord());
 		}
 		return result;
 	}

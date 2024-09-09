@@ -53,7 +53,9 @@ public class PrivateMfaRecord {
 	@JsonSerialize(using=IsoDateTimeSerializer.class)
 	private ZonedDateTime created;
 	private Status status = Status.CREATED;
-	private List<Long> verifyTimes = new ArrayList<>();
+	@JsonDeserialize(contentUsing=DateTimeFromIsoDateTimeDeserializer.class)
+	@JsonSerialize(contentUsing=IsoDateTimeSerializer.class)
+	private List<ZonedDateTime> verifyTimes = new ArrayList<>();
 	private Map<String,Object> publicData = new LinkedHashMap<>();
 	private Map<String,Object> privateData = new LinkedHashMap<>();
 
@@ -138,24 +140,24 @@ public class PrivateMfaRecord {
 	}
 
 	/**
-	 * Returns the Unix timestamps in milliseconds when a verification was
-	 * performed (with or without success). This can be used to check the
-	 * maximum number of verification attempts.
+	 * Returns the times when a verification was performed (with or without
+	 * success). This can be used to check the maximum number of verification
+	 * attempts.
 	 *
 	 * @return the verification times
 	 */
-	public List<Long> getVerifyTimes() {
+	public List<ZonedDateTime> getVerifyTimes() {
 		return verifyTimes;
 	}
 
 	/**
-	 * Sets the Unix timestamps in milliseconds when a verification was
-	 * performed (with or without success). This can be used to check the
-	 * maximum number of verification attempts.
+	 * Sets the times when a verification was performed (with or without
+	 * success). This can be used to check the maximum number of verification
+	 * attempts.
 	 *
 	 * @param verifyTimes the verification times
 	 */
-	public void setVerifyTimes(List<Long> verifyTimes) {
+	public void setVerifyTimes(List<ZonedDateTime> verifyTimes) {
 		this.verifyTimes = verifyTimes;
 	}
 

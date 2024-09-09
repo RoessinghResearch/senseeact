@@ -188,6 +188,31 @@ public class User extends nl.rrd.senseeact.client.model.User {
 		this.mfaList = mfaList;
 	}
 
+	public boolean hasVerifiedMfaRecord() {
+		for (PrivateMfaRecord record : mfaList) {
+			if (record.getStatus() == PrivateMfaRecord.Status.VERIFY_SUCCESS)
+				return true;
+		}
+		return false;
+	}
+
+	public List<PrivateMfaRecord> findVerifiedMfaRecords() {
+		List<PrivateMfaRecord> result = new ArrayList<>();
+		for (PrivateMfaRecord record : mfaList) {
+			if (record.getStatus() == PrivateMfaRecord.Status.VERIFY_SUCCESS)
+				result.add(record);
+		}
+		return result;
+	}
+
+	public PrivateMfaRecord findDefaultMfaRecord() {
+		for (PrivateMfaRecord record : mfaList) {
+			if (record.getStatus() == PrivateMfaRecord.Status.VERIFY_SUCCESS)
+				return record;
+		}
+		return null;
+	}
+
 	public PrivateMfaRecord findVerifiedMfaRecord(String id) {
 		for (PrivateMfaRecord record : mfaList) {
 			if (record.getStatus() == PrivateMfaRecord.Status.VERIFY_SUCCESS &&

@@ -204,7 +204,7 @@ public class AuthTokenValidator {
 			throw new UnauthorizedException(ErrorCode.AUTH_TOKEN_INVALID,
 					"Authentication token invalid");
 		}
-		if (!user.getMfaList().isEmpty()) {
+		if (user.hasVerifiedMfaRecord()) {
 			String mfaId = details.getMfaId();
 			if (mfaId == null) {
 				logger.info("Invalid auth token: Not authenticated with MFA");
