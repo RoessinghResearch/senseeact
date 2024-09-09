@@ -471,7 +471,8 @@ public class AuthControllerExecution {
 		result.setUser(user.getUserid());
 		result.setEmail(email);
 		result.setToken(token);
-		result.setMfaRecord(mfaRecord.toPublicMfaRecord());
+		result.setMfaRecord(mfaRecord == null ? null :
+				mfaRecord.toPublicMfaRecord());
 		// TODO send verification code
 		return result;
 	}
