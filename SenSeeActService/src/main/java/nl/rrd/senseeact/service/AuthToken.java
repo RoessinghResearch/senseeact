@@ -31,13 +31,15 @@ import java.util.Date;
 public class AuthToken {
 	private static final String VERSION = "version";
 	private static final String HASH = "hash";
+	private static final String PENDING_MFA = "pendingMfa";
 	private static final String AUTO_EXTEND_COOKIE = "autoExtendCookie";
 	private static final String AUTO_EXTEND_COOKIE_MINUTES =
 			"autoExtendCookieMinutes";
 
 	public static String createToken(ProtocolVersion version, User user,
-			ZonedDateTime now, Integer expireMinutes, boolean cookie,
-			boolean autoExtendCookie, HttpServletResponse response) {
+			boolean pendingMfa, ZonedDateTime now, Integer expireMinutes,
+			boolean cookie, boolean autoExtendCookie,
+			HttpServletResponse response) {
 		ZonedDateTime expiration = createExpiration(now, expireMinutes);
 		Date tokenExpire = createTokenExpiration(expiration);
 		ZonedDateTime cookieExpire = createCookieExpiration(now, expiration);
@@ -47,13 +49,13 @@ public class AuthToken {
 		if (version.ordinal() >= ProtocolVersion.V6_0_0.ordinal()) {
 			details = AuthDetails.forUserid(user.getUserid(),
 					Date.from(now.toInstant()), tokenExpire,
-					AuthDetails.hashSalt(user.getSalt()), autoExtendCookie,
-					expireMinutes);
+					AuthDetails.hashSalt(user.getSalt()), pendingMfa,
+					autoExtendCookie, expireMinutes);
 		} else {
 			details = AuthDetails.forEmail(user.getEmail(),
 					Date.from(now.toInstant()), tokenExpire,
-					AuthDetails.hashSalt(user.getSalt()), autoExtendCookie,
-					expireMinutes);
+					AuthDetails.hashSalt(user.getSalt()), pendingMfa,
+					autoExtendCookie, expireMinutes);
 		}
 		String token = AuthToken.createToken(details);
 		if (cookie)
@@ -95,6 +97,7 @@ public class AuthToken {
 		claims.claim(HASH, details.getHash());
 		if (details.getUserid() != null)
 			claims.claim(VERSION, 1);
+		claims.claim(PENDING_MFA, details.isPendingMfa());
 		claims.claim(AUTO_EXTEND_COOKIE, details.isAutoExtendCookie());
 		if (details.isAutoExtendCookie()) {
 			claims.claim(AUTO_EXTEND_COOKIE_MINUTES,
@@ -160,6 +163,7 @@ public class AuthToken {
 			}
 		}
 		Integer version;
+		Boolean pendingMfa;
 		Boolean autoExtendCookie;
 		Integer autoExtendCookieMinutes;
 		String hash;
@@ -167,6 +171,9 @@ public class AuthToken {
 			version = claims.getIntegerClaim(VERSION);
 			if (version == null)
 				version = 0;
+			pendingMfa = claims.getBooleanClaim(PENDING_MFA);
+			if (pendingMfa == null)
+				pendingMfa = false;
 			autoExtendCookie = claims.getBooleanClaim(AUTO_EXTEND_COOKIE);
 			if (autoExtendCookie == null)
 				autoExtendCookie = false;
@@ -180,11 +187,13 @@ public class AuthToken {
 		if (version == 1) {
 			return AuthDetails.forUserid(claims.getSubject(),
 					claims.getIssueTime(), claims.getExpirationTime(),
-					hash, autoExtendCookie, autoExtendCookieMinutes);
+					hash, pendingMfa, autoExtendCookie,
+					autoExtendCookieMinutes);
 		} else {
 			return AuthDetails.forEmail(claims.getSubject(),
 					claims.getIssueTime(), claims.getExpirationTime(),
-					hash, autoExtendCookie, autoExtendCookieMinutes);
+					hash, pendingMfa, autoExtendCookie,
+					autoExtendCookieMinutes);
 		}
 	}
 

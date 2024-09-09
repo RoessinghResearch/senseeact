@@ -245,8 +245,8 @@ public class AuthControllerExecution {
 				AuthControllerExecution.class.getSimpleName());
 		logger.info("User signed up: userid: {}, email: {}", user.getUserid(),
 				user.getEmail());
-		String token = AuthToken.createToken(version, user, now, expireMinutes,
-				cookie, autoExtendCookie, response);
+		String token = AuthToken.createToken(version, user, false, now,
+				expireMinutes, cookie, autoExtendCookie, response);
 		return new TokenResult(user.getUserid(), token);
 	}
 
@@ -446,10 +446,13 @@ public class AuthControllerExecution {
 			throw new UnauthorizedException(ErrorCode.ACCOUNT_INACTIVE,
 					"Account has been deactivated");
 		}
-		logger.info("User logged in: userid: {}, email: {}", user.getUserid(),
-				user.getEmail());
-		String token = AuthToken.createToken(version, user, now, expireMinutes,
-				cookie, autoExtendCookie, response);
+		PrivateMfaRecord mfaRecord = null;
+		if (!user.getMfaList().isEmpty())
+			mfaRecord = user.getMfaList().get(0);
+		logger.info("User logged in: userid: {}, email: {}, pendingMfa: {}",
+				user.getUserid(), user.getEmail(), mfaRecord != null);
+		String token = AuthToken.createToken(version, user, mfaRecord != null,
+				now, expireMinutes, cookie, autoExtendCookie, response);
 		return new TokenResult(user.getUserid(), token);
 	}
 
@@ -590,7 +593,7 @@ public class AuthControllerExecution {
 		Logger logger = AppComponents.getLogger(getClass().getSimpleName());
 		logger.info("User {} logged in as: userid: {}, email: {}",
 				user.getUserid(), asUser.getUserid(), asUser.getEmail());
-		String token = AuthToken.createToken(version, asUser, now,
+		String token = AuthToken.createToken(version, asUser, false, now,
 				LoginParams.DEFAULT_EXPIRATION, false, false, null);
 		if (version.ordinal() >= ProtocolVersion.V6_0_0.ordinal())
 			return new TokenResult(asUser.getUserid(), token);
@@ -695,8 +698,8 @@ public class AuthControllerExecution {
 		ZonedDateTime now = DateTimeUtils.nowMs();
 		Logger logger = AppComponents.getLogger(getClass().getSimpleName());
 		logger.info("User {} changed password", changeUser.getUserid());
-		return AuthToken.createToken(version, changeUser, now, expireMinutes,
-				cookie, autoExtendCookie, response);
+		return AuthToken.createToken(version, changeUser, false, now,
+				expireMinutes, cookie, autoExtendCookie, response);
 	}
 
 	public void clearAuthTokenCookie(HttpServletResponse response) {

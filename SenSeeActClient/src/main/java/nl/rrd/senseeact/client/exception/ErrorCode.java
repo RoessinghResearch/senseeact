@@ -20,6 +20,7 @@ public class ErrorCode {
 	public static final String INVALID_CREDENTIALS = "INVALID_CREDENTIALS";
 	public static final String ACCOUNT_BLOCKED = "ACCOUNT_BLOCKED";
 	public static final String ACCOUNT_INACTIVE = "ACCOUNT_INACTIVE";
+	public static final String PENDING_MFA = "PENDING_MFA";
 	public static final String USER_ALREADY_EXISTS = "USER_ALREADY_EXISTS";
 	public static final String GROUP_ALREADY_EXISTS = "GROUP_ALREADY_EXISTS";
 	public static final String USER_NOT_FOUND = "USER_NOT_FOUND";

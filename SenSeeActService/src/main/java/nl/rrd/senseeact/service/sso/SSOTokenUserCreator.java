@@ -85,7 +85,7 @@ public class SSOTokenUserCreator {
 	private static TokenResult createToken(ProtocolVersion version,
 			HttpServletResponse response, User user) {
 		ZonedDateTime now = DateTimeUtils.nowMs();
-		String token = AuthToken.createToken(version, user, now, null,
+		String token = AuthToken.createToken(version, user, false, now, null,
 				false, false, response);
 		return new TokenResult(user.getUserid(), token);
 	}

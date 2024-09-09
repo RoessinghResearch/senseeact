@@ -22,6 +22,7 @@ public class AuthDetails {
 	private Date issuedAt;
 	private Date expiration;
 	private String hash;
+	private boolean pendingMfa = false;
 	private boolean autoExtendCookie = false;
 	private Integer autoExtendCookieMinutes = null;
 
@@ -39,6 +40,9 @@ public class AuthDetails {
 	 * if the token never expires.
 	 * @param hash hash of the salt in the database. This makes old tokens
 	 * invalid when users change their password.
+	 * @param pendingMfa true if the user enabled multi-factor authentication
+	 * and the user only entered the password, but didn't enter the second
+	 * factor yet
 	 * @param autoExtendCookie true if the "authToken" cookie should be
 	 * automatically extended at every verification
 	 * @param autoExtendCookieMinutes if "autoExtendCookie" is true, this should
@@ -47,13 +51,14 @@ public class AuthDetails {
 	 * "autoExtendCookie" is false, this parameter is ignored and can be null.
 	 */
 	public static AuthDetails forUserid(String userid, Date issuedAt,
-			Date expiration, String hash, boolean autoExtendCookie,
-			Integer autoExtendCookieMinutes) {
+			Date expiration, String hash, boolean pendingMfa,
+			boolean autoExtendCookie, Integer autoExtendCookieMinutes) {
 		AuthDetails details = new AuthDetails();
 		details.userid = userid;
 		details.issuedAt = issuedAt;
 		details.expiration = expiration;
 		details.hash = hash;
+		details.pendingMfa = pendingMfa;
 		details.autoExtendCookie = autoExtendCookie;
 		if (autoExtendCookie)
 			details.autoExtendCookieMinutes = autoExtendCookieMinutes;
@@ -72,6 +77,9 @@ public class AuthDetails {
 	 * if the token never expires.
 	 * @param hash hash of the salt in the database. This makes old tokens
 	 * invalid when users change their password.
+	 * @param pendingMfa true if the user enabled multi-factor authentication
+	 * and the user only entered the password, but didn't enter the second
+	 * factor yet
 	 * @param autoExtendCookie true if the "authToken" cookie should be
 	 * automatically extended at every verification
 	 * @param autoExtendCookieMinutes if "autoExtendCookie" is true, this should
@@ -80,13 +88,14 @@ public class AuthDetails {
 	 * "autoExtendCookie" is false, this parameter is ignored and can be null.
 	 */
 	public static AuthDetails forEmail(String email, Date issuedAt,
-			Date expiration, String hash, boolean autoExtendCookie,
-			Integer autoExtendCookieMinutes) {
+			Date expiration, String hash, boolean pendingMfa,
+			boolean autoExtendCookie, Integer autoExtendCookieMinutes) {
 		AuthDetails details = new AuthDetails();
 		details.email = email;
 		details.issuedAt = issuedAt;
 		details.expiration = expiration;
 		details.hash = hash;
+		details.pendingMfa = pendingMfa;
 		details.autoExtendCookie = autoExtendCookie;
 		if (autoExtendCookie)
 			details.autoExtendCookieMinutes = autoExtendCookieMinutes;
@@ -145,6 +154,17 @@ public class AuthDetails {
 	 */
 	public String getHash() {
 		return hash;
+	}
+
+	/**
+	 * Returns true if the user enabled multi-factor authentication and the user
+	 * only entered the password, but didn't enter the second factor yet.
+	 *
+	 * @return true if this token still needs authentication with a second
+	 * factor, false otherwise
+	 */
+	public boolean isPendingMfa() {
+		return pendingMfa;
 	}
 
 	/**

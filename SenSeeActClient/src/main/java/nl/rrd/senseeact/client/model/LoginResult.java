@@ -14,6 +14,8 @@ public class LoginResult {
 	@JsonInclude(content=JsonInclude.Include.NON_NULL)
 	private String user = null;
 	@JsonInclude(content=JsonInclude.Include.NON_NULL)
+	private String email = null;
+	@JsonInclude(content=JsonInclude.Include.NON_NULL)
 	private String token = null;
 	@JsonInclude(content=JsonInclude.Include.NON_NULL)
 	private MfaRecord mfaRecord = null;
@@ -32,6 +34,14 @@ public class LoginResult {
 
 	public void setUser(String user) {
 		this.user = user;
+	}
+
+	public String getEmail() {
+		return email;
+	}
+
+	public void setEmail(String email) {
+		this.email = email;
 	}
 
 	public String getToken() {
