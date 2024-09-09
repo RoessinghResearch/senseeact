@@ -204,7 +204,7 @@ public class AuthTokenValidator {
 			throw new UnauthorizedException(ErrorCode.AUTH_TOKEN_INVALID,
 					"Authentication token invalid");
 		}
-		if (user.hasVerifiedMfaRecord()) {
+		if (!details.isPendingMfa() && user.hasVerifiedMfaRecord()) {
 			String mfaId = details.getMfaId();
 			if (mfaId == null) {
 				logger.info("Invalid auth token: Not authenticated with MFA");
@@ -212,7 +212,7 @@ public class AuthTokenValidator {
 						ErrorCode.AUTH_TOKEN_INVALID_MFA,
 						"Authentication token invalid");
 			}
-			if (user.findVerifiedMfaRecord(mfaId) != null) {
+			if (user.findVerifiedMfaRecord(mfaId) == null) {
 				logger.info("Invalid auth token: MFA record ID not found");
 				throw new UnauthorizedException(
 						ErrorCode.AUTH_TOKEN_INVALID_MFA,

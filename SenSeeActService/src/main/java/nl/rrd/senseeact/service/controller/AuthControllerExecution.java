@@ -483,9 +483,9 @@ public class AuthControllerExecution {
 		if (type.equals(MfaRecord.Constants.TYPE_SMS)) {
 			requestMfaVerificationSms(authDb, user, record);
 		} else if (!type.equals(MfaRecord.Constants.TYPE_TOTP)) {
-			HttpFieldError error = new HttpFieldError("type",
-					"Unknown MFA type: " + type);
-			throw BadRequestException.withInvalidInput(error);
+			Logger logger = AppComponents.getLogger(getClass().getSimpleName());
+			logger.error("MFA type not supported: " + type);
+			throw new InternalServerErrorException();
 		}
 	}
 
@@ -499,8 +499,9 @@ public class AuthControllerExecution {
 				PrivateMfaRecord.Constants.KEY_SMS_PHONE_NUMBER);
 		boolean verifyResult = twilioRequestSmsVerification(phone);
 		if (!verifyResult) {
-			throw new InternalServerErrorException(
-					"Request SMS verification failed");
+			Logger logger = AppComponents.getLogger(getClass().getSimpleName());
+			logger.error("Request SMS verification failed");
+			throw new InternalServerErrorException();
 		}
 	}
 
@@ -1066,14 +1067,15 @@ public class AuthControllerExecution {
 			return record.toPublicMfaRecord();
 		}
 		checkMaxMfaVerifyCount(record);
-		if (record.getType().equals(MfaRecord.Constants.TYPE_SMS)) {
+		String type = record.getType();
+		if (type.equals(MfaRecord.Constants.TYPE_SMS)) {
 			return confirmAddMfaRecordSms(record, code, authDb, user);
-		} else if (record.getType().equals(MfaRecord.Constants.TYPE_TOTP)) {
+		} else if (type.equals(MfaRecord.Constants.TYPE_TOTP)) {
 			return confirmAddMfaRecordTotp(record, code, authDb, user);
 		} else {
-			HttpFieldError error = new HttpFieldError("type",
-					"MFA type not implemented: " + record.getType());
-			throw BadRequestException.withInvalidInput(error);
+			Logger logger = AppComponents.getLogger(getClass().getSimpleName());
+			logger.error("MFA type not supported: " + type);
+			throw new InternalServerErrorException();
 		}
 	}
 
@@ -1092,7 +1094,7 @@ public class AuthControllerExecution {
 		}
 		String phone = (String)record.getPrivateData().get(
 				PrivateMfaRecord.Constants.KEY_SMS_PHONE_NUMBER);
-		boolean verifyResult = twilioRequestSmsVerificationCheck(phone, code);
+		boolean verifyResult = twilioSmsVerificationCheck(phone, code);
 		if (!verifyResult) {
 			record.setStatus(PrivateMfaRecord.Status.VERIFY_FAIL);
 			record.setPublicData(new LinkedHashMap<>());
@@ -1126,8 +1128,8 @@ public class AuthControllerExecution {
 		}
 		String factorSid = (String)record.getPrivateData().get(
 				PrivateMfaRecord.Constants.KEY_TOTP_FACTOR_SID);
-		boolean verifyResult = twilioRequestTotpVerificationCheck(user,
-				factorSid, code);
+		boolean verifyResult = twilioTotpVerificationCheck(user, factorSid,
+				code);
 		if (!verifyResult) {
 			record.setStatus(PrivateMfaRecord.Status.VERIFY_FAIL);
 			record.setPublicData(new LinkedHashMap<>());
@@ -1176,9 +1178,8 @@ public class AuthControllerExecution {
 		return true;
 	}
 
-	private boolean twilioRequestSmsVerificationCheck(String phone,
-			String code) throws HttpClientException, ParseException,
-			IOException {
+	private boolean twilioSmsVerificationCheck(String phone, String code)
+			throws HttpClientException, ParseException, IOException {
 		Configuration config = AppComponents.get(Configuration.class);
 		String serviceSid = config.get(Configuration.TWILIO_VERIFY_SERVICE_SID);
 		String url = String.format(
@@ -1233,9 +1234,9 @@ public class AuthControllerExecution {
 		public String bindingUri;
 	}
 
-	private boolean twilioRequestTotpVerificationCheck(User user,
-			String factorSid, String code) throws HttpClientException,
-			ParseException, IOException {
+	private boolean twilioTotpVerificationCheck(User user, String factorSid,
+			String code) throws HttpClientException, ParseException,
+			IOException {
 		Configuration config = AppComponents.get(Configuration.class);
 		String serviceSid = config.get(Configuration.TWILIO_VERIFY_SERVICE_SID);
 		String url = String.format(
@@ -1321,6 +1322,96 @@ public class AuthControllerExecution {
 			MatrixToImageWriter.writeToStream(matrix, "png", out);
 		}
 		return null;
+	}
+
+	public LoginResult verifyMfaCode(ProtocolVersion version,
+			HttpServletResponse response, Database authDb, User user,
+			AuthDetails authDetails, VerifyMfaParams params)
+			throws HttpException, Exception {
+		Logger logger = AppComponents.getLogger(getClass().getSimpleName());
+		ZonedDateTime now = DateTimeUtils.nowMs();
+		String mfaId = params.getMfaId();
+		String code = params.getCode();
+		Integer expiration = LoginParams.DEFAULT_EXPIRATION;
+		if (params.getTokenExpiration() == null ||
+				params.getTokenExpiration() != 0) {
+			expiration = params.getTokenExpiration();
+		}
+		boolean cookie = params.isCookie();
+		boolean autoExtendCookie = params.isAutoExtendCookie();
+		List<HttpFieldError> fieldErrors = new ArrayList<>();
+		if (mfaId == null || mfaId.isEmpty()) {
+			fieldErrors.add(new HttpFieldError("mfaId",
+					"Parameter \"mfaId\" not defined"));
+		}
+		if (code == null || code.isEmpty()) {
+			fieldErrors.add(new HttpFieldError("code",
+					"Parameter \"code\" not defined"));
+		}
+		if (!fieldErrors.isEmpty()) {
+			logger.info("Failed verify MFA attempt: " + fieldErrors);
+			throw BadRequestException.withInvalidInput(fieldErrors);
+		}
+		cleanMfaRecords(authDb, user);
+		if (authDetails == null) {
+			throw new BadRequestException("MFA verification not initiated");
+		}
+		if (authDetails.isPendingMfa() ||
+				!mfaId.equals(authDetails.getMfaId())) {
+			performVerifyMfaCode(authDb, user, now, mfaId, code);
+		}
+		String token = AuthToken.createToken(version, user, false, mfaId, now,
+				expiration, cookie, autoExtendCookie, response);
+		LoginResult result = new LoginResult();
+		result.setStatus(LoginResult.Status.COMPLETE);
+		result.setUser(user.getUserid());
+		result.setEmail(user.getEmail());
+		result.setToken(token);
+		return result;
+	}
+
+	private void performVerifyMfaCode(Database authDb, User user,
+			ZonedDateTime now, String mfaId, String code) throws HttpException,
+			Exception {
+		Logger logger = AppComponents.getLogger(getClass().getSimpleName());
+		PrivateMfaRecord record = user.findVerifiedMfaRecord(mfaId);
+		if (record == null)
+			throw new NotFoundException("MFA record not found");
+		checkMaxMfaVerifyCount(record);
+		record.getVerifyTimes().add(now);
+		UserCache cache = UserCache.getInstance();
+		cache.updateUser(authDb, user);
+		String type = record.getType();
+		boolean verifyResult;
+		if (type.equals(MfaRecord.Constants.TYPE_SMS)) {
+			verifyResult = verifyMfaCodeSms(record, code);
+		} else if (type.equals(MfaRecord.Constants.TYPE_TOTP)) {
+			verifyResult = verifyMfaCodeTotp(user, record, code);
+		} else {
+			logger.error("MFA type not supported: " + type);
+			throw new InternalServerErrorException();
+		}
+		if (!verifyResult) {
+			HttpFieldError error = new HttpFieldError("code",
+					"Invalid verification code");
+			throw BadRequestException.withInvalidInput(error);
+		}
+		logger.info("User logged in with MFA: userid: {}, email: {}",
+				user.getUserid(), user.getEmail());
+	}
+
+	private boolean verifyMfaCodeSms(PrivateMfaRecord record, String code)
+			throws HttpException, Exception {
+		String phone = (String)record.getPrivateData().get(
+				PrivateMfaRecord.Constants.KEY_SMS_PHONE_NUMBER);
+		return twilioSmsVerificationCheck(phone, code);
+	}
+
+	private boolean verifyMfaCodeTotp(User user, PrivateMfaRecord record,
+			String code) throws HttpException, Exception {
+		String factorSid = (String)record.getPrivateData().get(
+				PrivateMfaRecord.Constants.KEY_TOTP_FACTOR_SID);
+		return twilioTotpVerificationCheck(user, factorSid, code);
 	}
 
 	private static EmailTemplate findEmailTemplate(

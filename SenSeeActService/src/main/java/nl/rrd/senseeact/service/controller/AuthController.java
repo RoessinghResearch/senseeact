@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import nl.rrd.senseeact.client.model.*;
+import nl.rrd.senseeact.service.QueryContext;
 import nl.rrd.senseeact.service.QueryRunner;
 import nl.rrd.senseeact.service.controller.model.ChangePasswordParams;
 import nl.rrd.senseeact.service.controller.model.ResetPasswordParams;
@@ -455,6 +456,26 @@ public class AuthController {
 					(version, authDb, user, authDetails) ->
 					exec.getMfaTotpQRCode(response, authDb, user, id),
 					versionName, request, response);
+		}
+	}
+
+	@RequestMapping(value="/mfa/verify", method=RequestMethod.POST, consumes={
+			MediaType.APPLICATION_JSON_VALUE })
+	public LoginResult verifyMfaCode(
+			HttpServletRequest request,
+			HttpServletResponse response,
+			@PathVariable("version")
+			@Parameter(hidden = true)
+			String versionName,
+			@RequestBody
+			VerifyMfaParams verifyParams) throws HttpException, Exception {
+		synchronized (AuthControllerExecution.AUTH_LOCK) {
+			QueryContext context = new QueryContext().setAllowPendingMfa(true);
+			return QueryRunner.runAuthQuery(
+					(version, authDb, user, authDetails) ->
+					exec.verifyMfaCode(version, response, authDb, user,
+							authDetails, verifyParams),
+					versionName, request, response, context);
 		}
 	}
 }
