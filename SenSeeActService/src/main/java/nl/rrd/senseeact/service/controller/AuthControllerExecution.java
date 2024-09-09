@@ -365,15 +365,27 @@ public class AuthControllerExecution {
 			cookie = loginParams.isCookie();
 			autoExtendCookie = loginParams.isAutoExtendCookie();
 		}
-		TokenResult result = loginByEmail(version, request, response, email,
-				password, expiration, cookie, autoExtendCookie, authDb);
-		if (version.ordinal() >= ProtocolVersion.V6_0_0.ordinal())
-			return result;
-		else
-			return result.getToken();
+		LoginResult loginResult = loginByEmail(version, request, response,
+				email, password, expiration, cookie, autoExtendCookie, authDb);
+		Logger logger = AppComponents.getLogger(getClass().getSimpleName());
+		if (version.ordinal() >= ProtocolVersion.V6_1_0.ordinal()) {
+			return loginResult;
+		}
+		if (loginResult.getMfaRecord() != null) {
+			logger.info("Failed login attempt for user {}: protocol version {} does not support MFA",
+					loginResult.getEmail(), version.versionName());
+			throw new UnauthorizedException(ErrorCode.AUTH_TOKEN_INVALID,
+					"Authentication token invalid");
+		}
+		if (version.ordinal() >= ProtocolVersion.V6_0_0.ordinal()) {
+			return new TokenResult(loginResult.getUser(),
+					loginResult.getToken());
+		} else {
+			return loginResult.getToken();
+		}
 	}
 
-	private TokenResult loginByEmail(ProtocolVersion version,
+	private LoginResult loginByEmail(ProtocolVersion version,
 			HttpServletRequest request, HttpServletResponse response,
 			String email, String password, Integer expireMinutes,
 			boolean cookie, boolean autoExtendCookie, Database authDb)
@@ -453,7 +465,15 @@ public class AuthControllerExecution {
 				user.getUserid(), user.getEmail(), mfaRecord != null);
 		String token = AuthToken.createToken(version, user, mfaRecord != null,
 				null, now, expireMinutes, cookie, autoExtendCookie, response);
-		return new TokenResult(user.getUserid(), token);
+		LoginResult result = new LoginResult();
+		result.setStatus(mfaRecord == null ? LoginResult.Status.COMPLETE :
+				LoginResult.Status.REQUIRES_MFA);
+		result.setUser(user.getUserid());
+		result.setEmail(email);
+		result.setToken(token);
+		result.setMfaRecord(mfaRecord.toPublicMfaRecord());
+		// TODO send verification code
+		return result;
 	}
 
 	public static void validateForbiddenQueryParams(HttpServletRequest request,
@@ -520,15 +540,11 @@ public class AuthControllerExecution {
 		}
 		username = username.toLowerCase();
 		if (username.contains("@")) {
-			TokenResult token = loginByEmail(version, request, response,
+			LoginResult loginResult = loginByEmail(version, request, response,
 					username, password, expiration, cookie, autoExtendCookie,
 					authDb);
-			if (version.ordinal() >= ProtocolVersion.V6_0_0.ordinal()) {
-				return new LoginUsernameResult(token.getUser(),
-						token.getToken(), username);
-			} else {
-				return new LoginUsernameResultV0(username, token.getToken());
-			}
+			return getLoginUsernameResultForVersion(version, username,
+					loginResult);
 		}
 		List<String> validDomains = new ArrayList<>();
 		ProjectRepository projectRepo = AppComponents.get(
@@ -555,15 +571,31 @@ public class AuthControllerExecution {
 					ErrorCode.INVALID_CREDENTIALS, invalidError);
 		}
 		User user = users.get(0);
-		TokenResult token = loginByEmail(version, request, response,
+		LoginResult loginResult = loginByEmail(version, request, response,
 				user.getEmail(), password, expiration, cookie,
 				autoExtendCookie, authDb);
+		return getLoginUsernameResultForVersion(version, username, loginResult);
+	}
+
+	private Object getLoginUsernameResultForVersion(ProtocolVersion version,
+			String username, LoginResult loginResult)
+			throws UnauthorizedException {
+		Logger logger = AppComponents.getLogger(getClass().getSimpleName());
+		if (version.ordinal() >= ProtocolVersion.V6_1_0.ordinal()) {
+			return loginResult;
+		}
+		if (loginResult.getMfaRecord() != null) {
+			logger.info("Failed login attempt for username {}: protocol version {} does not support MFA",
+					username, version.versionName());
+			throw new UnauthorizedException(ErrorCode.AUTH_TOKEN_INVALID,
+					"Authentication token invalid");
+		}
 		if (version.ordinal() >= ProtocolVersion.V6_0_0.ordinal()) {
-			return new LoginUsernameResult(token.getUser(),
-					token.getToken(), user.getEmail());
+			return new LoginUsernameResult(loginResult.getUser(),
+					loginResult.getToken(), username);
 		} else {
-			return new LoginUsernameResultV0(user.getEmail(),
-					token.getToken());
+			return new LoginUsernameResultV0(username,
+					loginResult.getToken());
 		}
 	}
 

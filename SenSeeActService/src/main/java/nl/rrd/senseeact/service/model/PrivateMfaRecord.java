@@ -283,6 +283,7 @@ public class PrivateMfaRecord {
 		result.setId(id);
 		result.setType(type);
 		result.setCreated(created);
+		result.setVerified(status == Status.VERIFY_SUCCESS);
 		result.setData(new LinkedHashMap<>(publicData));
 		return result;
 	}
