@@ -526,42 +526,41 @@ public class AuthControllerExecution {
 			} else {
 				return new LoginUsernameResultV0(username, token.getToken());
 			}
-		} else {
-			List<String> validDomains = new ArrayList<>();
-			ProjectRepository projectRepo = AppComponents.get(
-					ProjectRepository.class);
-			List<BaseProject> projects = projectRepo.getProjects();
-			for (BaseProject project : projects) {
-				String domain = project.getUsernameDomain();
-				if (domain != null && !validDomains.contains(domain))
-					validDomains.add(domain);
-			}
-			UserCache userCache = UserCache.getInstance();
-			List<User> users = userCache.findByEmailLocal(username);
-			users = filterUsersByDomain(users, validDomains);
-			if (users.size() != 1) {
-				String invalidError = "Username or password is invalid, or there are more users with the same username in different domains";
-				if (users.isEmpty()) {
-					logger.info("Failed login attempt for username {}: user unknown",
-							username);
-				} else {
-					logger.info("Failed login attempt for username {}: multiple users found with the same username",
-							username);
-				}
-				throw new UnauthorizedException(
-						ErrorCode.INVALID_CREDENTIALS, invalidError);
-			}
-			User user = users.get(0);
-			TokenResult token = loginByEmail(version, request, response,
-					user.getEmail(), password, expiration, cookie,
-					autoExtendCookie, authDb);
-			if (version.ordinal() >= ProtocolVersion.V6_0_0.ordinal()) {
-				return new LoginUsernameResult(token.getUser(),
-						token.getToken(), user.getEmail());
+		}
+		List<String> validDomains = new ArrayList<>();
+		ProjectRepository projectRepo = AppComponents.get(
+				ProjectRepository.class);
+		List<BaseProject> projects = projectRepo.getProjects();
+		for (BaseProject project : projects) {
+			String domain = project.getUsernameDomain();
+			if (domain != null && !validDomains.contains(domain))
+				validDomains.add(domain);
+		}
+		UserCache userCache = UserCache.getInstance();
+		List<User> users = userCache.findByEmailLocal(username);
+		users = filterUsersByDomain(users, validDomains);
+		if (users.size() != 1) {
+			String invalidError = "Username or password is invalid, or there are more users with the same username in different domains";
+			if (users.isEmpty()) {
+				logger.info("Failed login attempt for username {}: user unknown",
+						username);
 			} else {
-				return new LoginUsernameResultV0(user.getEmail(),
-						token.getToken());
+				logger.info("Failed login attempt for username {}: multiple users found with the same username",
+						username);
 			}
+			throw new UnauthorizedException(
+					ErrorCode.INVALID_CREDENTIALS, invalidError);
+		}
+		User user = users.get(0);
+		TokenResult token = loginByEmail(version, request, response,
+				user.getEmail(), password, expiration, cookie,
+				autoExtendCookie, authDb);
+		if (version.ordinal() >= ProtocolVersion.V6_0_0.ordinal()) {
+			return new LoginUsernameResult(token.getUser(),
+					token.getToken(), user.getEmail());
+		} else {
+			return new LoginUsernameResultV0(user.getEmail(),
+					token.getToken());
 		}
 	}
 
@@ -793,13 +792,13 @@ public class AuthControllerExecution {
 		return null;
 	}
 
-	public PublicMfaRecord addMfaRecord(HttpServletRequest request, String type,
+	public MfaRecord addMfaRecord(HttpServletRequest request, String type,
 			Database authDb, User user) throws HttpException, Exception {
 		cleanMfaRecords(authDb, user);
 		checkMaxMfaAddCount(user);
-		if (type.equals(MfaRecord.TYPE_SMS)) {
+		if (type.equals(MfaRecord.Constants.TYPE_SMS)) {
 			return addMfaRecordSms(request, authDb, user);
-		} else if (type.equals(MfaRecord.TYPE_TOTP)) {
+		} else if (type.equals(MfaRecord.Constants.TYPE_TOTP)) {
 			return addMfaRecordTotp(authDb, user);
 		} else {
 			HttpFieldError error = new HttpFieldError("type",
@@ -808,9 +807,9 @@ public class AuthControllerExecution {
 		}
 	}
 
-	private PublicMfaRecord addMfaRecordSms(HttpServletRequest request,
+	private MfaRecord addMfaRecordSms(HttpServletRequest request,
 			Database authDb, User user) throws HttpException, Exception {
-		checkMaxMfaType(user, MfaRecord.TYPE_SMS, MAX_MFA_SMS_COUNT);
+		checkMaxMfaType(user, MfaRecord.Constants.TYPE_SMS, MAX_MFA_SMS_COUNT);
 		MfaRecordSmsInput input = readMfaRecordSmsInput(request);
 		checkExistingMfaSms(user, input.phone);
 		ZonedDateTime now = DateTimeUtils.nowMs();
@@ -819,19 +818,19 @@ public class AuthControllerExecution {
 			throw new BadRequestException(ErrorCode.INVALID_INPUT,
 					"Invalid phone number: " + input.phone);
 		}
-		MfaRecord record = new MfaRecord();
+		PrivateMfaRecord record = new PrivateMfaRecord();
 		record.setId(UUID.randomUUID().toString().toLowerCase()
 				.replaceAll("-", ""));
-		record.setType(MfaRecord.TYPE_SMS);
+		record.setType(MfaRecord.Constants.TYPE_SMS);
 		record.setCreated(now);
 		Map<String,Object> data = new LinkedHashMap<>();
-		data.put(MfaRecord.KEY_SMS_PHONE_NUMBER, input.phone);
+		data.put(PrivateMfaRecord.Constants.KEY_SMS_PHONE_NUMBER, input.phone);
 		record.setPublicData(data);
 		record.setPrivateData(new LinkedHashMap<>(data));
 		user.getMfaList().add(record);
 		UserCache cache = UserCache.getInstance();
 		cache.updateUser(authDb, user);
-		return PublicMfaRecord.fromMfaRecord(record);
+		return record.toPublicMfaRecord();
 	}
 
 	private static class MfaRecordSmsInput {
@@ -855,7 +854,8 @@ public class AuthControllerExecution {
 		MfaRecordSmsInput result = new MfaRecordSmsInput();
 		try {
 			result.phone = mapReader.readStringRegex(
-					MfaRecord.KEY_SMS_PHONE_NUMBER, "\\+[0-9]+");
+					PrivateMfaRecord.Constants.KEY_SMS_PHONE_NUMBER,
+					"\\+[0-9]+");
 		} catch (ParseException ex) {
 			throw new BadRequestException(ErrorCode.INVALID_INPUT,
 					"Invalid input: " + ex.getMessage());
@@ -865,13 +865,13 @@ public class AuthControllerExecution {
 
 	private void checkExistingMfaSms(User user, String phone)
 			throws BadRequestException {
-		for (MfaRecord record : user.getMfaList()) {
-			if (!record.getType().equals(MfaRecord.TYPE_SMS) ||
-					record.getStatus() != MfaRecord.Status.VERIFY_SUCCESS) {
+		for (PrivateMfaRecord record : user.getMfaList()) {
+			if (!record.getType().equals(MfaRecord.Constants.TYPE_SMS) ||
+					record.getStatus() != PrivateMfaRecord.Status.VERIFY_SUCCESS) {
 				continue;
 			}
 			String recordPhone = (String)record.getPrivateData().get(
-					MfaRecord.KEY_SMS_PHONE_NUMBER);
+					PrivateMfaRecord.Constants.KEY_SMS_PHONE_NUMBER);
 			if (recordPhone.equals(phone)) {
 				String msg = "MFA records with phone number already exists: " +
 						phone;
@@ -881,26 +881,29 @@ public class AuthControllerExecution {
 		}
 	}
 
-	private PublicMfaRecord addMfaRecordTotp(Database authDb, User user)
+	private MfaRecord addMfaRecordTotp(Database authDb, User user)
 			throws HttpException, Exception {
-		checkMaxMfaType(user, MfaRecord.TYPE_TOTP, MAX_MFA_TOTP_COUNT);
+		checkMaxMfaType(user, MfaRecord.Constants.TYPE_TOTP,
+				MAX_MFA_TOTP_COUNT);
 		ZonedDateTime now = DateTimeUtils.nowMs();
 		TwilioTotpData totpData = twilioCreateTotpFactor(user);
-		MfaRecord record = new MfaRecord();
+		PrivateMfaRecord record = new PrivateMfaRecord();
 		record.setId(UUID.randomUUID().toString().toLowerCase()
 				.replaceAll("-", ""));
-		record.setType(MfaRecord.TYPE_TOTP);
+		record.setType(MfaRecord.Constants.TYPE_TOTP);
 		record.setCreated(now);
 		Map<String,Object> publicData = new LinkedHashMap<>();
-		publicData.put(MfaRecord.KEY_TOTP_BINDING_URI, totpData.bindingUri);
+		publicData.put(PrivateMfaRecord.Constants.KEY_TOTP_BINDING_URI,
+				totpData.bindingUri);
 		record.setPublicData(publicData);
 		Map<String,Object> privateData = new LinkedHashMap<>(publicData);
-		privateData.put(MfaRecord.KEY_TOTP_FACTOR_SID, totpData.factorSid);
+		privateData.put(PrivateMfaRecord.Constants.KEY_TOTP_FACTOR_SID,
+				totpData.factorSid);
 		record.setPrivateData(privateData);
 		user.getMfaList().add(record);
 		UserCache cache = UserCache.getInstance();
 		cache.updateUser(authDb, user);
-		return PublicMfaRecord.fromMfaRecord(record);
+		return record.toPublicMfaRecord();
 	}
 
 	private void cleanMfaRecords(Database authDb, User user)
@@ -910,10 +913,10 @@ public class AuthControllerExecution {
 		ZonedDateTime minVerifyTime = now.minusMinutes(MAX_MFA_VERIFY_MINUTES);
 		long minVerifyMs = minVerifyTime.toInstant().toEpochMilli();
 		boolean changed = false;
-		Iterator<MfaRecord> it = user.getMfaList().iterator();
+		Iterator<PrivateMfaRecord> it = user.getMfaList().iterator();
 		while (it.hasNext()) {
-			MfaRecord record = it.next();
-			if (record.getStatus() == MfaRecord.Status.VERIFY_SUCCESS) {
+			PrivateMfaRecord record = it.next();
+			if (record.getStatus() == PrivateMfaRecord.Status.VERIFY_SUCCESS) {
 				if (cleanMfaRecordVerifyTimes(record, minVerifyMs))
 					changed = true;
 			} else if (record.getCreated().isBefore(minAddTime)) {
@@ -927,7 +930,7 @@ public class AuthControllerExecution {
 		cache.updateUser(authDb, user);
 	}
 
-	private boolean cleanMfaRecordVerifyTimes(MfaRecord record,
+	private boolean cleanMfaRecordVerifyTimes(PrivateMfaRecord record,
 			long minVerifyMs) {
 		boolean changed = false;
 		Iterator<Long> it = record.getVerifyTimes().iterator();
@@ -943,8 +946,8 @@ public class AuthControllerExecution {
 
 	private void checkMaxMfaAddCount(User user) throws BadRequestException {
 		int count = 0;
-		for (MfaRecord record : user.getMfaList()) {
-			if (record.getStatus() != MfaRecord.Status.VERIFY_SUCCESS)
+		for (PrivateMfaRecord record : user.getMfaList()) {
+			if (record.getStatus() != PrivateMfaRecord.Status.VERIFY_SUCCESS)
 				count++;
 		}
 		if (count >= MAX_MFA_ADD_COUNT) {
@@ -955,7 +958,7 @@ public class AuthControllerExecution {
 		}
 	}
 
-	private void checkMaxMfaVerifyCount(MfaRecord record)
+	private void checkMaxMfaVerifyCount(PrivateMfaRecord record)
 			throws BadRequestException {
 		int count = record.getVerifyTimes().size();
 		if (count >= MAX_MFA_VERIFY_COUNT) {
@@ -980,8 +983,8 @@ public class AuthControllerExecution {
 
 	private int getVerifiedMfaTypeCount(User user, String type) {
 		int count = 0;
-		for (MfaRecord record : user.getMfaList()) {
-			if (record.getStatus() == MfaRecord.Status.VERIFY_SUCCESS &&
+		for (PrivateMfaRecord record : user.getMfaList()) {
+			if (record.getStatus() == PrivateMfaRecord.Status.VERIFY_SUCCESS &&
 					type.equals(record.getType())) {
 				count++;
 			}
@@ -989,21 +992,21 @@ public class AuthControllerExecution {
 		return count;
 	}
 
-	public PublicMfaRecord verifyAddMfaRecord(String mfaId, String code,
+	public MfaRecord verifyAddMfaRecord(String mfaId, String code,
 			Database authDb, User user) throws HttpException, Exception {
 		cleanMfaRecords(authDb, user);
-		MfaRecord record = findMfaRecord(mfaId, user);
+		PrivateMfaRecord record = findMfaRecord(mfaId, user);
 		if (record == null ||
-				record.getStatus() == MfaRecord.Status.VERIFY_FAIL) {
+				record.getStatus() == PrivateMfaRecord.Status.VERIFY_FAIL) {
 			throw new NotFoundException("MFA record not found");
 		}
-		if (record.getStatus() == MfaRecord.Status.VERIFY_SUCCESS) {
-			return PublicMfaRecord.fromMfaRecord(record);
+		if (record.getStatus() == PrivateMfaRecord.Status.VERIFY_SUCCESS) {
+			return record.toPublicMfaRecord();
 		}
 		checkMaxMfaVerifyCount(record);
-		if (record.getType().equals(MfaRecord.TYPE_SMS)) {
+		if (record.getType().equals(MfaRecord.Constants.TYPE_SMS)) {
 			return confirmAddMfaRecordSms(record, code, authDb, user);
-		} else if (record.getType().equals(MfaRecord.TYPE_TOTP)) {
+		} else if (record.getType().equals(MfaRecord.Constants.TYPE_TOTP)) {
 			return confirmAddMfaRecordTotp(record, code, authDb, user);
 		} else {
 			HttpFieldError error = new HttpFieldError("type",
@@ -1012,60 +1015,68 @@ public class AuthControllerExecution {
 		}
 	}
 
-	private PublicMfaRecord confirmAddMfaRecordSms(MfaRecord record,
+	private MfaRecord confirmAddMfaRecordSms(PrivateMfaRecord record,
 			String code, Database authDb, User user) throws HttpException,
 			Exception {
 		UserCache cache = UserCache.getInstance();
 		try {
-			checkMaxMfaType(user, MfaRecord.TYPE_SMS, MAX_MFA_SMS_COUNT);
+			checkMaxMfaType(user, MfaRecord.Constants.TYPE_SMS,
+					MAX_MFA_SMS_COUNT);
 		} catch (BadRequestException ex) {
-			record.setStatus(MfaRecord.Status.VERIFY_FAIL);
+			record.setStatus(PrivateMfaRecord.Status.VERIFY_FAIL);
+			record.setPublicData(new LinkedHashMap<>());
 			cache.updateUser(authDb, user);
 			throw ex;
 		}
 		String phone = (String)record.getPrivateData().get(
-				MfaRecord.KEY_SMS_PHONE_NUMBER);
+				PrivateMfaRecord.Constants.KEY_SMS_PHONE_NUMBER);
 		boolean verifyResult = twilioRequestSmsVerificationCheck(phone, code);
 		if (!verifyResult) {
-			record.setStatus(MfaRecord.Status.VERIFY_FAIL);
+			record.setStatus(PrivateMfaRecord.Status.VERIFY_FAIL);
+			record.setPublicData(new LinkedHashMap<>());
 			cache.updateUser(authDb, user);
 			HttpFieldError error = new HttpFieldError("code",
 					"Invalid verification code");
 			throw BadRequestException.withInvalidInput(error);
 		}
-		record.setStatus(MfaRecord.Status.VERIFY_SUCCESS);
-		record.getPublicData().remove(MfaRecord.KEY_SMS_PHONE_NUMBER);
-		record.getPublicData().put(MfaRecord.KEY_SMS_PARTIAL_PHONE_NUMBER,
+		record.setStatus(PrivateMfaRecord.Status.VERIFY_SUCCESS);
+		record.getPublicData().remove(
+				PrivateMfaRecord.Constants.KEY_SMS_PHONE_NUMBER);
+		record.getPublicData().put(
+				PrivateMfaRecord.Constants.KEY_SMS_PARTIAL_PHONE_NUMBER,
 				getPartialPhoneNumber(phone));
 		cache.updateUser(authDb, user);
-		return PublicMfaRecord.fromMfaRecord(record);
+		return record.toPublicMfaRecord();
 	}
 
-	private PublicMfaRecord confirmAddMfaRecordTotp(MfaRecord record,
+	private MfaRecord confirmAddMfaRecordTotp(PrivateMfaRecord record,
 			String code, Database authDb, User user) throws HttpException,
 			Exception {
 		UserCache cache = UserCache.getInstance();
 		try {
-			checkMaxMfaType(user, MfaRecord.TYPE_SMS, MAX_MFA_TOTP_COUNT);
+			checkMaxMfaType(user, MfaRecord.Constants.TYPE_TOTP,
+					MAX_MFA_TOTP_COUNT);
 		} catch (BadRequestException ex) {
-			record.setStatus(MfaRecord.Status.VERIFY_FAIL);
+			record.setStatus(PrivateMfaRecord.Status.VERIFY_FAIL);
+			record.setPublicData(new LinkedHashMap<>());
 			cache.updateUser(authDb, user);
 			throw ex;
 		}
 		String factorSid = (String)record.getPrivateData().get(
-				MfaRecord.KEY_TOTP_FACTOR_SID);
+				PrivateMfaRecord.Constants.KEY_TOTP_FACTOR_SID);
 		boolean verifyResult = twilioRequestTotpVerificationCheck(user,
 				factorSid, code);
 		if (!verifyResult) {
-			record.setStatus(MfaRecord.Status.VERIFY_FAIL);
+			record.setStatus(PrivateMfaRecord.Status.VERIFY_FAIL);
+			record.setPublicData(new LinkedHashMap<>());
 			cache.updateUser(authDb, user);
 			HttpFieldError error = new HttpFieldError("code",
 					"Invalid verification code");
 			throw BadRequestException.withInvalidInput(error);
 		}
-		record.setStatus(MfaRecord.Status.VERIFY_SUCCESS);
+		record.setStatus(PrivateMfaRecord.Status.VERIFY_SUCCESS);
 		cache.updateUser(authDb, user);
-		return PublicMfaRecord.fromMfaRecord(record);
+		return record.toPublicMfaRecord();
 	}
 
 	private String getPartialPhoneNumber(String phone) {
@@ -1193,8 +1204,8 @@ public class AuthControllerExecution {
 		httpClient.addHeader("Authorization", "Basic " + base64Auth);
 	}
 
-	private MfaRecord findMfaRecord(String id, User user) {
-		for (MfaRecord record : user.getMfaList()) {
+	private PrivateMfaRecord findMfaRecord(String id, User user) {
+		for (PrivateMfaRecord record : user.getMfaList()) {
 			if (id.equals(record.getId())) {
 				return record;
 			}
@@ -1205,9 +1216,9 @@ public class AuthControllerExecution {
 	public Object deleteMfaRecord(String id, Database authDb, User user)
 			throws HttpException, Exception {
 		cleanMfaRecords(authDb, user);
-		MfaRecord record = findMfaRecord(id, user);
+		PrivateMfaRecord record = findMfaRecord(id, user);
 		if (record == null || record.getStatus() !=
-				MfaRecord.Status.VERIFY_SUCCESS) {
+				PrivateMfaRecord.Status.VERIFY_SUCCESS) {
 			return null;
 		}
 		user.getMfaList().remove(record);
@@ -1216,11 +1227,11 @@ public class AuthControllerExecution {
 		return null;
 	}
 
-	public List<PublicMfaRecord> getMfaRecords(User user) {
-		List<PublicMfaRecord> result = new ArrayList<>();
-		for (MfaRecord record : user.getMfaList()) {
-			if (record.getStatus() == MfaRecord.Status.VERIFY_SUCCESS)
-				result.add(PublicMfaRecord.fromMfaRecord(record));
+	public List<MfaRecord> getMfaRecords(User user) {
+		List<MfaRecord> result = new ArrayList<>();
+		for (PrivateMfaRecord record : user.getMfaList()) {
+			if (record.getStatus() == PrivateMfaRecord.Status.VERIFY_SUCCESS)
+				result.add(record.toPublicMfaRecord());
 		}
 		return result;
 	}
@@ -1229,18 +1240,18 @@ public class AuthControllerExecution {
 			Database authDb, User user, String mfaId) throws HttpException,
 			Exception {
 		cleanMfaRecords(authDb, user);
-		MfaRecord record = findMfaRecord(mfaId, user);
+		PrivateMfaRecord record = findMfaRecord(mfaId, user);
 		if (record == null || record.getStatus() ==
-				MfaRecord.Status.VERIFY_FAIL) {
+				PrivateMfaRecord.Status.VERIFY_FAIL) {
 			throw new NotFoundException("MFA record not found");
 		}
-		if (!MfaRecord.TYPE_TOTP.equals(record.getType())) {
+		if (!MfaRecord.Constants.TYPE_TOTP.equals(record.getType())) {
 			throw new BadRequestException(String.format(
 					"MFA record does not have type \"%s\"",
-					MfaRecord.TYPE_TOTP));
+					MfaRecord.Constants.TYPE_TOTP));
 		}
 		String uri = (String)record.getPrivateData().get(
-				MfaRecord.KEY_TOTP_BINDING_URI);
+				PrivateMfaRecord.Constants.KEY_TOTP_BINDING_URI);
 		QRCodeWriter qrWriter = new QRCodeWriter();
 		BitMatrix matrix = qrWriter.encode(uri, BarcodeFormat.QR_CODE, 500,
 				500);

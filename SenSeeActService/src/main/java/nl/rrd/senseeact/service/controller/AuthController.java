@@ -6,15 +6,11 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import nl.rrd.senseeact.client.model.LoginParams;
-import nl.rrd.senseeact.client.model.LoginUsernameParams;
-import nl.rrd.senseeact.client.model.SignupParams;
-import nl.rrd.senseeact.client.model.SignupTemporaryUserParams;
+import nl.rrd.senseeact.client.model.*;
 import nl.rrd.senseeact.service.QueryRunner;
 import nl.rrd.senseeact.service.controller.model.ChangePasswordParams;
 import nl.rrd.senseeact.service.controller.model.ResetPasswordParams;
 import nl.rrd.senseeact.service.exception.HttpException;
-import nl.rrd.senseeact.service.model.PublicMfaRecord;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
@@ -361,7 +357,7 @@ public class AuthController {
 			)
 		}
 	)
-	public PublicMfaRecord addMfaRecord(
+	public MfaRecord addMfaRecord(
 			HttpServletRequest request,
 			HttpServletResponse response,
 			@PathVariable("version")
@@ -377,7 +373,7 @@ public class AuthController {
 	}
 
 	@RequestMapping(value="/mfa/add/verify", method=RequestMethod.POST)
-	public PublicMfaRecord verifyAddMfaRecord(
+	public MfaRecord verifyAddMfaRecord(
 			HttpServletRequest request,
 			HttpServletResponse response,
 			@PathVariable("version")
@@ -411,7 +407,7 @@ public class AuthController {
 	}
 
 	@RequestMapping(value="/mfa/list", method=RequestMethod.GET)
-	public List<PublicMfaRecord> getMfaRecords(
+	public List<MfaRecord> getMfaRecords(
 			HttpServletRequest request,
 			HttpServletResponse response,
 			@PathVariable("version")

@@ -3,6 +3,7 @@ package nl.rrd.senseeact.service.model;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import nl.rrd.senseeact.client.model.MfaRecord;
 import nl.rrd.utils.json.DateTimeFromIsoDateTimeDeserializer;
 import nl.rrd.utils.json.IsoDateTimeSerializer;
 
@@ -13,19 +14,38 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * This class defines a multi-factor authentication record.
+ * This class defines a multi-factor authentication record. It contains private
+ * information that should not be returned to the user. It mirrors {@link
+ * MfaRecord MfaRecord}, but does not extend it, to prevent that an instance
+ * of this record is returned where an {@link MfaRecord MfaRecord} should be
+ * returned.
  *
- * @author Dennis Hofs (d.hofs@rrd.nl)
+ * <p>While an {@link MfaRecord MfaRecord} has a "verified" property, this class
+ * has a status, that can be CREATED, VERIFY_FAIL or VERIFY_SUCCESS.</p>
+ *
+ * <p>Status CREATED corresponds to an unverified record. It is returned right
+ * after the user creates it, before a verification code has been submitted. It
+ * can contain more sensitive public data such as a complete phone number, which
+ * the user just entered.</p>
+ *
+ * <p>Status VERIFY_SUCCESS corresponds to a verified record. It can be returned
+ * after the user authenticates with their password, but before the second
+ * factor. It is also returned when the user requests a list of their verified
+ * records. In this case more sensitive data, such as a complete phone number,
+ * is not included in the public data.</p>
+ *
+ * <p>A record with status VERIFY_FAIL is never returned to the user. These are
+ * only preserved in the database to keep track of attempts to add MFA
+ * records and enforce a maximum number of attempts within a certain time
+ * span.</p>
+ *
+ * @author Dennis Hofs (RRD)
  */
 @JsonIgnoreProperties(ignoreUnknown=true)
-public class MfaRecord {
-	public static final String TYPE_SMS = "sms";
-	public static final String TYPE_TOTP = "totp";
-
-	public static final String KEY_SMS_PHONE_NUMBER = "phoneNumber";
-	public static final String KEY_SMS_PARTIAL_PHONE_NUMBER = "partialPhoneNumber";
-	public static final String KEY_TOTP_FACTOR_SID = "factorSid";
-	public static final String KEY_TOTP_BINDING_URI = "bindingUri";
+public class PrivateMfaRecord {
+	public static class Constants extends MfaRecord.Constants {
+		public static final String KEY_TOTP_FACTOR_SID = "factorSid";
+	}
 
 	private String id;
 	private String type;
@@ -99,7 +119,7 @@ public class MfaRecord {
 
 	/**
 	 * Returns the status of this record. The default is {@link
-	 * MfaRecord.Status#CREATED CREATED}.
+	 * PrivateMfaRecord.Status#CREATED CREATED}.
 	 *
 	 * @return the status
 	 */
@@ -109,7 +129,7 @@ public class MfaRecord {
 
 	/**
 	 * Sets the status of this record. The default is {@link
-	 * MfaRecord.Status#CREATED CREATED}.
+	 * PrivateMfaRecord.Status#CREATED CREATED}.
 	 *
 	 * @param status the status
 	 */
@@ -140,34 +160,32 @@ public class MfaRecord {
 	}
 
 	/**
-	 * Returns the public data associated with this record. This depends on the
-	 * status and type. A record with status CREATED is only returned right
-	 * after the user created it. When the user requests a list of MFA records,
-	 * only the verified records are returned. Therefore "created" records
-	 * contain more public data than verified records.
+	 * Returns the public data associated with this record. This is the data
+	 * that is included in an {@link MfaRecord MfaRecord}. It depends on the
+	 * status and type. See more details at the top of this page.
 	 *
 	 * <p><b>TOTP, status: CREATED</b></p>
 	 *
 	 * <p><ul>
-	 * <li>{@link #KEY_TOTP_BINDING_URI KEY_TOTP_BINDING_URI}</li>
+	 * <li>{@link PrivateMfaRecord.Constants#KEY_TOTP_BINDING_URI KEY_TOTP_BINDING_URI}</li>
 	 * </ul></p>
 	 *
 	 * <p><b>TOTP, status: VERIFY_SUCCESS</b></p>
 	 *
 	 * <p><ul>
-	 * <li>{@link #KEY_TOTP_BINDING_URI KEY_TOTP_BINDING_URI}</li>
+	 * <li>{@link PrivateMfaRecord.Constants#KEY_TOTP_BINDING_URI KEY_TOTP_BINDING_URI}</li>
 	 * </ul></p>
 	 *
 	 * <p><b>SMS, status: CREATED</b></p>
 	 *
 	 * <p><ul>
-	 * <li>{@link #KEY_SMS_PHONE_NUMBER KEY_SMS_PHONE_NUMBER}</li>
+	 * <li>{@link PrivateMfaRecord.Constants#KEY_SMS_PHONE_NUMBER KEY_SMS_PHONE_NUMBER}</li>
 	 * </ul></p>
 	 *
 	 * <p><b>SMS, status: VERIFY_SUCCESS</b></p>
 	 *
 	 * <p><ul>
-	 * <li>{@link #KEY_SMS_PARTIAL_PHONE_NUMBER KEY_SMS_PARTIAL_PHONE_NUMBER}</li>
+	 * <li>{@link PrivateMfaRecord.Constants#KEY_SMS_PARTIAL_PHONE_NUMBER KEY_SMS_PARTIAL_PHONE_NUMBER}</li>
 	 * </ul></p>
 	 *
 	 * @return the public data
@@ -177,34 +195,32 @@ public class MfaRecord {
 	}
 
 	/**
-	 * Sets the public data associated with this record. This depends on the
-	 * status and type. A record with status CREATED is only returned right
-	 * after the user created it. When the user requests a list of MFA records,
-	 * only the verified records are returned.Therefore "created" records
-	 * contain more public data than verified records.
+	 * Sets the public data associated with this record. This is the data that
+	 * is included in an {@link MfaRecord MfaRecord}. It depends on the status
+	 * and type. See more details at the top of this page.
 	 *
 	 * <p><b>TOTP, status: CREATED</b></p>
 	 *
 	 * <p><ul>
-	 * <li>{@link #KEY_TOTP_BINDING_URI KEY_TOTP_BINDING_URI}</li>
+	 * <li>{@link PrivateMfaRecord.Constants#KEY_TOTP_BINDING_URI KEY_TOTP_BINDING_URI}</li>
 	 * </ul></p>
 	 *
 	 * <p><b>TOTP, status: VERIFY_SUCCESS</b></p>
 	 *
 	 * <p><ul>
-	 * <li>{@link #KEY_TOTP_BINDING_URI KEY_TOTP_BINDING_URI}</li>
+	 * <li>{@link PrivateMfaRecord.Constants#KEY_TOTP_BINDING_URI KEY_TOTP_BINDING_URI}</li>
 	 * </ul></p>
 	 *
 	 * <p><b>SMS, status: CREATED</b></p>
 	 *
 	 * <p><ul>
-	 * <li>{@link #KEY_SMS_PHONE_NUMBER KEY_SMS_PHONE_NUMBER}</li>
+	 * <li>{@link PrivateMfaRecord.Constants#KEY_SMS_PHONE_NUMBER KEY_SMS_PHONE_NUMBER}</li>
 	 * </ul></p>
 	 *
 	 * <p><b>SMS, status: VERIFY_SUCCESS</b></p>
 	 *
 	 * <p><ul>
-	 * <li>{@link #KEY_SMS_PARTIAL_PHONE_NUMBER KEY_SMS_PARTIAL_PHONE_NUMBER}</li>
+	 * <li>{@link PrivateMfaRecord.Constants#KEY_SMS_PARTIAL_PHONE_NUMBER KEY_SMS_PARTIAL_PHONE_NUMBER}</li>
 	 * </ul></p>
 	 *
 	 * @param publicData the public data
@@ -216,20 +232,19 @@ public class MfaRecord {
 	/**
 	 * Returns the private data associated with this record. That is all data,
 	 * including public data and data that is too sensitive to return to the
-	 * user when they request a list of MFA records. The keys depend on the type
-	 * of record.
+	 * user. The keys depend on the type of record.
 	 *
 	 * <p><b>TOTP</b></p>
 	 *
 	 * <p><ul>
-	 * <li>{@link #KEY_TOTP_BINDING_URI KEY_TOTP_BINDING_URI}</li>
-	 * <li>{@link #KEY_TOTP_FACTOR_SID KEY_TOTP_FACTOR_SID}</li>
+	 * <li>{@link PrivateMfaRecord.Constants#KEY_TOTP_BINDING_URI KEY_TOTP_BINDING_URI}</li>
+	 * <li>{@link PrivateMfaRecord.Constants#KEY_TOTP_FACTOR_SID KEY_TOTP_FACTOR_SID}</li>
 	 * </ul></p>
 	 *
 	 * <p><b>SMS</b></p>
 	 *
 	 * <p><ul>
-	 * <li>{@link #KEY_SMS_PHONE_NUMBER KEY_SMS_PHONE_NUMBER}</li>
+	 * <li>{@link PrivateMfaRecord.Constants#KEY_SMS_PHONE_NUMBER KEY_SMS_PHONE_NUMBER}</li>
 	 * </ul></p>
 	 *
 	 * @return the private data
@@ -247,19 +262,28 @@ public class MfaRecord {
 	 * <p><b>TOTP</b></p>
 	 *
 	 * <p><ul>
-	 * <li>{@link #KEY_TOTP_BINDING_URI KEY_TOTP_BINDING_URI}</li>
-	 * <li>{@link #KEY_TOTP_FACTOR_SID KEY_TOTP_FACTOR_SID}</li>
+	 * <li>{@link PrivateMfaRecord.Constants#KEY_TOTP_BINDING_URI KEY_TOTP_BINDING_URI}</li>
+	 * <li>{@link PrivateMfaRecord.Constants#KEY_TOTP_FACTOR_SID KEY_TOTP_FACTOR_SID}</li>
 	 * </ul></p>
 	 *
 	 * <p><b>SMS</b></p>
 	 *
 	 * <p><ul>
-	 * <li>{@link #KEY_SMS_PHONE_NUMBER KEY_SMS_PHONE_NUMBER}</li>
+	 * <li>{@link PrivateMfaRecord.Constants#KEY_SMS_PHONE_NUMBER KEY_SMS_PHONE_NUMBER}</li>
 	 * </ul></p>
 	 *
 	 * @param privateData the private data
 	 */
 	public void setPrivateData(Map<String,Object> privateData) {
 		this.privateData = privateData;
+	}
+
+	public MfaRecord toPublicMfaRecord() {
+		MfaRecord result = new MfaRecord();
+		result.setId(id);
+		result.setType(type);
+		result.setCreated(created);
+		result.setData(new LinkedHashMap<>(publicData));
+		return result;
 	}
 }

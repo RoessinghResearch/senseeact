@@ -61,7 +61,7 @@ public class User extends nl.rrd.senseeact.client.model.User {
 	private String mfa;
 
 	@JsonIgnore
-	private List<MfaRecord> mfaList = new ArrayList<>();
+	private List<PrivateMfaRecord> mfaList = new ArrayList<>();
 
 	public User() {
 	}
@@ -180,11 +180,11 @@ public class User extends nl.rrd.senseeact.client.model.User {
 		mfaList = JsonMapper.parse(mfa, new TypeReference<>() {});
 	}
 
-	public List<MfaRecord> getMfaList() {
+	public List<PrivateMfaRecord> getMfaList() {
 		return mfaList;
 	}
 
-	public void setMfaList(List<MfaRecord> mfaList) {
+	public void setMfaList(List<PrivateMfaRecord> mfaList) {
 		this.mfaList = mfaList;
 	}
 
