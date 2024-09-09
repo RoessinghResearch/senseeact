@@ -1069,17 +1069,18 @@ public class AuthControllerExecution {
 		checkMaxMfaVerifyCount(record);
 		String type = record.getType();
 		if (type.equals(MfaRecord.Constants.TYPE_SMS)) {
-			return confirmAddMfaRecordSms(record, code, authDb, user);
+			return verifyAddMfaRecordSms(record, code, authDb, user);
 		} else if (type.equals(MfaRecord.Constants.TYPE_TOTP)) {
-			return confirmAddMfaRecordTotp(record, code, authDb, user);
+			return verifyAddMfaRecordTotp(record, code, authDb, user);
 		} else {
 			Logger logger = AppComponents.getLogger(getClass().getSimpleName());
 			logger.error("MFA type not supported: " + type);
 			throw new InternalServerErrorException();
 		}
+		// TODO update token in cookies
 	}
 
-	private MfaRecord confirmAddMfaRecordSms(PrivateMfaRecord record,
+	private MfaRecord verifyAddMfaRecordSms(PrivateMfaRecord record,
 			String code, Database authDb, User user) throws HttpException,
 			Exception {
 		UserCache cache = UserCache.getInstance();
@@ -1113,7 +1114,7 @@ public class AuthControllerExecution {
 		return record.toPublicMfaRecord();
 	}
 
-	private MfaRecord confirmAddMfaRecordTotp(PrivateMfaRecord record,
+	private MfaRecord verifyAddMfaRecordTotp(PrivateMfaRecord record,
 			String code, Database authDb, User user) throws HttpException,
 			Exception {
 		UserCache cache = UserCache.getInstance();
