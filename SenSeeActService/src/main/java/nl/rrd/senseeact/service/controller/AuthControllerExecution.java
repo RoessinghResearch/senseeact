@@ -1083,7 +1083,7 @@ public class AuthControllerExecution {
 			throw new InternalServerErrorException();
 		}
 		return createVerifyAddMfaRecordResult(version, response, user,
-					authDetails, null, result);
+					authDetails, mfaId, result);
 	}
 
 	private VerifyAddMfaRecordResult createVerifyAddMfaRecordResult(

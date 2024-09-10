@@ -12,7 +12,7 @@ public class VerifyAddMfaRecordResult extends JsonObject {
 	}
 
 	public VerifyAddMfaRecordResult(MfaRecord mfaRecord, String token) {
-		this.mfaRecord = getMfaRecord();
+		this.mfaRecord = mfaRecord;
 		this.token = token;
 	}
 
