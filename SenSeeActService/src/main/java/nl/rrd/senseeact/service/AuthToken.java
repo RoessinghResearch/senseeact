@@ -33,9 +33,8 @@ public class AuthToken {
 	private static final String HASH = "hash";
 	private static final String PENDING_MFA = "pendingMfa";
 	private static final String MFA_ID = "mfaId";
+	private static final String COOKIE = "cookie";
 	private static final String AUTO_EXTEND_COOKIE = "autoExtendCookie";
-	private static final String AUTO_EXTEND_COOKIE_MINUTES =
-			"autoExtendCookieMinutes";
 
 	public static String createToken(ProtocolVersion version, User user,
 			boolean pendingMfa, String mfaId, ZonedDateTime now,
@@ -51,12 +50,12 @@ public class AuthToken {
 			details = AuthDetails.forUserid(user.getUserid(),
 					Date.from(now.toInstant()), tokenExpire,
 					AuthDetails.hashSalt(user.getSalt()), pendingMfa, mfaId,
-					autoExtendCookie, expireMinutes);
+					cookie, autoExtendCookie);
 		} else {
 			details = AuthDetails.forEmail(user.getEmail(),
 					Date.from(now.toInstant()), tokenExpire,
 					AuthDetails.hashSalt(user.getSalt()), pendingMfa, mfaId,
-					autoExtendCookie, expireMinutes);
+					cookie, autoExtendCookie);
 		}
 		String token = AuthToken.createToken(details);
 		if (cookie)
@@ -101,11 +100,8 @@ public class AuthToken {
 		claims.claim(PENDING_MFA, details.isPendingMfa());
 		if (details.getMfaId() != null)
 			claims.claim(MFA_ID, details.getMfaId());
+		claims.claim(COOKIE, details.isCookie());
 		claims.claim(AUTO_EXTEND_COOKIE, details.isAutoExtendCookie());
-		if (details.isAutoExtendCookie()) {
-			claims.claim(AUTO_EXTEND_COOKIE_MINUTES,
-					details.getAutoExtendCookieMinutes());
-		}
 		JWSAlgorithm algorithm;
 		if (keyBs.length >= 64)
 			algorithm = JWSAlgorithm.HS512;
@@ -168,8 +164,8 @@ public class AuthToken {
 		Integer version;
 		Boolean pendingMfa;
 		String mfaId;
+		Boolean cookie;
 		Boolean autoExtendCookie;
-		Integer autoExtendCookieMinutes;
 		String hash;
 		try {
 			version = claims.getIntegerClaim(VERSION);
@@ -179,11 +175,12 @@ public class AuthToken {
 			if (pendingMfa == null)
 				pendingMfa = false;
 			mfaId = claims.getStringClaim(MFA_ID);
+			cookie = claims.getBooleanClaim(COOKIE);
+			if (cookie == null)
+				cookie = false;
 			autoExtendCookie = claims.getBooleanClaim(AUTO_EXTEND_COOKIE);
 			if (autoExtendCookie == null)
 				autoExtendCookie = false;
-			autoExtendCookieMinutes = claims.getIntegerClaim(
-					AUTO_EXTEND_COOKIE_MINUTES);
 			hash = claims.getStringClaim(HASH);
 		} catch (ParseException ex) {
 			throw new InvalidAuthTokenException("Invalid claims: " + claims +
@@ -192,13 +189,11 @@ public class AuthToken {
 		if (version == 1) {
 			return AuthDetails.forUserid(claims.getSubject(),
 					claims.getIssueTime(), claims.getExpirationTime(),
-					hash, pendingMfa, mfaId, autoExtendCookie,
-					autoExtendCookieMinutes);
+					hash, pendingMfa, mfaId, cookie, autoExtendCookie);
 		} else {
 			return AuthDetails.forEmail(claims.getSubject(),
 					claims.getIssueTime(), claims.getExpirationTime(),
-					hash, pendingMfa, mfaId, autoExtendCookie,
-					autoExtendCookieMinutes);
+					hash, pendingMfa, mfaId, cookie, autoExtendCookie);
 		}
 	}
 

@@ -2,6 +2,7 @@ package nl.rrd.senseeact.service;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.time.temporal.ChronoUnit;
 import java.util.Base64;
 import java.util.Date;
 
@@ -24,8 +25,8 @@ public class AuthDetails {
 	private String hash;
 	private boolean pendingMfa = false;
 	private String mfaId = null;
+	private boolean cookie = false;
 	private boolean autoExtendCookie = false;
-	private Integer autoExtendCookieMinutes = null;
 
 	private AuthDetails() {
 	}
@@ -46,16 +47,13 @@ public class AuthDetails {
 	 * factor yet
 	 * @param mfaId if the user authenticated with MFA, this should be set to
 	 * the used MFA record ID
+	 * @param cookie true if the "authToken" cookie should be set
 	 * @param autoExtendCookie true if the "authToken" cookie should be
 	 * automatically extended at every verification
-	 * @param autoExtendCookieMinutes if "autoExtendCookie" is true, this should
-	 * be the number of minutes after which the token should expire from the
-	 * current time. This can be null if the token should never expire. If
-	 * "autoExtendCookie" is false, this parameter is ignored and can be null.
 	 */
 	public static AuthDetails forUserid(String userid, Date issuedAt,
 			Date expiration, String hash, boolean pendingMfa, String mfaId,
-			boolean autoExtendCookie, Integer autoExtendCookieMinutes) {
+			boolean cookie, boolean autoExtendCookie) {
 		AuthDetails details = new AuthDetails();
 		details.userid = userid;
 		details.issuedAt = issuedAt;
@@ -63,9 +61,8 @@ public class AuthDetails {
 		details.hash = hash;
 		details.pendingMfa = pendingMfa;
 		details.mfaId = mfaId;
+		details.cookie = cookie;
 		details.autoExtendCookie = autoExtendCookie;
-		if (autoExtendCookie)
-			details.autoExtendCookieMinutes = autoExtendCookieMinutes;
 		return details;
 	}
 
@@ -86,16 +83,13 @@ public class AuthDetails {
 	 * factor yet
 	 * @param mfaId if the user authenticated with MFA, this should be set to
 	 * the used MFA record ID
+	 * @param cookie true if the "authToken" cookie should be set
 	 * @param autoExtendCookie true if the "authToken" cookie should be
 	 * automatically extended at every verification
-	 * @param autoExtendCookieMinutes if "autoExtendCookie" is true, this should
-	 * be the number of minutes after which the token should expire from the
-	 * current time. This can be null if the token should never expire. If
-	 * "autoExtendCookie" is false, this parameter is ignored and can be null.
 	 */
 	public static AuthDetails forEmail(String email, Date issuedAt,
 			Date expiration, String hash, boolean pendingMfa, String mfaId,
-			boolean autoExtendCookie, Integer autoExtendCookieMinutes) {
+			boolean cookie, boolean autoExtendCookie) {
 		AuthDetails details = new AuthDetails();
 		details.email = email;
 		details.issuedAt = issuedAt;
@@ -103,9 +97,8 @@ public class AuthDetails {
 		details.hash = hash;
 		details.pendingMfa = pendingMfa;
 		details.mfaId = mfaId;
+		details.cookie = cookie;
 		details.autoExtendCookie = autoExtendCookie;
-		if (autoExtendCookie)
-			details.autoExtendCookieMinutes = autoExtendCookieMinutes;
 		return details;
 	}
 
@@ -185,6 +178,15 @@ public class AuthDetails {
 	}
 
 	/**
+	 * Returns true if the "authToken" cookie should be set.
+	 *
+	 * @return true if the "authToken" cookie should be set
+	 */
+	public boolean isCookie() {
+		return cookie;
+	}
+
+	/**
 	 * Returns true if the "authToken" cookie should be automatically extended
 	 * at every verification.
 	 *
@@ -196,15 +198,17 @@ public class AuthDetails {
 	}
 
 	/**
-	 * This method should only be called if {@link #isAutoExtendCookie()
-	 * isAutoExtendCookie()} returns true. It returns the number of minutes
-	 * after which the token should expire from the current time. This can be
-	 * null if the token should never expire.
+	 * Returns the expiration in minutes. This is the difference between
+	 * "issuedAt" and "expiration". If "expiration" is null, then this method
+	 * also returns null.
 	 *
-	 * @return the number of minutes or null
+	 * @return the expiration in minutes or null
 	 */
-	public Integer getAutoExtendCookieMinutes() {
-		return autoExtendCookieMinutes;
+	public Integer toExpireMinutes() {
+		if (expiration == null)
+			return null;
+		return (int)ChronoUnit.MINUTES.between(issuedAt.toInstant(),
+				expiration.toInstant());
 	}
 
 	/**

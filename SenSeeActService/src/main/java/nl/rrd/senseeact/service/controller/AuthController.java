@@ -273,7 +273,7 @@ public class AuthController {
 			return QueryRunner.runAuthQuery(
 					(version, authDb, user, authDetails) ->
 					exec.changePassword(version, request, response, null, null,
-							null, false, false, params, authDb, user,
+							null, params, authDb, user,
 							authDetails),
 					versionName, request, response);
 		}
@@ -291,16 +291,12 @@ public class AuthController {
 			@RequestParam(value="oldPassword", required=false, defaultValue="")
 			String oldPassword,
 			@RequestParam(value="newPassword", required=false, defaultValue="")
-			String newPassword,
-			@RequestParam(value="cookie", required=false, defaultValue="false")
-			boolean cookie,
-			@RequestParam(value="autoExtendCookie", required=false, defaultValue="false")
-			boolean autoExtendCookie) throws HttpException, Exception {
+			String newPassword) throws HttpException, Exception {
 		synchronized (AuthControllerExecution.AUTH_LOCK) {
 			return QueryRunner.runAuthQuery(
 					(version, authDb, user, authDetails) ->
 					exec.changePassword(version, request, response, email,
-					oldPassword, newPassword, cookie, autoExtendCookie, null,
+					oldPassword, newPassword, null,
 					authDb, user, authDetails),
 					versionName, request, response);
 		}
@@ -392,7 +388,7 @@ public class AuthController {
 	}
 
 	@RequestMapping(value="/mfa/add/verify", method=RequestMethod.POST)
-	public MfaRecord verifyAddMfaRecord(
+	public VerifyAddMfaRecordResult verifyAddMfaRecord(
 			HttpServletRequest request,
 			HttpServletResponse response,
 			@PathVariable("version")
@@ -405,7 +401,8 @@ public class AuthController {
 		synchronized (AuthControllerExecution.AUTH_LOCK) {
 			return QueryRunner.runAuthQuery(
 					(version, authDb, user, authDetails) ->
-					exec.verifyAddMfaRecord(id, code, authDb, user),
+					exec.verifyAddMfaRecord(version, response, id, code, authDb,
+							user, authDetails),
 					versionName, request, response);
 		}
 	}

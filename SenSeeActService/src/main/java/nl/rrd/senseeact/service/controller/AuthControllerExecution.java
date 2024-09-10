@@ -687,24 +687,16 @@ public class AuthControllerExecution {
 	public String changePassword(ProtocolVersion version,
 			HttpServletRequest request, HttpServletResponse response,
 			String email, String oldPassword, String newPassword,
-			boolean cookie, boolean autoExtendCookie,
 			ChangePasswordParams params, Database authDb, User user,
 			AuthDetails authDetails) throws HttpException, Exception {
 		validateForbiddenQueryParams(request, "email", "oldPassword",
 				"newPassword");
 		String userid = null;
-		Integer expireMinutes = LoginParams.DEFAULT_EXPIRATION;
 		if (params != null) {
 			userid = params.getUser();
 			email = params.getEmail();
 			oldPassword = params.getOldPassword();
 			newPassword = params.getNewPassword();
-			if (params.getTokenExpiration() == null ||
-					params.getTokenExpiration() != 0) {
-				expireMinutes = params.getTokenExpiration();
-			}
-			cookie = params.isCookie();
-			autoExtendCookie = params.isAutoExtendCookie();
 		}
 		List<HttpFieldError> fieldErrors = new ArrayList<>();
 		if (newPassword == null || newPassword.isEmpty()) {
@@ -761,7 +753,16 @@ public class AuthControllerExecution {
 		ZonedDateTime now = DateTimeUtils.nowMs();
 		Logger logger = AppComponents.getLogger(getClass().getSimpleName());
 		logger.info("User {} changed password", changeUser.getUserid());
-		String mfaId = authDetails == null ? null : authDetails.getMfaId();
+		String mfaId = null;
+		Integer expireMinutes = LoginParams.DEFAULT_EXPIRATION;
+		boolean cookie = false;
+		boolean autoExtendCookie = false;
+		if (authDetails != null) {
+			mfaId = authDetails.getMfaId();
+			expireMinutes = authDetails.toExpireMinutes();
+			cookie = authDetails.isCookie();
+			autoExtendCookie = authDetails.isAutoExtendCookie();
+		}
 		return AuthToken.createToken(version, changeUser, false, mfaId, now,
 				expireMinutes, cookie, autoExtendCookie, response);
 	}
@@ -1055,8 +1056,10 @@ public class AuthControllerExecution {
 		return count;
 	}
 
-	public MfaRecord verifyAddMfaRecord(String mfaId, String code,
-			Database authDb, User user) throws HttpException, Exception {
+	public VerifyAddMfaRecordResult verifyAddMfaRecord(ProtocolVersion version,
+			HttpServletResponse response, String mfaId, String code,
+			Database authDb, User user, AuthDetails authDetails)
+			throws HttpException, Exception {
 		cleanMfaRecords(authDb, user);
 		PrivateMfaRecord record = findMfaRecord(mfaId, user);
 		if (record == null ||
@@ -1064,20 +1067,40 @@ public class AuthControllerExecution {
 			throw new NotFoundException("MFA record not found");
 		}
 		if (record.getStatus() == PrivateMfaRecord.Status.VERIFY_SUCCESS) {
-			return record.toPublicMfaRecord();
+			return createVerifyAddMfaRecordResult(version, response, user,
+					authDetails, mfaId, record.toPublicMfaRecord());
 		}
 		checkMaxMfaVerifyCount(record);
 		String type = record.getType();
+		MfaRecord result;
 		if (type.equals(MfaRecord.Constants.TYPE_SMS)) {
-			return verifyAddMfaRecordSms(record, code, authDb, user);
+			result = verifyAddMfaRecordSms(record, code, authDb, user);
 		} else if (type.equals(MfaRecord.Constants.TYPE_TOTP)) {
-			return verifyAddMfaRecordTotp(record, code, authDb, user);
+			result = verifyAddMfaRecordTotp(record, code, authDb, user);
 		} else {
 			Logger logger = AppComponents.getLogger(getClass().getSimpleName());
 			logger.error("MFA type not supported: " + type);
 			throw new InternalServerErrorException();
 		}
-		// TODO update token in cookies
+		return createVerifyAddMfaRecordResult(version, response, user,
+					authDetails, null, result);
+	}
+
+	private VerifyAddMfaRecordResult createVerifyAddMfaRecordResult(
+			ProtocolVersion version, HttpServletResponse response, User user,
+			AuthDetails authDetails, String mfaId, MfaRecord record) {
+		ZonedDateTime now = DateTimeUtils.nowMs();
+		Integer expireMinutes = LoginParams.DEFAULT_EXPIRATION;
+		boolean cookie = false;
+		boolean autoExtendCookie = false;
+		if (authDetails != null) {
+			expireMinutes = authDetails.toExpireMinutes();
+			cookie = authDetails.isCookie();
+			autoExtendCookie = authDetails.isAutoExtendCookie();
+		}
+		String token = AuthToken.createToken(version, user, false, mfaId, now,
+				expireMinutes, cookie, autoExtendCookie, response);
+		return new VerifyAddMfaRecordResult(record, token);
 	}
 
 	private MfaRecord verifyAddMfaRecordSms(PrivateMfaRecord record,
@@ -1333,13 +1356,6 @@ public class AuthControllerExecution {
 		ZonedDateTime now = DateTimeUtils.nowMs();
 		String mfaId = params.getMfaId();
 		String code = params.getCode();
-		Integer expiration = LoginParams.DEFAULT_EXPIRATION;
-		if (params.getTokenExpiration() == null ||
-				params.getTokenExpiration() != 0) {
-			expiration = params.getTokenExpiration();
-		}
-		boolean cookie = params.isCookie();
-		boolean autoExtendCookie = params.isAutoExtendCookie();
 		List<HttpFieldError> fieldErrors = new ArrayList<>();
 		if (mfaId == null || mfaId.isEmpty()) {
 			fieldErrors.add(new HttpFieldError("mfaId",
@@ -1361,8 +1377,11 @@ public class AuthControllerExecution {
 				!mfaId.equals(authDetails.getMfaId())) {
 			performVerifyMfaCode(authDb, user, now, mfaId, code);
 		}
+		Integer expireMinutes = authDetails.toExpireMinutes();
+		boolean cookie = authDetails.isCookie();
+		boolean autoExtendCookie = authDetails.isAutoExtendCookie();
 		String token = AuthToken.createToken(version, user, false, mfaId, now,
-				expiration, cookie, autoExtendCookie, response);
+				expireMinutes, cookie, autoExtendCookie, response);
 		LoginResult result = new LoginResult();
 		result.setStatus(LoginResult.Status.COMPLETE);
 		result.setUser(user.getUserid());

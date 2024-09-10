@@ -97,8 +97,7 @@ public class AuthTokenValidator {
 			ZonedDateTime now = DateTimeUtils.nowMs();
 			AuthToken.createToken(version, result.getUser(),
 					authDetails.isPendingMfa(), authDetails.getMfaId(), now,
-					authDetails.getAutoExtendCookieMinutes(), true, true,
-					response);
+					authDetails.toExpireMinutes(), true, true, response);
 		}
 		User user = result.getUser();
 		synchronized (AuthControllerExecution.AUTH_LOCK) {
