@@ -211,12 +211,6 @@ public class AuthTokenValidator {
 						ErrorCode.AUTH_TOKEN_INVALID_MFA,
 						"Authentication token invalid");
 			}
-			if (user.findVerifiedMfaRecord(mfaId) == null) {
-				logger.info("Invalid auth token: MFA record ID not found");
-				throw new UnauthorizedException(
-						ErrorCode.AUTH_TOKEN_INVALID_MFA,
-						"Authentication token invalid");
-			}
 		}
 		return new ValidateTokenResult(user, details);
 	}

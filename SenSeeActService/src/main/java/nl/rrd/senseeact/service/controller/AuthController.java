@@ -387,22 +387,38 @@ public class AuthController {
 		}
 	}
 
-	@RequestMapping(value="/mfa/add/verify", method=RequestMethod.POST)
-	public VerifyAddMfaRecordResult verifyAddMfaRecord(
+	@RequestMapping(value="/mfa/add/totp/qrcode", method=RequestMethod.GET)
+	public void getMfaAddTotpQRCode(
 			HttpServletRequest request,
 			HttpServletResponse response,
 			@PathVariable("version")
 			@Parameter(hidden = true)
 			String versionName,
 			@RequestParam(value="id")
-			String id,
-			@RequestParam(value="code")
-			String code) throws HttpException, Exception {
+			String id) throws HttpException, Exception {
+		synchronized (AuthControllerExecution.AUTH_LOCK) {
+			QueryRunner.runAuthQuery(
+					(version, authDb, user, authDetails) ->
+					exec.getMfaAddTotpQRCode(response, authDb, user, id),
+					versionName, request, response);
+		}
+	}
+
+	@RequestMapping(value="/mfa/add/verify", method=RequestMethod.POST,
+			consumes={ MediaType.APPLICATION_JSON_VALUE })
+	public VerifyAddMfaRecordResult verifyAddMfaRecord(
+			HttpServletRequest request,
+			HttpServletResponse response,
+			@PathVariable("version")
+			@Parameter(hidden = true)
+			String versionName,
+			@RequestBody
+			VerifyMfaParams verifyParams) throws HttpException, Exception {
 		synchronized (AuthControllerExecution.AUTH_LOCK) {
 			return QueryRunner.runAuthQuery(
 					(version, authDb, user, authDetails) ->
-					exec.verifyAddMfaRecord(version, response, id, code, authDb,
-							user, authDetails),
+					exec.verifyAddMfaRecord(version, response, authDb,
+							user, authDetails, verifyParams),
 					versionName, request, response);
 		}
 	}
@@ -439,8 +455,8 @@ public class AuthController {
 		}
 	}
 
-	@RequestMapping(value="/mfa/add/totp/qrcode", method=RequestMethod.GET)
-	public void getMfaTotpQRCode(
+	@RequestMapping(value="/mfa/default", method=RequestMethod.POST)
+	public void setDefaultMfaRecord(
 			HttpServletRequest request,
 			HttpServletResponse response,
 			@PathVariable("version")
@@ -451,8 +467,26 @@ public class AuthController {
 		synchronized (AuthControllerExecution.AUTH_LOCK) {
 			QueryRunner.runAuthQuery(
 					(version, authDb, user, authDetails) ->
-					exec.getMfaTotpQRCode(response, authDb, user, id),
+					exec.setDefaultMfaRecord(authDb, user, id),
 					versionName, request, response);
+		}
+	}
+
+	@RequestMapping(value="/mfa/request-verify", method=RequestMethod.GET)
+	public void requestMfaVerification(
+			HttpServletRequest request,
+			HttpServletResponse response,
+			@PathVariable("version")
+			@Parameter(hidden = true)
+			String versionName,
+			@RequestParam(value="id")
+			String id) throws HttpException, Exception {
+		synchronized (AuthControllerExecution.AUTH_LOCK) {
+			QueryContext context = new QueryContext().setAllowPendingMfa(true);
+			QueryRunner.runAuthQuery(
+					(version, authDb, user, authDetails) ->
+					exec.requestMfaVerification(authDb, user, id),
+					versionName, request, response, context);
 		}
 	}
 

@@ -20,8 +20,10 @@ import nl.rrd.utils.exception.ParseException;
 import nl.rrd.utils.http.HttpClient2;
 import nl.rrd.utils.http.HttpClientException;
 import nl.rrd.utils.http.HttpResponse;
-import org.apache.hc.core5.http.ContentType;
-import org.apache.hc.core5.http.Header;
+import nl.rrd.utils.io.FileUtils;
+import org.apache.hc.core5.http.*;
+import org.apache.hc.core5.http.io.HttpClientResponseHandler;
+import org.apache.hc.core5.http.io.entity.EntityUtils;
 import org.slf4j.Logger;
 
 import java.io.*;
@@ -135,6 +137,15 @@ public class SenSeeActClient {
 	 * be blocked for 60 seconds.</li>
 	 * </ul></p>
 	 *
+	 * <p>If the account has a verified multi-factor authentication record, then
+	 * you should enter a verification code with {@link
+	 * #verifyMfaCode(String, String) verifyMfaCode()}. This is the case if
+	 * the result of this method has status {@link
+	 * LoginResult.Status#REQUIRES_MFA REQUIRES_MFA}. The default MFA record,
+	 * included in the result of this method, has automatically been triggered,
+	 * in the same way as {@link #requestMfaVerification(String)
+	 * requestMfaVerification()}. See that method for more information.</p>
+	 *
 	 * @param email the email address
 	 * @param password the password
 	 * @return the authentication token
@@ -146,7 +157,7 @@ public class SenSeeActClient {
 	 * @throws IOException if an error occurs while communicating with the
 	 * server
 	 */
-	public TokenResult login(String email, String password)
+	public LoginResult login(String email, String password)
 			throws SenSeeActClientException, HttpClientException, ParseException,
 			IOException {
 		return doLogin(email, password, LoginParams.DEFAULT_EXPIRATION, false,
@@ -165,7 +176,16 @@ public class SenSeeActClient {
 	 * If at least 10 subsequent logins failed for this user. The account will
 	 * be blocked for 60 seconds.</li>
 	 * </ul></p>
-	 * 
+	 *
+	 * <p>If the account has a verified multi-factor authentication record, then
+	 * you should enter a verification code with {@link
+	 * #verifyMfaCode(String, String) verifyMfaCode()}. This is the case if
+	 * the result of this method has status {@link
+	 * LoginResult.Status#REQUIRES_MFA REQUIRES_MFA}. The default MFA record,
+	 * included in the result of this method, has automatically been triggered,
+	 * in the same way as {@link #requestMfaVerification(String)
+	 * requestMfaVerification()}. See that method for more information.</p>
+	 *
 	 * @param email the email address
 	 * @param password the password
 	 * @param tokenExpiration the token expiration in minutes, or null if the
@@ -183,7 +203,7 @@ public class SenSeeActClient {
 	 * @throws IOException if an error occurs while communicating with the
 	 * server
 	 */
-	public TokenResult login(String email, String password,
+	public LoginResult login(String email, String password,
 			Integer tokenExpiration, boolean cookie, boolean autoExtendCookie)
 			throws SenSeeActClientException, HttpClientException, ParseException,
 			IOException {
@@ -211,7 +231,7 @@ public class SenSeeActClient {
 	 * @throws IOException if an error occurs while communicating with the
 	 * server
 	 */
-	private TokenResult doLogin(String email, String password,
+	private LoginResult doLogin(String email, String password,
 			Integer tokenExpiration, boolean cookie, boolean autoExtendCookie)
 			throws SenSeeActClientException, HttpClientException, ParseException,
 			IOException {
@@ -221,9 +241,9 @@ public class SenSeeActClient {
 		params.setTokenExpiration(tokenExpiration);
 		params.setCookie(cookie);
 		params.setAutoExtendCookie(autoExtendCookie);
-		TokenResult result = runQuery("/auth/login", "POST", false,
+		LoginResult result = runQuery("/auth/login", "POST", false,
 				client -> client.writeJson(params),
-				response -> response.readJson(TokenResult.class));
+				response -> response.readJson(LoginResult.class));
 		this.authHeaders = List.of(new AuthHeader(DEFAULT_AUTH_HEADER,
 				result.getToken()));
 		return result;
@@ -251,6 +271,15 @@ public class SenSeeActClient {
 	 * be blocked for 60 seconds.</li>
 	 * </ul></p>
 	 *
+	 * <p>If the account has a verified multi-factor authentication record, then
+	 * you should enter a verification code with {@link
+	 * #verifyMfaCode(String, String) verifyMfaCode()}. This is the case if
+	 * the result of this method has status {@link
+	 * LoginResult.Status#REQUIRES_MFA REQUIRES_MFA}. The default MFA record,
+	 * included in the result of this method, has automatically been triggered,
+	 * in the same way as {@link #requestMfaVerification(String)
+	 * requestMfaVerification()}. See that method for more information.</p>
+	 *
 	 * @param username the username
 	 * @param password the password
 	 * @return the email address and authentication token
@@ -262,9 +291,9 @@ public class SenSeeActClient {
 	 * @throws IOException if an error occurs while communicating with the
 	 * server
 	 */
-	public LoginUsernameResult loginUsername(String username, String password)
-			throws SenSeeActClientException, HttpClientException, ParseException,
-			IOException {
+	public LoginResult loginUsername(String username, String password)
+			throws SenSeeActClientException, HttpClientException,
+			ParseException, IOException {
 		return loginUsername(username, password,
 				LoginParams.DEFAULT_EXPIRATION, false, false);
 	}
@@ -287,7 +316,16 @@ public class SenSeeActClient {
 	 * If at least 10 subsequent logins failed for this user. The account will
 	 * be blocked for 60 seconds.</li>
 	 * </ul></p>
-	 * 
+	 *
+	 * <p>If the account has a verified multi-factor authentication record, then
+	 * you should enter a verification code with {@link
+	 * #verifyMfaCode(String, String) verifyMfaCode()}. This is the case if
+	 * the result of this method has status {@link
+	 * LoginResult.Status#REQUIRES_MFA REQUIRES_MFA}. The default MFA record,
+	 * included in the result of this method, has automatically been triggered,
+	 * in the same way as {@link #requestMfaVerification(String)
+	 * requestMfaVerification()}. See that method for more information.</p>
+	 *
 	 * @param username the username
 	 * @param password the password
 	 * @param tokenExpiration the token expiration in minutes, or null if the
@@ -305,7 +343,7 @@ public class SenSeeActClient {
 	 * @throws IOException if an error occurs while communicating with the
 	 * server
 	 */
-	public LoginUsernameResult loginUsername(String username, String password,
+	public LoginResult loginUsername(String username, String password,
 			Integer tokenExpiration, boolean cookie, boolean autoExtendCookie)
 			throws SenSeeActClientException, HttpClientException, ParseException,
 			IOException {
@@ -315,10 +353,10 @@ public class SenSeeActClient {
 		params.setTokenExpiration(tokenExpiration);
 		params.setCookie(cookie);
 		params.setAutoExtendCookie(autoExtendCookie);
-		LoginUsernameResult loginResult = runQuery("/auth/login-username",
+		LoginResult loginResult = runQuery("/auth/login-username",
 				"POST", false,
 				client -> client.writeJson(params),
-				response -> response.readJson(LoginUsernameResult.class));
+				response -> response.readJson(LoginResult.class));
 		this.authHeaders = List.of(new AuthHeader(DEFAULT_AUTH_HEADER,
 				loginResult.getToken()));
 		return loginResult;
@@ -831,6 +869,302 @@ public class SenSeeActClient {
 		runQuery("/auth/reset-password", "POST", false,
 				client -> client.writePostParams(postParams),
 				HttpResponse::readString);
+	}
+
+	/**
+	 * Adds a multi-factor authentication record for SMS to the user who is
+	 * currently logged in. It returns the unverified MFA record. A verification
+	 * code is sent to the specified phone number. The record should be verified
+	 * with {@link #verifyAddMfaRecord(String, String) verifyAddMfaRecord()}.
+	 *
+	 * <p>As long as the account has a verified MFA record, every login requires
+	 * an additional authentication against an MFA record. The first MFA record
+	 * is the default. This means that a login automatically triggers that
+	 * record, in the same way as {@link #requestMfaVerification(String)
+	 * requestMfaVerification()}.</p>
+	 *
+	 * @param phone the phone number, formatted as a plus sign followed by
+	 * numbers: +00000000
+	 * @return the unverified MFA record
+	 * @throws SenSeeActClientException if the SenSeeAct service returns an
+	 * error response
+	 * @throws HttpClientException if the server returns an error response (for
+	 * example if the server is available, but the SenSeeAct service is not)
+	 * @throws ParseException if an error occurs while parsing the response
+	 * @throws IOException if an error occurs while communicating with the
+	 * server
+	 */
+	public MfaRecord addMfaRecordSms(String phone)
+			throws SenSeeActClientException, HttpClientException,
+			ParseException, IOException {
+		Map<String,String> params = new LinkedHashMap<>();
+		params.put(MfaRecord.Constants.KEY_SMS_PHONE_NUMBER, phone);
+		return runQuery("/auth/mfa/add", "POST", true,
+				client -> client.addQueryParam(
+						"type", MfaRecord.Constants.TYPE_SMS)
+						.writeJson(params),
+				response -> response.readJson(MfaRecord.class));
+	}
+
+	/**
+	 * Adds a multi-factor authentication record for TOTP to the user who is
+	 * currently logged in. TOTP uses an authenticator app such as Authy. This
+	 * method returns the unverified MFA record. A QR code can be obtained with
+	 * {@link #getMfaAddTotpQRCode(String, OutputStream) getMfaAddTotpQRCode()}.
+	 * This should be scanned in the authenticator app to get a verification
+	 * code. The record should be verified with {@link
+	 * #verifyAddMfaRecord(String, String) verifyAddMfaRecord()}.
+	 *
+	 * <p>As long as the account has a verified MFA record, every login requires
+	 * an additional authentication against an MFA record. The first MFA record
+	 * is the default. This means that a login automatically triggers that
+	 * record, in the same way as {@link #requestMfaVerification(String)
+	 * requestMfaVerification()}.</p>
+	 *
+	 * @return the unverified MFA record
+	 * @throws SenSeeActClientException if the SenSeeAct service returns an
+	 * error response
+	 * @throws HttpClientException if the server returns an error response (for
+	 * example if the server is available, but the SenSeeAct service is not)
+	 * @throws ParseException if an error occurs while parsing the response
+	 * @throws IOException if an error occurs while communicating with the
+	 * server
+	 */
+	public MfaRecord addMfaRecordTotp() throws SenSeeActClientException,
+			HttpClientException, ParseException, IOException {
+		return runQuery("/auth/mfa/add", "POST", true,
+				client -> client.addQueryParam(
+						"type", MfaRecord.Constants.TYPE_TOTP)
+						.readResponse(),
+				response -> response.readJson(MfaRecord.class));
+	}
+
+	/**
+	 * Reads the QR code image for the binding URI of an MFA record with type
+	 * TOTP. This can be called after {@link #addMfaRecordTotp()
+	 * addMfaRecordTotp()}. The QR code should be scanned in an authenticator
+	 * app, such as Authy. The authenticator app will show a verification code
+	 * that can be passed to {@link #verifyAddMfaRecord(String, String)
+	 * verifyAddMfaRecord()}.
+	 *
+	 * @param mfaId the MFA record ID
+	 * @param output the output stream where the QR code image is written to
+	 * @throws SenSeeActClientException if the SenSeeAct service returns an
+	 * error response
+	 * @throws HttpClientException if the server returns an error response (for
+	 * example if the server is available, but the SenSeeAct service is not)
+	 * @throws ParseException if an error occurs while parsing the response
+	 * @throws IOException if an error occurs while communicating with the
+	 * server
+	 */
+	public void getMfaAddTotpQRCode(String mfaId, OutputStream output)
+			throws SenSeeActClientException, HttpClientException,
+			ParseException, IOException {
+		HttpClientResponseHandler<Object> responseHandler =
+				response -> readMfaAddTotpQRCode(response, output);
+		runQuery("/auth/mfa/add/totp/qrcode", "GET", true,
+				client -> client.addQueryParam("id", mfaId)
+						.readResponse(responseHandler)
+		);
+	}
+
+	private Object readMfaAddTotpQRCode(ClassicHttpResponse response,
+			OutputStream output) throws HttpException, IOException {
+		try (response) {
+			HttpEntity entity = response.getEntity();
+			try (InputStream input = entity.getContent()) {
+				FileUtils.copyStream(input, output, 0, null);
+			} finally {
+				EntityUtils.consume(entity);
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Verifies a new multi-factor authentication record that was added with
+	 * addMfaRecord*(). If the specified verification code is correct, the
+	 * record will be stored in the account of the current user as a verified
+	 * MFA record.
+	 *
+	 * <p>This method returns the verified record, and an updated authentication
+	 * token containing a reference to the new MFA record. If this is the first
+	 * MFA record, then the previous token will no longer be valid, because it
+	 * does not hold a now required MFA. This method stores the updated token
+	 * in this client so you stay logged in.</p>
+	 *
+	 * <p>As long as the account has a verified MFA record, every login requires
+	 * an additional authentication against an MFA record. The first MFA record
+	 * is the default. This means that a login automatically triggers that
+	 * record, in the same way as {@link #requestMfaVerification(String)
+	 * requestMfaVerification()}.</p>
+	 *
+	 * @param mfaId the MFA record ID
+	 * @param code the verification code
+	 * @return the verified MFA record and updated authentication token
+	 * @throws SenSeeActClientException if the SenSeeAct service returns an
+	 * error response
+	 * @throws HttpClientException if the server returns an error response (for
+	 * example if the server is available, but the SenSeeAct service is not)
+	 * @throws ParseException if an error occurs while parsing the response
+	 * @throws IOException if an error occurs while communicating with the
+	 * server
+	 */
+	public VerifyAddMfaRecordResult verifyAddMfaRecord(String mfaId,
+			String code) throws SenSeeActClientException, HttpClientException,
+			ParseException, IOException {
+		VerifyMfaParams params = new VerifyMfaParams(mfaId, code);
+		VerifyAddMfaRecordResult result = runQuery("/auth/mfa/add/verify",
+				"POST", true,
+				client -> client.writeJson(params),
+				response -> response.readJson(VerifyAddMfaRecordResult.class));
+		this.authHeaders = List.of(new AuthHeader(DEFAULT_AUTH_HEADER,
+				result.getToken()));
+		return result;
+	}
+
+	/**
+	 * Deletes a multi-factor authentication record from the account of the
+	 * current user. If there are no remaining MFA records after this, then
+	 * new logins no longer require MFA.
+	 *
+	 * @param mfaId the MFA record ID
+	 * @throws SenSeeActClientException if the SenSeeAct service returns an
+	 * error response
+	 * @throws HttpClientException if the server returns an error response (for
+	 * example if the server is available, but the SenSeeAct service is not)
+	 * @throws ParseException if an error occurs while parsing the response
+	 * @throws IOException if an error occurs while communicating with the
+	 * server
+	 */
+	public void deleteMfaRecord(String mfaId) throws SenSeeActClientException,
+			HttpClientException, ParseException, IOException {
+		runQuery("/auth/mfa", "DELETE", true,
+				client -> client.addQueryParam("id", mfaId)
+						.readResponse(),
+				HttpResponse::readString);
+	}
+
+	/**
+	 * Returns a list of all verified multi-factor authentication records in
+	 * the account of the current user.
+	 *
+	 * <p>As long as the account has a verified MFA record, every login requires
+	 * an additional authentication against an MFA record. The first MFA record
+	 * is the default. This means that a login automatically triggers that
+	 * record, in the same way as {@link #requestMfaVerification(String)
+	 * requestMfaVerification()}.</p>
+	 *
+	 * @return the MFA records
+	 * @throws SenSeeActClientException if the SenSeeAct service returns an
+	 * error response
+	 * @throws HttpClientException if the server returns an error response (for
+	 * example if the server is available, but the SenSeeAct service is not)
+	 * @throws ParseException if an error occurs while parsing the response
+	 * @throws IOException if an error occurs while communicating with the
+	 * server
+	 */
+	public List<MfaRecord> getMfaRecords() throws SenSeeActClientException,
+			HttpClientException, ParseException, IOException {
+		return runQuery("/auth/mfa/list", "GET", true,
+				HttpClient2::readResponse,
+				response -> response.readJson(new TypeReference<>() {}));
+	}
+
+	/**
+	 * Sets the default multi-factor authentication record in the account of
+	 * the current user. The specified MFA record will be moved to the front
+	 * of the list. The default record is automatically triggered at a login,
+	 * in the same way as {@link #requestMfaVerification(String)
+	 * requestMfaVerification()}.</p>
+	 *
+	 * @param mfaId the MFA record ID
+	 * @throws SenSeeActClientException if the SenSeeAct service returns an
+	 * error response
+	 * @throws HttpClientException if the server returns an error response (for
+	 * example if the server is available, but the SenSeeAct service is not)
+	 * @throws ParseException if an error occurs while parsing the response
+	 * @throws IOException if an error occurs while communicating with the
+	 * server
+	 */
+	public void setDefaultMfaRecord(String mfaId)
+			throws SenSeeActClientException, HttpClientException,
+			ParseException, IOException {
+		runQuery("/auth/mfa/default", "POST", true,
+				client -> client.addQueryParam("id", mfaId)
+						.readResponse(),
+				HttpResponse::readString);
+	}
+
+	/**
+	 * Starts a multi-factor authentication against the specified MFA record
+	 * in the account of the current user. Depending on the MFA type, as
+	 * described below, this method can be called for the user to obtain a
+	 * verification code, which can be verified with {@link
+	 * #verifyMfaCode(String, String) verifyMfaCode()}.
+	 *
+	 * <p>As long as the account has a verified MFA record, every login requires
+	 * an additional authentication against an MFA record. The first MFA record
+	 * is the default. This means that a login automatically triggers that
+	 * record. In that case you should not call this method as well. You can
+	 * call this method if the user needs to obtain the verification code again,
+	 * or to authenticate against a different MFA record.</p>
+	 *
+	 * <p>What this method does, depends on the MFA type.</p>
+	 *
+	 * <p><ul>
+	 * <li>{@link MfaRecord.Constants#TYPE_SMS TYPE_SMS}: The verification code
+	 * is sent by SMS to the phone number stored in the MFA record.</li>
+	 * <li>{@link MfaRecord.Constants#TYPE_TOTP TYPE_TOTP}: Nothing is done.
+	 * The user can get a verification code any time from their authenticator
+	 * app, such as Authy.</li>
+	 * </ul></p>
+	 *
+	 * @param mfaId the MFA record ID
+	 * @throws SenSeeActClientException if the SenSeeAct service returns an
+	 * error response
+	 * @throws HttpClientException if the server returns an error response (for
+	 * example if the server is available, but the SenSeeAct service is not)
+	 * @throws ParseException if an error occurs while parsing the response
+	 * @throws IOException if an error occurs while communicating with the
+	 * server
+	 */
+	public void requestMfaVerification(String mfaId)
+			throws SenSeeActClientException, HttpClientException,
+			ParseException, IOException {
+		runQuery("/auth/mfa/request-verify", "GET", true,
+				client -> client.addQueryParam("id", mfaId)
+						.readResponse(),
+				HttpResponse::readString);
+	}
+
+	/**
+	 * Verifies a multi-factor authentication code against the specified MFA
+	 * record in the account of the current user. See {@link
+	 * #requestMfaVerification(String) requestMfaVerification()} for more
+	 * information on how to obtain a verification code.
+	 *
+	 * @param mfaId the MFA record ID
+	 * @param code the verification code
+	 * @return the login result
+	 * @throws SenSeeActClientException if the SenSeeAct service returns an
+	 * error response
+	 * @throws HttpClientException if the server returns an error response (for
+	 * example if the server is available, but the SenSeeAct service is not)
+	 * @throws ParseException if an error occurs while parsing the response
+	 * @throws IOException if an error occurs while communicating with the
+	 * server
+	 */
+	public LoginResult verifyMfaCode(String mfaId, String code)
+			throws SenSeeActClientException, HttpClientException,
+			ParseException, IOException {
+		VerifyMfaParams params = new VerifyMfaParams(mfaId, code);
+		LoginResult result = runQuery("/auth/mfa/verify", "POST", true,
+				client -> client.writeJson(params),
+				response -> response.readJson(LoginResult.class));
+		authHeaders = List.of(new AuthHeader(DEFAULT_AUTH_HEADER,
+				result.getToken()));
+		return result;
 	}
 
 	/**
@@ -5964,6 +6298,10 @@ public class SenSeeActClient {
 	 * token. For other queries you should set "authenticate" to false, because
 	 * it may not be possible to add an authentication token (for example for
 	 * a login or signup).
+	 *
+	 * <p>If you need streaming input or output, you may use {@link
+	 * #runQuery(String, String, boolean, HttpClientRunner)
+	 * runQuery(action, method, authenticate, runner)}.</p>
 	 * 
 	 * @param action the action. This is appended to the base URL and should
 	 * start with a slash.
@@ -5991,14 +6329,7 @@ public class SenSeeActClient {
 			responseHeaders = httpResponse.getHeaders();
 			return result;
 		} catch (HttpClientException httpEx) {
-			ObjectMapper mapper = new ObjectMapper();
-			HttpError error;
-			try {
-				error = mapper.readValue(httpEx.getErrorContent(),
-						HttpError.class);
-			} catch (JsonProcessingException parseEx) {
-				error = null;
-			}
+			HttpError error = readHttpError(httpEx);
 			if (error == null)
 				throw httpEx;
 			throw new SenSeeActClientException(httpEx.getStatusCode(),
@@ -6007,7 +6338,62 @@ public class SenSeeActClient {
 			closeHttpClient(client);
 		}
 	}
-	
+
+	/**
+	 * Runs a SenSeeAct query. If the query requires authentication, you should
+	 * set "authenticate" to true. Then this method will add the authentication
+	 * token. For other queries you should set "authenticate" to false, because
+	 * it may not be possible to add an authentication token (for example for
+	 * a login or signup).
+	 *
+	 * <p>It is usually easier to call {@link
+	 * #runQuery(String, String, boolean, SenSeeActRequestRunner, SenSeeActResultReader)
+	 * runQuery(action, method, authenticate, runner, reader)}.</p>
+	 *
+	 * <p>This method is mainly useful if you need streaming input or
+	 * output.</p>
+	 *
+	 * @param action the action. This is appended to the base URL and should
+	 * start with a slash.
+	 * @param method the HTTP method (e.g. GET or POST)
+	 * @param authenticate true if the query requires authentication, false
+	 * otherwise
+	 * @param runner the query runner
+	 * @throws SenSeeActClientException if the SenSeeAct service returns an
+	 * error response
+	 * @throws HttpClientException if the server returns an error response (for
+	 * example if the server is available, but the SenSeeAct service is not)
+	 * @throws ParseException if an error occurs while parsing the response
+	 * @throws IOException if an error occurs while communicating with the
+	 * server
+	 */
+	public void runQuery(String action, String method, boolean authenticate,
+			HttpClientRunner runner) throws SenSeeActClientException,
+			HttpClientException, ParseException, IOException {
+		HttpClient2 client = getHttpClient(action, method, authenticate);
+		try {
+			runner.run(client);
+		} catch (HttpClientException httpEx) {
+			HttpError error = readHttpError(httpEx);
+			if (error == null)
+				throw httpEx;
+			throw new SenSeeActClientException(httpEx.getStatusCode(),
+					httpEx.getStatusMessage(), error);
+		} finally {
+			closeHttpClient(client);
+		}
+	}
+
+	private HttpError readHttpError(HttpClientException ex) {
+		ObjectMapper mapper = new ObjectMapper();
+		try {
+			return mapper.readValue(ex.getErrorContent(),
+					HttpError.class);
+		} catch (JsonProcessingException parseEx) {
+			return null;
+		}
+	}
+
 	/**
 	 * Creates an HTTP client for a new SenSeeAct query. This method is used in
 	 * {@link #runQuery(String, String, boolean, SenSeeActRequestRunner, SenSeeActResultReader)

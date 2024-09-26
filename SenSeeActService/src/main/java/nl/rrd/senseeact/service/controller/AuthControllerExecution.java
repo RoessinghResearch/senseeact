@@ -476,35 +476,6 @@ public class AuthControllerExecution {
 		return result;
 	}
 
-	private void requestMfaVerification(Database authDb, User user,
-			PrivateMfaRecord record) throws HttpException, Exception {
-		checkMaxMfaVerifyCount(record);
-		String type = record.getType();
-		if (type.equals(MfaRecord.Constants.TYPE_SMS)) {
-			requestMfaVerificationSms(authDb, user, record);
-		} else if (!type.equals(MfaRecord.Constants.TYPE_TOTP)) {
-			Logger logger = AppComponents.getLogger(getClass().getSimpleName());
-			logger.error("MFA type not supported: " + type);
-			throw new InternalServerErrorException();
-		}
-	}
-
-	private void requestMfaVerificationSms(Database authDb, User user,
-			PrivateMfaRecord record) throws HttpException, Exception {
-		UserCache cache = UserCache.getInstance();
-		ZonedDateTime time = DateTimeUtils.nowMs();
-		record.getVerifyTimes().add(time);
-		cache.updateUser(authDb, user);
-		String phone = (String)record.getPrivateData().get(
-				PrivateMfaRecord.Constants.KEY_SMS_PHONE_NUMBER);
-		boolean verifyResult = twilioRequestSmsVerification(phone);
-		if (!verifyResult) {
-			Logger logger = AppComponents.getLogger(getClass().getSimpleName());
-			logger.error("Request SMS verification failed");
-			throw new InternalServerErrorException();
-		}
-	}
-
 	public static void validateForbiddenQueryParams(HttpServletRequest request,
 			String... paramNames) throws BadRequestException {
 		if (request.getQueryString() == null)
@@ -973,6 +944,47 @@ public class AuthControllerExecution {
 		return record.toPublicMfaRecord();
 	}
 
+	public Object requestMfaVerification(Database authDb, User user,
+			String mfaId) throws HttpException, Exception {
+		cleanMfaRecords(authDb, user);
+		PrivateMfaRecord record = findMfaRecord(mfaId, user);
+		if (record == null || record.getStatus() !=
+				PrivateMfaRecord.Status.VERIFY_SUCCESS) {
+			throw new NotFoundException("MFA record not found");
+		}
+		requestMfaVerification(authDb, user, record);
+		return null;
+	}
+
+	private void requestMfaVerification(Database authDb, User user,
+			PrivateMfaRecord record) throws HttpException, Exception {
+		checkMaxMfaVerifyCount(record);
+		String type = record.getType();
+		if (type.equals(MfaRecord.Constants.TYPE_SMS)) {
+			requestMfaVerificationSms(authDb, user, record);
+		} else if (!type.equals(MfaRecord.Constants.TYPE_TOTP)) {
+			Logger logger = AppComponents.getLogger(getClass().getSimpleName());
+			logger.error("MFA type not supported: " + type);
+			throw new InternalServerErrorException();
+		}
+	}
+
+	private void requestMfaVerificationSms(Database authDb, User user,
+			PrivateMfaRecord record) throws HttpException, Exception {
+		UserCache cache = UserCache.getInstance();
+		ZonedDateTime time = DateTimeUtils.nowMs();
+		record.getVerifyTimes().add(time);
+		cache.updateUser(authDb, user);
+		String phone = (String)record.getPrivateData().get(
+				PrivateMfaRecord.Constants.KEY_SMS_PHONE_NUMBER);
+		boolean verifyResult = twilioRequestSmsVerification(phone);
+		if (!verifyResult) {
+			Logger logger = AppComponents.getLogger(getClass().getSimpleName());
+			logger.error("Request SMS verification failed");
+			throw new InternalServerErrorException();
+		}
+	}
+
 	private void cleanMfaRecords(Database authDb, User user)
 			throws DatabaseException {
 		ZonedDateTime now = DateTimeUtils.nowMs();
@@ -1057,10 +1069,13 @@ public class AuthControllerExecution {
 	}
 
 	public VerifyAddMfaRecordResult verifyAddMfaRecord(ProtocolVersion version,
-			HttpServletResponse response, String mfaId, String code,
-			Database authDb, User user, AuthDetails authDetails)
+			HttpServletResponse response, Database authDb, User user,
+			AuthDetails authDetails, VerifyMfaParams params)
 			throws HttpException, Exception {
 		cleanMfaRecords(authDb, user);
+		validateVerifyMfaParams(params);
+		String mfaId = params.getMfaId();
+		String code = params.getCode();
 		PrivateMfaRecord record = findMfaRecord(mfaId, user);
 		if (record == null ||
 				record.getStatus() == PrivateMfaRecord.Status.VERIFY_FAIL) {
@@ -1322,7 +1337,23 @@ public class AuthControllerExecution {
 		return result;
 	}
 
-	public Object getMfaTotpQRCode(HttpServletResponse response,
+	public Object setDefaultMfaRecord(Database authDb, User user, String mfaId)
+			throws HttpException, Exception {
+		cleanMfaRecords(authDb, user);
+		PrivateMfaRecord record = findMfaRecord(mfaId, user);
+		if (record == null || record.getStatus() !=
+				PrivateMfaRecord.Status.VERIFY_SUCCESS) {
+			throw new NotFoundException("MFA record not found");
+		}
+		List<PrivateMfaRecord> list = user.getMfaList();
+		list.remove(record);
+		list.add(0, record);
+		UserCache cache = UserCache.getInstance();
+		cache.updateUser(authDb, user);
+		return null;
+	}
+
+	public Object getMfaAddTotpQRCode(HttpServletResponse response,
 			Database authDb, User user, String mfaId) throws HttpException,
 			Exception {
 		cleanMfaRecords(authDb, user);
@@ -1352,23 +1383,10 @@ public class AuthControllerExecution {
 			HttpServletResponse response, Database authDb, User user,
 			AuthDetails authDetails, VerifyMfaParams params)
 			throws HttpException, Exception {
-		Logger logger = AppComponents.getLogger(getClass().getSimpleName());
 		ZonedDateTime now = DateTimeUtils.nowMs();
+		validateVerifyMfaParams(params);
 		String mfaId = params.getMfaId();
 		String code = params.getCode();
-		List<HttpFieldError> fieldErrors = new ArrayList<>();
-		if (mfaId == null || mfaId.isEmpty()) {
-			fieldErrors.add(new HttpFieldError("mfaId",
-					"Parameter \"mfaId\" not defined"));
-		}
-		if (code == null || code.isEmpty()) {
-			fieldErrors.add(new HttpFieldError("code",
-					"Parameter \"code\" not defined"));
-		}
-		if (!fieldErrors.isEmpty()) {
-			logger.info("Failed verify MFA attempt: " + fieldErrors);
-			throw BadRequestException.withInvalidInput(fieldErrors);
-		}
 		cleanMfaRecords(authDb, user);
 		if (authDetails == null) {
 			throw new BadRequestException("MFA verification not initiated");
@@ -1388,6 +1406,26 @@ public class AuthControllerExecution {
 		result.setEmail(user.getEmail());
 		result.setToken(token);
 		return result;
+	}
+
+	private void validateVerifyMfaParams(VerifyMfaParams params)
+			throws HttpException {
+		Logger logger = AppComponents.getLogger(getClass().getSimpleName());
+		String mfaId = params.getMfaId();
+		String code = params.getCode();
+		List<HttpFieldError> fieldErrors = new ArrayList<>();
+		if (mfaId == null || mfaId.isEmpty()) {
+			fieldErrors.add(new HttpFieldError("mfaId",
+					"Parameter \"mfaId\" not defined"));
+		}
+		if (code == null || code.isEmpty()) {
+			fieldErrors.add(new HttpFieldError("code",
+					"Parameter \"code\" not defined"));
+		}
+		if (!fieldErrors.isEmpty()) {
+			logger.info("Failed verify MFA attempt: " + fieldErrors);
+			throw BadRequestException.withInvalidInput(fieldErrors);
+		}
 	}
 
 	private void performVerifyMfaCode(Database authDb, User user,

@@ -5,10 +5,16 @@ import nl.rrd.utils.json.JsonObject;
 
 @JsonIgnoreProperties(ignoreUnknown=true)
 public class VerifyMfaParams extends JsonObject {
-	public static final int DEFAULT_EXPIRATION = 1440; // minutes
-
 	private String mfaId = null;
 	private String code = null;
+
+	public VerifyMfaParams() {
+	}
+
+	public VerifyMfaParams(String mfaId, String code) {
+		this.mfaId = mfaId;
+		this.code = code;
+	}
 
 	public String getMfaId() {
 		return mfaId;
