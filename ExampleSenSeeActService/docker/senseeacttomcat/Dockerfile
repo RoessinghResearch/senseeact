@@ -6,7 +6,7 @@
 #     --build-arg TOMCAT_ADMIN_PASSWORD=secret \
 #     .
 
-FROM tomcat:10.1-jdk17 AS build
+FROM tomcat:10.1-jdk21 AS build
 ARG GOOGLE_APPLICATION_CREDENTIALS
 WORKDIR /app
 COPY ./rrd-utils/RRDUtils/ ./rrd-utils/RRDUtils/
@@ -15,7 +15,7 @@ COPY $GOOGLE_APPLICATION_CREDENTIALS google-application-credentials.json
 WORKDIR /app/senseeact/ExampleSenSeeActService
 RUN chmod 755 gradlew && sed -i 's/\r//' gradlew && ./gradlew build
 
-FROM tomcat:10.1-jdk17
+FROM tomcat:10.1-jdk21
 ARG TOMCAT_ADMIN_USERNAME
 ARG TOMCAT_ADMIN_PASSWORD
 COPY --from=build /app/google-application-credentials.json /app/

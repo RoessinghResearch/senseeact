@@ -21,7 +21,7 @@ RUN line=`grep -n -m 1 "Listen 80" conf/httpd.conf | sed -e "s/:.*$//"` && \
 	sed -i -e "${line}i Listen 8081" conf/httpd.conf
 EXPOSE 8081
 
-FROM eclipse-temurin:22 AS build
+FROM eclipse-temurin:23 AS build
 WORKDIR /app
 COPY ./ ./
 WORKDIR /app/senseeact/ExampleSenSeeActService

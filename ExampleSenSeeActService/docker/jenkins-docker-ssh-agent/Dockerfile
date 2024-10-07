@@ -1,4 +1,4 @@
-FROM jenkins/ssh-agent:jdk17
+FROM jenkins/ssh-agent:jdk21
 ARG GROUP
 ARG SSH_PRIVATE_KEY
 ARG SSH_PUBLIC_KEY
