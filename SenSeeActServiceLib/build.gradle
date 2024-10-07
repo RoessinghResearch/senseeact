@@ -17,19 +17,19 @@ java {
 
 dependencies {
 	api project(':SenSeeActClient')
-	api 'com.nimbusds:nimbus-jose-jwt:9.40'
+	api 'com.nimbusds:nimbus-jose-jwt:9.41.2'
 	api 'jakarta.mail:jakarta.mail-api:2.1.3'
 	api 'org.eclipse.angus:angus-mail:2.0.3'
 	api 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.6.0'
-	api 'org.springframework:spring-context-support:6.1.12'
-	api('org.springframework.boot:spring-boot-starter-web:3.3.3') {
+	api 'org.springframework:spring-context-support:6.1.13'
+	api('org.springframework.boot:spring-boot-starter-web:3.3.4') {
 		exclude group: 'org.apache.logging.log4j', module: 'log4j-to-slf4j'
 		// logback-classic should only be enabled at runtime. It should not be
 		// used during test.
 		exclude group: 'ch.qos.logback', module: 'logback-classic'
 	}
-	api 'com.google.cloud:libraries-bom:26.45.0'
-	api 'com.google.cloud:google-cloud-texttospeech:2.49.0'
+	api 'com.google.cloud:libraries-bom:26.48.0'
+	api 'com.google.cloud:google-cloud-texttospeech:2.52.0'
 	api('com.google.firebase:firebase-admin:9.3.0') {
 		// firebase-admin includes a version of slf4j-api that is not compatible
 		// with the latest version of spring-boot
