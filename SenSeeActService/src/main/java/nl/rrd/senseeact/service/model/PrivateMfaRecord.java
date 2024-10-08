@@ -166,17 +166,9 @@ public class PrivateMfaRecord {
 	 * that is included in an {@link MfaRecord MfaRecord}. It depends on the
 	 * status and type. See more details at the top of this page.
 	 *
-	 * <p><b>TOTP, status: CREATED</b></p>
+	 * <p><b>TOTP</b></p>
 	 *
-	 * <p><ul>
-	 * <li>{@link PrivateMfaRecord.Constants#KEY_TOTP_BINDING_URI KEY_TOTP_BINDING_URI}</li>
-	 * </ul></p>
-	 *
-	 * <p><b>TOTP, status: VERIFY_SUCCESS</b></p>
-	 *
-	 * <p><ul>
-	 * <li>{@link PrivateMfaRecord.Constants#KEY_TOTP_BINDING_URI KEY_TOTP_BINDING_URI}</li>
-	 * </ul></p>
+	 * <p>Empty map</p>
 	 *
 	 * <p><b>SMS, status: CREATED</b></p>
 	 *
@@ -201,17 +193,9 @@ public class PrivateMfaRecord {
 	 * is included in an {@link MfaRecord MfaRecord}. It depends on the status
 	 * and type. See more details at the top of this page.
 	 *
-	 * <p><b>TOTP, status: CREATED</b></p>
+	 * <p><b>TOTP</b></p>
 	 *
-	 * <p><ul>
-	 * <li>{@link PrivateMfaRecord.Constants#KEY_TOTP_BINDING_URI KEY_TOTP_BINDING_URI}</li>
-	 * </ul></p>
-	 *
-	 * <p><b>TOTP, status: VERIFY_SUCCESS</b></p>
-	 *
-	 * <p><ul>
-	 * <li>{@link PrivateMfaRecord.Constants#KEY_TOTP_BINDING_URI KEY_TOTP_BINDING_URI}</li>
-	 * </ul></p>
+	 * <p>Empty map</p>
 	 *
 	 * <p><b>SMS, status: CREATED</b></p>
 	 *

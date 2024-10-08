@@ -29,12 +29,12 @@ import java.util.Map;
 @JsonIgnoreProperties(ignoreUnknown=true)
 public class MfaRecord {
 	public static class Constants {
-		public static final String TYPE_SMS = "sms";
 		public static final String TYPE_TOTP = "totp";
+		public static final String TYPE_SMS = "sms";
 
+		public static final String KEY_TOTP_BINDING_URI = "bindingUri";
 		public static final String KEY_SMS_PHONE_NUMBER = "phoneNumber";
 		public static final String KEY_SMS_PARTIAL_PHONE_NUMBER = "partialPhoneNumber";
-		public static final String KEY_TOTP_BINDING_URI = "bindingUri";
 	}
 
 	private String id;
@@ -134,9 +134,7 @@ public class MfaRecord {
 	 *
 	 * <p><b>TOTP, verified</b></p>
 	 *
-	 * <p><ul>
-	 * <li>{@link MfaRecord.Constants#KEY_TOTP_BINDING_URI KEY_TOTP_BINDING_URI}</li>
-	 * </ul></p>
+	 * <p>Empty map</p>
 	 *
 	 * <p><b>SMS, unverified</b></p>
 	 *
@@ -169,9 +167,7 @@ public class MfaRecord {
 	 *
 	 * <p><b>TOTP, verified</b></p>
 	 *
-	 * <p><ul>
-	 * <li>{@link MfaRecord.Constants#KEY_TOTP_BINDING_URI KEY_TOTP_BINDING_URI}</li>
-	 * </ul></p>
+	 * <p>Empty map</p>
 	 *
 	 * <p><b>SMS, unverified</b></p>
 	 *

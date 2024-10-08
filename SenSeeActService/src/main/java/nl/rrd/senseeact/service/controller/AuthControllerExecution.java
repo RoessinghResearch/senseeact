@@ -835,15 +835,40 @@ public class AuthControllerExecution {
 			Database authDb, User user) throws HttpException, Exception {
 		cleanMfaRecords(authDb, user);
 		checkMaxMfaAddCount(user);
-		if (type.equals(MfaRecord.Constants.TYPE_SMS)) {
-			return addMfaRecordSms(request, authDb, user);
-		} else if (type.equals(MfaRecord.Constants.TYPE_TOTP)) {
+		if (type.equals(MfaRecord.Constants.TYPE_TOTP)) {
 			return addMfaRecordTotp(authDb, user);
+		} else if (type.equals(MfaRecord.Constants.TYPE_SMS)) {
+			return addMfaRecordSms(request, authDb, user);
 		} else {
 			HttpFieldError error = new HttpFieldError("type",
 					"Unknown MFA type: " + type);
 			throw BadRequestException.withInvalidInput(error);
 		}
+	}
+
+	private MfaRecord addMfaRecordTotp(Database authDb, User user)
+			throws HttpException, Exception {
+		checkMaxMfaType(user, MfaRecord.Constants.TYPE_TOTP,
+				MAX_MFA_TOTP_COUNT);
+		ZonedDateTime now = DateTimeUtils.nowMs();
+		TwilioTotpData totpData = twilioCreateTotpFactor(user);
+		PrivateMfaRecord record = new PrivateMfaRecord();
+		record.setId(UUID.randomUUID().toString().toLowerCase()
+				.replaceAll("-", ""));
+		record.setType(MfaRecord.Constants.TYPE_TOTP);
+		record.setCreated(now);
+		Map<String,Object> publicData = new LinkedHashMap<>();
+		publicData.put(PrivateMfaRecord.Constants.KEY_TOTP_BINDING_URI,
+				totpData.bindingUri);
+		record.setPublicData(publicData);
+		Map<String,Object> privateData = new LinkedHashMap<>(publicData);
+		privateData.put(PrivateMfaRecord.Constants.KEY_TOTP_FACTOR_SID,
+				totpData.factorSid);
+		record.setPrivateData(privateData);
+		user.getMfaList().add(record);
+		UserCache cache = UserCache.getInstance();
+		cache.updateUser(authDb, user);
+		return record.toPublicMfaRecord();
 	}
 
 	private MfaRecord addMfaRecordSms(HttpServletRequest request,
@@ -893,11 +918,11 @@ public class AuthControllerExecution {
 		MfaRecordSmsInput result = new MfaRecordSmsInput();
 		try {
 			result.phone = mapReader.readStringRegex(
-					PrivateMfaRecord.Constants.KEY_SMS_PHONE_NUMBER,
-					"\\+[0-9]+");
+					MfaRecord.Constants.KEY_SMS_PHONE_NUMBER, "\\+[0-9]+");
 		} catch (ParseException ex) {
-			throw new BadRequestException(ErrorCode.INVALID_INPUT,
-					"Invalid input: " + ex.getMessage());
+			HttpFieldError error = new HttpFieldError(
+					MfaRecord.Constants.KEY_SMS_PHONE_NUMBER, ex.getMessage());
+			throw BadRequestException.withInvalidInput(error);
 		}
 		return result;
 	}
@@ -913,35 +938,13 @@ public class AuthControllerExecution {
 			if (recordPhone.equals(phone)) {
 				String msg = "MFA records with phone number already exists: " +
 						phone;
-				throw new BadRequestException(
+				HttpError error = new HttpError(
 						ErrorCode.AUTH_MFA_SMS_ALREADY_EXISTS, msg);
+				error.addFieldError(new HttpFieldError(
+						MfaRecord.Constants.KEY_SMS_PHONE_NUMBER, msg));
+				throw new BadRequestException(error);
 			}
 		}
-	}
-
-	private MfaRecord addMfaRecordTotp(Database authDb, User user)
-			throws HttpException, Exception {
-		checkMaxMfaType(user, MfaRecord.Constants.TYPE_TOTP,
-				MAX_MFA_TOTP_COUNT);
-		ZonedDateTime now = DateTimeUtils.nowMs();
-		TwilioTotpData totpData = twilioCreateTotpFactor(user);
-		PrivateMfaRecord record = new PrivateMfaRecord();
-		record.setId(UUID.randomUUID().toString().toLowerCase()
-				.replaceAll("-", ""));
-		record.setType(MfaRecord.Constants.TYPE_TOTP);
-		record.setCreated(now);
-		Map<String,Object> publicData = new LinkedHashMap<>();
-		publicData.put(PrivateMfaRecord.Constants.KEY_TOTP_BINDING_URI,
-				totpData.bindingUri);
-		record.setPublicData(publicData);
-		Map<String,Object> privateData = new LinkedHashMap<>(publicData);
-		privateData.put(PrivateMfaRecord.Constants.KEY_TOTP_FACTOR_SID,
-				totpData.factorSid);
-		record.setPrivateData(privateData);
-		user.getMfaList().add(record);
-		UserCache cache = UserCache.getInstance();
-		cache.updateUser(authDb, user);
-		return record.toPublicMfaRecord();
 	}
 
 	public Object requestMfaVerification(Database authDb, User user,
@@ -1118,6 +1121,38 @@ public class AuthControllerExecution {
 		return new VerifyAddMfaRecordResult(record, token);
 	}
 
+	private MfaRecord verifyAddMfaRecordTotp(PrivateMfaRecord record,
+			String code, Database authDb, User user) throws HttpException,
+			Exception {
+		UserCache cache = UserCache.getInstance();
+		try {
+			checkMaxMfaType(user, MfaRecord.Constants.TYPE_TOTP,
+					MAX_MFA_TOTP_COUNT);
+		} catch (BadRequestException ex) {
+			record.setStatus(PrivateMfaRecord.Status.VERIFY_FAIL);
+			record.setPublicData(new LinkedHashMap<>());
+			cache.updateUser(authDb, user);
+			throw ex;
+		}
+		String factorSid = (String)record.getPrivateData().get(
+				PrivateMfaRecord.Constants.KEY_TOTP_FACTOR_SID);
+		boolean verifyResult = twilioTotpVerificationCheck(user, factorSid,
+				code);
+		if (!verifyResult) {
+			record.setStatus(PrivateMfaRecord.Status.VERIFY_FAIL);
+			record.setPublicData(new LinkedHashMap<>());
+			cache.updateUser(authDb, user);
+			HttpFieldError error = new HttpFieldError("code",
+					"Invalid verification code");
+			throw BadRequestException.withInvalidInput(error);
+		}
+		record.setStatus(PrivateMfaRecord.Status.VERIFY_SUCCESS);
+		record.getPublicData().remove(
+				PrivateMfaRecord.Constants.KEY_TOTP_BINDING_URI);
+		cache.updateUser(authDb, user);
+		return record.toPublicMfaRecord();
+	}
+
 	private MfaRecord verifyAddMfaRecordSms(PrivateMfaRecord record,
 			String code, Database authDb, User user) throws HttpException,
 			Exception {
@@ -1152,93 +1187,12 @@ public class AuthControllerExecution {
 		return record.toPublicMfaRecord();
 	}
 
-	private MfaRecord verifyAddMfaRecordTotp(PrivateMfaRecord record,
-			String code, Database authDb, User user) throws HttpException,
-			Exception {
-		UserCache cache = UserCache.getInstance();
-		try {
-			checkMaxMfaType(user, MfaRecord.Constants.TYPE_TOTP,
-					MAX_MFA_TOTP_COUNT);
-		} catch (BadRequestException ex) {
-			record.setStatus(PrivateMfaRecord.Status.VERIFY_FAIL);
-			record.setPublicData(new LinkedHashMap<>());
-			cache.updateUser(authDb, user);
-			throw ex;
-		}
-		String factorSid = (String)record.getPrivateData().get(
-				PrivateMfaRecord.Constants.KEY_TOTP_FACTOR_SID);
-		boolean verifyResult = twilioTotpVerificationCheck(user, factorSid,
-				code);
-		if (!verifyResult) {
-			record.setStatus(PrivateMfaRecord.Status.VERIFY_FAIL);
-			record.setPublicData(new LinkedHashMap<>());
-			cache.updateUser(authDb, user);
-			HttpFieldError error = new HttpFieldError("code",
-					"Invalid verification code");
-			throw BadRequestException.withInvalidInput(error);
-		}
-		record.setStatus(PrivateMfaRecord.Status.VERIFY_SUCCESS);
-		cache.updateUser(authDb, user);
-		return record.toPublicMfaRecord();
-	}
-
 	private String getPartialPhoneNumber(String phone) {
 		if (phone.length() < 5)
 			return phone;
 		return phone.substring(0, 3) +
 				"*".repeat(phone.length() - 5) +
 				phone.substring(phone.length() - 2);
-	}
-
-	private boolean twilioRequestSmsVerification(String phone)
-			throws HttpClientException, ParseException, IOException {
-		Configuration config = AppComponents.get(Configuration.class);
-		String serviceSid = config.get(Configuration.TWILIO_VERIFY_SERVICE_SID);
-		String url = String.format(
-				"https://verify.twilio.com/v2/Services/%s/Verifications",
-				serviceSid);
-		Map<String,String> params = new LinkedHashMap<>();
-		params.put("To", phone);
-		params.put("Channel", "sms");
-		Map<String,Object> response;
-		try (HttpClient2 httpClient = new HttpClient2(url)) {
-			addTwilioAuthHeader(httpClient);
-			response = httpClient.setMethod("POST")
-				.writePostParams(params)
-				.readJson(new TypeReference<>() {});
-		}
-		Object status = response.get("status");
-		if (status instanceof Integer statusCode) {
-			if (statusCode == 400)
-				return false;
-		}
-		if (!"pending".equals(status))
-			throw new ParseException("Unexpected verify response");
-		return true;
-	}
-
-	private boolean twilioSmsVerificationCheck(String phone, String code)
-			throws HttpClientException, ParseException, IOException {
-		Configuration config = AppComponents.get(Configuration.class);
-		String serviceSid = config.get(Configuration.TWILIO_VERIFY_SERVICE_SID);
-		String url = String.format(
-				"https://verify.twilio.com/v2/Services/%s/VerificationCheck",
-				serviceSid);
-		Map<String,String> params = new LinkedHashMap<>();
-		params.put("To", phone);
-		params.put("Code", code);
-		Map<String,Object> response;
-		try (HttpClient2 httpClient = new HttpClient2(url)) {
-			addTwilioAuthHeader(httpClient);
-			response = httpClient.setMethod("POST")
-					.writePostParams(params)
-					.readJson(new TypeReference<>() {});
-		}
-		Object status = response.get("status");
-		if (!(status instanceof String)) {
-			throw new ParseException("Unexpected verify response");
-		}
-		return "approved".equals(status);
 	}
 
 	private TwilioTotpData twilioCreateTotpFactor(User user) throws HttpClientException,
@@ -1295,6 +1249,57 @@ public class AuthControllerExecution {
 			throw new ParseException("Unexpected verify response");
 		}
 		return "verified".equals(status);
+	}
+
+	private boolean twilioRequestSmsVerification(String phone)
+			throws HttpClientException, ParseException, IOException {
+		Configuration config = AppComponents.get(Configuration.class);
+		String serviceSid = config.get(Configuration.TWILIO_VERIFY_SERVICE_SID);
+		String url = String.format(
+				"https://verify.twilio.com/v2/Services/%s/Verifications",
+				serviceSid);
+		Map<String,String> params = new LinkedHashMap<>();
+		params.put("To", phone);
+		params.put("Channel", "sms");
+		Map<String,Object> response;
+		try (HttpClient2 httpClient = new HttpClient2(url)) {
+			addTwilioAuthHeader(httpClient);
+			response = httpClient.setMethod("POST")
+				.writePostParams(params)
+				.readJson(new TypeReference<>() {});
+		}
+		Object status = response.get("status");
+		if (status instanceof Integer statusCode) {
+			if (statusCode == 400)
+				return false;
+		}
+		if (!"pending".equals(status))
+			throw new ParseException("Unexpected verify response");
+		return true;
+	}
+
+	private boolean twilioSmsVerificationCheck(String phone, String code)
+			throws HttpClientException, ParseException, IOException {
+		Configuration config = AppComponents.get(Configuration.class);
+		String serviceSid = config.get(Configuration.TWILIO_VERIFY_SERVICE_SID);
+		String url = String.format(
+				"https://verify.twilio.com/v2/Services/%s/VerificationCheck",
+				serviceSid);
+		Map<String,String> params = new LinkedHashMap<>();
+		params.put("To", phone);
+		params.put("Code", code);
+		Map<String,Object> response;
+		try (HttpClient2 httpClient = new HttpClient2(url)) {
+			addTwilioAuthHeader(httpClient);
+			response = httpClient.setMethod("POST")
+					.writePostParams(params)
+					.readJson(new TypeReference<>() {});
+		}
+		Object status = response.get("status");
+		if (!(status instanceof String)) {
+			throw new ParseException("Unexpected verify response");
+		}
+		return "approved".equals(status);
 	}
 
 	private void addTwilioAuthHeader(HttpClient2 httpClient) {
@@ -1441,10 +1446,10 @@ public class AuthControllerExecution {
 		cache.updateUser(authDb, user);
 		String type = record.getType();
 		boolean verifyResult;
-		if (type.equals(MfaRecord.Constants.TYPE_SMS)) {
-			verifyResult = verifyMfaCodeSms(record, code);
-		} else if (type.equals(MfaRecord.Constants.TYPE_TOTP)) {
+		if (type.equals(MfaRecord.Constants.TYPE_TOTP)) {
 			verifyResult = verifyMfaCodeTotp(user, record, code);
+		} else if (type.equals(MfaRecord.Constants.TYPE_SMS)) {
+			verifyResult = verifyMfaCodeSms(record, code);
 		} else {
 			logger.error("MFA type not supported: " + type);
 			throw new InternalServerErrorException();
@@ -1458,18 +1463,18 @@ public class AuthControllerExecution {
 				user.getUserid(), user.getEmail());
 	}
 
-	private boolean verifyMfaCodeSms(PrivateMfaRecord record, String code)
-			throws HttpException, Exception {
-		String phone = (String)record.getPrivateData().get(
-				PrivateMfaRecord.Constants.KEY_SMS_PHONE_NUMBER);
-		return twilioSmsVerificationCheck(phone, code);
-	}
-
 	private boolean verifyMfaCodeTotp(User user, PrivateMfaRecord record,
 			String code) throws HttpException, Exception {
 		String factorSid = (String)record.getPrivateData().get(
 				PrivateMfaRecord.Constants.KEY_TOTP_FACTOR_SID);
 		return twilioTotpVerificationCheck(user, factorSid, code);
+	}
+
+	private boolean verifyMfaCodeSms(PrivateMfaRecord record, String code)
+			throws HttpException, Exception {
+		String phone = (String)record.getPrivateData().get(
+				PrivateMfaRecord.Constants.KEY_SMS_PHONE_NUMBER);
+		return twilioSmsVerificationCheck(phone, code);
 	}
 
 	private static EmailTemplate findEmailTemplate(

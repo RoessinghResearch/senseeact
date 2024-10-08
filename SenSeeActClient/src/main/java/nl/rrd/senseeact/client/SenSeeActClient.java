@@ -872,6 +872,39 @@ public class SenSeeActClient {
 	}
 
 	/**
+	 * Adds a multi-factor authentication record for TOTP to the user who is
+	 * currently logged in. TOTP uses an authenticator app such as Authy. This
+	 * method returns the unverified MFA record. A QR code can be obtained with
+	 * {@link #getMfaAddTotpQRCode(String, OutputStream) getMfaAddTotpQRCode()}.
+	 * This should be scanned in the authenticator app to get a verification
+	 * code. The record should be verified with {@link
+	 * #verifyAddMfaRecord(String, String) verifyAddMfaRecord()}.
+	 *
+	 * <p>As long as the account has a verified MFA record, every login requires
+	 * an additional authentication against an MFA record. The first MFA record
+	 * is the default. This means that a login automatically triggers that
+	 * record, in the same way as {@link #requestMfaVerification(String)
+	 * requestMfaVerification()}.</p>
+	 *
+	 * @return the unverified MFA record
+	 * @throws SenSeeActClientException if the SenSeeAct service returns an
+	 * error response
+	 * @throws HttpClientException if the server returns an error response (for
+	 * example if the server is available, but the SenSeeAct service is not)
+	 * @throws ParseException if an error occurs while parsing the response
+	 * @throws IOException if an error occurs while communicating with the
+	 * server
+	 */
+	public MfaRecord addMfaRecordTotp() throws SenSeeActClientException,
+			HttpClientException, ParseException, IOException {
+		return runQuery("/auth/mfa/add", "POST", true,
+				client -> client.addQueryParam(
+						"type", MfaRecord.Constants.TYPE_TOTP)
+						.readResponse(),
+				response -> response.readJson(MfaRecord.class));
+	}
+
+	/**
 	 * Adds a multi-factor authentication record for SMS to the user who is
 	 * currently logged in. It returns the unverified MFA record. A verification
 	 * code is sent to the specified phone number. The record should be verified
@@ -903,39 +936,6 @@ public class SenSeeActClient {
 				client -> client.addQueryParam(
 						"type", MfaRecord.Constants.TYPE_SMS)
 						.writeJson(params),
-				response -> response.readJson(MfaRecord.class));
-	}
-
-	/**
-	 * Adds a multi-factor authentication record for TOTP to the user who is
-	 * currently logged in. TOTP uses an authenticator app such as Authy. This
-	 * method returns the unverified MFA record. A QR code can be obtained with
-	 * {@link #getMfaAddTotpQRCode(String, OutputStream) getMfaAddTotpQRCode()}.
-	 * This should be scanned in the authenticator app to get a verification
-	 * code. The record should be verified with {@link
-	 * #verifyAddMfaRecord(String, String) verifyAddMfaRecord()}.
-	 *
-	 * <p>As long as the account has a verified MFA record, every login requires
-	 * an additional authentication against an MFA record. The first MFA record
-	 * is the default. This means that a login automatically triggers that
-	 * record, in the same way as {@link #requestMfaVerification(String)
-	 * requestMfaVerification()}.</p>
-	 *
-	 * @return the unverified MFA record
-	 * @throws SenSeeActClientException if the SenSeeAct service returns an
-	 * error response
-	 * @throws HttpClientException if the server returns an error response (for
-	 * example if the server is available, but the SenSeeAct service is not)
-	 * @throws ParseException if an error occurs while parsing the response
-	 * @throws IOException if an error occurs while communicating with the
-	 * server
-	 */
-	public MfaRecord addMfaRecordTotp() throws SenSeeActClientException,
-			HttpClientException, ParseException, IOException {
-		return runQuery("/auth/mfa/add", "POST", true,
-				client -> client.addQueryParam(
-						"type", MfaRecord.Constants.TYPE_TOTP)
-						.readResponse(),
 				response -> response.readJson(MfaRecord.class));
 	}
 
@@ -1113,11 +1113,11 @@ public class SenSeeActClient {
 	 * <p>What this method does, depends on the MFA type.</p>
 	 *
 	 * <p><ul>
-	 * <li>{@link MfaRecord.Constants#TYPE_SMS TYPE_SMS}: The verification code
-	 * is sent by SMS to the phone number stored in the MFA record.</li>
 	 * <li>{@link MfaRecord.Constants#TYPE_TOTP TYPE_TOTP}: Nothing is done.
 	 * The user can get a verification code any time from their authenticator
 	 * app, such as Authy.</li>
+	 * <li>{@link MfaRecord.Constants#TYPE_SMS TYPE_SMS}: The verification code
+	 * is sent by SMS to the phone number stored in the MFA record.</li>
 	 * </ul></p>
 	 *
 	 * @param mfaId the MFA record ID
