@@ -1168,6 +1168,7 @@ public class AuthControllerExecution {
 		}
 		String phone = (String)record.getPrivateData().get(
 				PrivateMfaRecord.Constants.KEY_SMS_PHONE_NUMBER);
+		checkExistingMfaSms(user, phone);
 		boolean verifyResult = twilioSmsVerificationCheck(phone, code);
 		if (!verifyResult) {
 			record.setStatus(PrivateMfaRecord.Status.VERIFY_FAIL);
