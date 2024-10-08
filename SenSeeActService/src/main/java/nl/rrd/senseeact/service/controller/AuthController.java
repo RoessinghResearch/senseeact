@@ -448,10 +448,11 @@ public class AuthController {
 			@Parameter(hidden = true)
 			String versionName) throws HttpException, Exception {
 		synchronized (AuthControllerExecution.AUTH_LOCK) {
+			QueryContext context = new QueryContext().setAllowPendingMfa(true);
 			return QueryRunner.runAuthQuery(
 					(version, authDb, user, authDetails) ->
 					exec.getMfaRecords(user),
-					versionName, request, response);
+					versionName, request, response, context);
 		}
 	}
 

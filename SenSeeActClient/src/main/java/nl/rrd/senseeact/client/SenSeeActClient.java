@@ -1076,7 +1076,7 @@ public class SenSeeActClient {
 	 * the current user. The specified MFA record will be moved to the front
 	 * of the list. The default record is automatically triggered at a login,
 	 * in the same way as {@link #requestMfaVerification(String)
-	 * requestMfaVerification()}.</p>
+	 * requestMfaVerification()}.
 	 *
 	 * @param mfaId the MFA record ID
 	 * @throws SenSeeActClientException if the SenSeeAct service returns an
