@@ -13,13 +13,13 @@ public class LoginResult {
 	}
 
 	private Status status;
-	@JsonInclude(content=JsonInclude.Include.NON_NULL)
+	@JsonInclude(JsonInclude.Include.NON_NULL)
 	private String user = null;
-	@JsonInclude(content=JsonInclude.Include.NON_NULL)
+	@JsonInclude(JsonInclude.Include.NON_NULL)
 	private String email = null;
-	@JsonInclude(content=JsonInclude.Include.NON_NULL)
+	@JsonInclude(JsonInclude.Include.NON_NULL)
 	private String token = null;
-	@JsonInclude(content=JsonInclude.Include.NON_NULL)
+	@JsonInclude(JsonInclude.Include.NON_NULL)
 	private MfaRecord mfaRecord = null;
 
 	/**
