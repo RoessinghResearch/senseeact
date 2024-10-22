@@ -1,0 +1,69 @@
+.text-edit {
+	width: 100%;
+	height: 32px;
+	display: grid;
+}
+
+.text-edit-border {
+	grid-row: 1;
+	grid-column: 1;
+	width: 100%;
+	height: 32px;
+	border: 0.5px solid #757575;
+	border-radius: 16px;
+	box-sizing: border-box;
+}
+
+.text-edit-disabled .text-edit-border {
+	border: 0.5px solid #c0c0c0;
+}
+
+.text-edit-content {
+	grid-row: 1;
+	grid-column: 1;
+	display: flex;
+}
+
+.text-edit input {
+	width: 0px;
+	flex-grow: 1;
+	border: 0;
+	padding: 0;
+	padding: 0px 12px;
+	background: none;
+	height: 32px;
+	color: #373844;
+	font-family: 'Open Sans', sans-serif;
+	font-weight: 600;
+	font-size: 15px;
+	box-sizing: border-box;
+}
+
+.text-edit.error .text-edit-border {
+	border: 2px solid #be2b2b;
+}
+
+.text-edit.error input {
+	color: #be2b2b;
+}
+
+.text-edit input::placeholder {
+	font-family: 'Open Sans', sans-serif;
+	font-weight: 300;
+	font-style: italic;
+	font-size: 15px;
+	color: #7f7f7f;
+}
+
+.text-edit-end-icon {
+	width: 24px;
+	height: 24px;
+	mask-size: 24px;
+	-webkit-mask-size: 24px;
+	margin: 4px 4px 4px 4px;
+	background-color: #b1b1b1;
+}
+
+.text-edit-end-icon:last-child {
+	margin-right: 12px;
+}

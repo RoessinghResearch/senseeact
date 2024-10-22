@@ -1,7 +1,7 @@
 <link rel="stylesheet" type="text/css" href="../css/pages/me/account.css"></link>
 <div class="fill-space">
 	<div class="page-back-header"></div>
-	<div id="form" class="bordered-form" style="margin-top: 16px">
+	<div class="bordered-form" style="margin-top: 16px">
 		<div class="form-row">
 			<div id="email-label" class="form-label"></div>
 			<div id="email-value" class="form-value"></div>
@@ -14,6 +14,15 @@
 			<div id="password-label" class="form-label"></div>
 			<div id="password-value" class="form-value"></div>
 		</div>
+	</div>
+	<div class="bordered-form" style="margin-top: 16px">
+		<div class="bordered-form-content">
+			<div id="mfa-title" class="title"></div>
+			<p id="mfa-intro" class="text"></p>
+			<button id="mfa-add-button" class="small grow-to-fit"></button>
+		</div>
+	</div>
+	<div class="bordered-form" style="margin-top: 16px; margin-bottom: 16px">
 		<div class="form-row">
 			<div id="first-name-label" class="form-label"></div>
 			<div id="first-name-value" class="form-value"></div>
@@ -26,5 +35,7 @@
 </div>
 <div id="background-image"></div>
 <script type="text/javascript">
+	loadJS('pages/me/account-auth');
+	loadJS('pages/me/account-mfa');
 	loadJS('pages/me/account');
 </script>

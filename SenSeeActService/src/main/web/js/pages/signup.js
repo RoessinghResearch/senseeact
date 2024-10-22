@@ -150,7 +150,8 @@ class SignupPage {
 		animator.clearAnimatedClickHandler(button);
 		this._updateButtonEnabled();
 		var self = this;
-		animator.addAnimatedClickHandler(button, button, 'animate-button-click',
+		animator.addAnimatedClickHandler(button, button,
+			'animate-blue-button-click',
 			null,
 			function(result) {
 				self._showPasswordCard();
@@ -166,7 +167,8 @@ class SignupPage {
 		animator.clearAnimatedClickHandler(button);
 		this._updateButtonEnabled();
 		var self = this;
-		animator.addAnimatedClickHandler(button, button, 'animate-button-click',
+		animator.addAnimatedClickHandler(button, button,
+			'animate-blue-button-click',
 			function(clickId) {
 				self._onSignupClick(clickId);
 			},

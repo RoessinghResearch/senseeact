@@ -52,6 +52,10 @@
 	cursor: pointer;
 }
 
+.editable-text-value .icon:focus {
+	background-color: #0000ff;
+}
+
 .editable-text-value .edit-form input {
 	flex-grow: 1;
 	width: 0px;

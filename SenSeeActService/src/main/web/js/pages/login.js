@@ -54,7 +54,8 @@ class LoginPage {
 			self._updateButtonEnabled();
 		});
 		let button = this._button;
-		animator.addAnimatedClickHandler(button, button, 'animate-button-click',
+		animator.addAnimatedClickHandler(button, button,
+			'animate-blue-button-click',
 			function(clickId) {
 				self._onLoginClick(clickId);
 			},

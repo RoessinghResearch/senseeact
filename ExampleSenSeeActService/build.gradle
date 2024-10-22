@@ -414,11 +414,13 @@ def minimizeJs() {
 		'client.js',
 		'menu.js',
 		'widgets/background-image.js',
+		'widgets/dialogue.js',
 		'widgets/editable-text-value.js',
 		'widgets/icon-text-edit.js',
 		'widgets/page-back-header.js',
 		'widgets/password-edit.js',
-		'widgets/progress-bar.js'
+		'widgets/progress-bar.js',
+		'widgets/text-edit.js'
 	]
 	minimizeJsFiles(jsDir, srcFiles, jsDir, 'senseeact.min.js', true)
 	deleteEmptyDirs(jsDir)

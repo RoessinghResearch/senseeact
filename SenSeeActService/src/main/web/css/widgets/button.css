@@ -4,7 +4,7 @@ button, a.button {
 	line-height: 48px;
 	border: 0;
 	border-radius: 24px;
-	background-color: #5298b2;
+	background-color: var(--blue-color);
 	text-align: center;
 	font-family: 'Oswald', sans-serif;
 	text-transform: uppercase;
@@ -12,16 +12,26 @@ button, a.button {
 	font-size: 20px;
 	color: white;
 	cursor: pointer;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 button:hover, a.button:hover {
-	background-color: #62a9c3;
+	background-color: var(--blue-hover-color);
 	color: white;
 }
 
+button:disabled, a.button:disabled {
+	border: 0.5px solid #afafaf;
+	background-color: #ececec;
+	color: #afafaf;
+	cursor: default;
+}
+
 button.small, a.button.small {
-	height: 32px;
-	line-height: 32px;
+	height: 36px;
+	line-height: 36px;
 	border-radius: 12px;
 	width: 114px;
 	font-size: 16px;
@@ -29,9 +39,86 @@ button.small, a.button.small {
 	padding-right: 12px;
 }
 
-button:disabled {
-	border: 0.5px solid #afafaf;
-	background-color: #ececec;
-	color: #afafaf;
-	cursor: default;
+button.grow-to-fit,
+a.button.grow-to-fit {
+	min-width: 224px;
+	width: auto;
+}
+
+button.small.grow-to-fit,
+a.button.small.grow-to-fit {
+	min-width: 114px;
+	width: auto;
+}
+
+@keyframes animation-blue-button-click {
+	0% {
+		background: var(--blue-hover-color);
+	}
+	50% {
+		background: var(--blue-pressed-color);
+	}
+	100% {
+		background: var(--blue-hover-color);
+	}
+}
+
+.animate-blue-button-click {
+	animation-name: animation-blue-button-click;
+	animation-timing-function: ease;
+	animation-duration: 200ms;
+}
+
+@keyframes animation-white-button-click {
+	0% {
+		background: var(--white-hover-color);
+	}
+	50% {
+		background: var(--white-pressed-color);
+	}
+	100% {
+		background: var(--white-hover-color);
+	}
+}
+
+.animate-white-button-click {
+	animation-name: animation-white-button-click;
+	animation-timing-function: ease;
+	animation-duration: 200ms;
+}
+
+@keyframes animation-white-light-button-click {
+	0% {
+		background: var(--white-light-hover-color);
+	}
+	50% {
+		background: var(--white-light-pressed-color);
+	}
+	100% {
+		background: var(--white-light-hover-color);
+	}
+}
+
+.animate-white-light-button-click {
+	animation-name: animation-white-light-button-click;
+	animation-timing-function: ease;
+	animation-duration: 200ms;
+}
+
+@keyframes animation-tinted-button-click {
+	0% {
+		background: var(--tinted-hover-color);
+	}
+	50% {
+		background: var(--tinted-pressed-color);
+	}
+	100% {
+		background: var(--tinted-hover-color);
+	}
+}
+
+.animate-tinted-button-click {
+	animation-name: animation-tinted-button-click;
+	animation-timing-function: ease;
+	animation-duration: 200ms;
 }

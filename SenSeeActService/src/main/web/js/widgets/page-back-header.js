@@ -29,7 +29,7 @@ class PageBackHeader {
 			backBgDiv.append(backIconDiv);
 			var self = this;
 			animator.addAnimatedClickHandler(backBgDiv, backBgDiv,
-				'animate-button-click',
+				'animate-blue-button-click',
 				null,
 				function() {
 					self._onBackClick();

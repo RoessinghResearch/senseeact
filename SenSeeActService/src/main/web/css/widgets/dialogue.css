@@ -1,0 +1,153 @@
+#dialogue-root {
+	grid-row: 1;
+	grid-column: 1;
+	display: none;
+	z-index: 11;
+	overflow: hidden;
+}
+
+#dialogue-container {
+	grid-row: 1;
+	grid-column: 1;
+	display: flex;
+	min-height: 0px;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	margin: 20px;
+	overflow: hidden;
+}
+
+#dialogue {
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+	max-width: 640px;
+	background-color: white;
+	border-radius: 16px;
+	box-shadow: 2px 2px 8px 0px #606060;
+	overflow-y: scroll;
+}
+
+.dialogue-form {
+	flex-grow: 1;
+	display: flex;
+	flex-direction: column;
+}
+
+.dialogue-content {
+	margin: 16px;
+	flex-grow: 1;
+}
+
+.dialogue-button-panel {
+	display: flex;
+	justify-content: space-between;
+	margin: 16px 28px 16px 28px;
+}
+
+.dialogue-button-panel-part {
+	display: flex;
+	min-width: 0px;
+}
+
+.dialogue-button-panel-part.margin-left {
+	margin-left: 8px;
+}
+
+.dialogue-button-panel-part.margin-right {
+	margin-right: 8px;
+}
+
+.dialogue-button-panel button {
+	margin-right: 8px;
+	flex-basis: 114px;
+}
+
+.dialogue-button-panel button:last-child {
+	margin-right: 0px;
+}
+
+.dialogue-header {
+	color: var(--blue-color);
+	font-family: 'Oswald', sans-serif;
+	font-weight: 400;
+	font-size: 22px;
+	text-transform: uppercase;
+	margin: 0px 12px 20px 12px;
+}
+
+.dialogue-text {
+	margin: 0px 12px 0px 12px;
+}
+
+.dialogue-section-header {
+	margin: 24px 12px 0px 12px;
+	font-weight: 600;
+}
+
+.dialogue-field {
+	margin-top: 12px;
+}
+
+.dialogue-field-large {
+	margin-top: 24px;
+}
+
+.dialogue-field-label {
+	margin: 0px 12px 6px 12px;
+}
+
+.dialogue-field-checkbox-container,
+.dialogue-field-radio-container {
+	margin: 0px 12px;
+	display: flex;
+}
+
+.dialogue-field-checkbox-container .checkbox,
+.dialogue-field-radio-container .radio {
+	margin-top: 3px;
+}
+
+.dialogue-field-checkbox-label,
+.dialogue-field-radio-label {
+	flex-grow: 1;
+	margin-left: 8px;
+}
+
+.dialogue-field-error {
+	margin: 6px 12px 0px 12px;
+	color: #be2b2b;
+}
+
+.dialogue-field-label.error {
+	font-weight: 600;
+	color: #be2b2b;
+}
+
+#dialogue-widget-overlay {
+	grid-column: 1;
+	grid-row: 1;
+	display: none;
+	z-index: 15;
+}
+
+.dialogue-field-checkbox-label-row {
+	margin: 0px 12px;
+	display: flex;
+}
+
+.dialogue-field-checkbox-label-item {
+	flex-basis: 0;
+	flex-grow: 1;
+	text-align: center;
+	overflow-x: hidden;
+}
+
+.dialogue-field-checkbox-label-item-label {
+	white-space: nowrap;
+	overflow-x: hidden;
+	text-overflow: ellipsis;
+	font-family: 'Oswald';
+	text-transform: uppercase;
+}
