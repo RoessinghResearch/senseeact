@@ -453,6 +453,10 @@ a.menu-item.menu-item-selected:hover {
 		display: flex;
 	}
 
+	.bordered-form-content {
+		margin-left: 0px;
+	}
+
 	.bordered-form .form-label {
 		min-width: 100px;
 		width: 25%;
