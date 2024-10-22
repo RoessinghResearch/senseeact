@@ -1,9 +1,19 @@
 #dialogue-root {
-	grid-row: 1;
-	grid-column: 1;
 	display: none;
+	position: fixed;
+	left: 0px;
+	top: 0px;
+	width: 100%;
+	height: 100%;
+	box-sizing: border-box;
 	z-index: 11;
 	overflow: hidden;
+}
+
+@media (min-width: 960px) {
+	#dialogue-root {
+		padding-left: 240px;
+	}
 }
 
 #dialogue-container {
