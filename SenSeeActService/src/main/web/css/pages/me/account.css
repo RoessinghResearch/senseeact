@@ -149,3 +149,8 @@
 	width: 100%;
 	height: 100%;
 }
+
+#mfa-add-totp-verify-code {
+	margin-top: 8px;
+	text-align: center;
+}

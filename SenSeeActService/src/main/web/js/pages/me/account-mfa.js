@@ -1,4 +1,9 @@
 class MyAccountMfaForm {
+	/**
+	 * Properties:
+	 * - _totpVerifyCodeEdit (NumCodeEdit)
+	 */
+
 	constructor() {
 		var self = this;
 		$('#mfa-title').text(i18next.t('mfa_title'));
@@ -61,10 +66,10 @@ class MyAccountMfaForm {
 		card.css('visibility', 'hidden');
 		cardContainer.append(card);
 		let textDiv = dlg.createText(i18next.t(
-			'mfatype_totp_install_authenticator'));
+			'mfa_add_totp_install_authenticator'));
 		textDiv.addClass('small-text');
 		card.append(textDiv);
-		textDiv = dlg.createText(i18next.t('mfatype_totp_add_code'));
+		textDiv = dlg.createText(i18next.t('mfa_add_totp_scan_qr'));
 		textDiv.addClass('small-text');
 		textDiv.css('margin-top', '8px');
 		card.append(textDiv);
@@ -74,6 +79,16 @@ class MyAccountMfaForm {
 		let waitCircle = $('<div></div>');
 		waitCircle.addClass('wait-circle');
 		imgBox.append(waitCircle);
+		textDiv = dlg.createText(i18next.t('mfa_add_totp_enter_code'));
+		textDiv.addClass('small-text');
+		textDiv.css('margin-top', '8px');
+		card.append(textDiv);
+		let numCodeEditDiv = $('<div></div>');
+		numCodeEditDiv.attr('id', 'mfa-add-totp-verify-code');
+		let numCodeEdit = new NumCodeEdit(numCodeEditDiv);
+		this._totpVerifyCodeEdit = numCodeEdit;
+		numCodeEdit.render();
+		card.append(numCodeEditDiv);
 	}
 
 	_onMfaTypeContinueClick(dlg) {
@@ -96,6 +111,7 @@ class MyAccountMfaForm {
 		mfaTypeCard.css('visibility', 'hidden');
 		let addTotpCard = dlgContent.find('#mfa-add-totp-card');
 		addTotpCard.css('visibility', 'visible');
+		this._totpVerifyCodeEdit.focus();
 		let url = servicePath + '/auth/mfa/add?type=totp';
 		var self = this;
 		$.ajax({

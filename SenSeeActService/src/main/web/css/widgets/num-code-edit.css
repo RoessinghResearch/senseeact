@@ -1,0 +1,13 @@
+.num-code-edit input {
+	width: 24px;
+	height: 32px;
+	margin-left: 8px;
+	border: 1px solid #757575;
+	border-radius: 6px;
+	font-size: 18px;
+	text-align: center;
+}
+
+.num-code-edit input:first-child {
+	margin-left: 0px;
+}

@@ -146,7 +146,7 @@ class EditableTextValue {
 	_onEditClick() {
 		this._viewDiv.hide();
 		this._editDiv.show();
-		this._input.focus();
+		this._input.trigger('focus');
 	}
 
 	_onCancelClick() {
@@ -182,7 +182,7 @@ class EditableTextValue {
 
 	_onConfirmFail() {
 		this._input.addClass('error');
-		this._input.focus();
+		this._input.trigger('focus');
 	}
 
 	_onConfirmComplete() {

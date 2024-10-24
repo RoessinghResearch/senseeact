@@ -417,6 +417,7 @@ def minimizeJs() {
 		'widgets/dialogue.js',
 		'widgets/editable-text-value.js',
 		'widgets/icon-text-edit.js',
+		'widgets/num-code-edit.js',
 		'widgets/page-back-header.js',
 		'widgets/password-edit.js',
 		'widgets/progress-bar.js',

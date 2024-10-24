@@ -81,7 +81,7 @@ class SignupPage {
 
 		$(document.body).addClass('tinted-background');
 		$('#content').css('visibility', 'visible');
-		firstNameEdit.textInput.focus();
+		firstNameEdit.textInput.trigger('focus');
 	}
 
 	_getAcceptTermsLabel() {
@@ -145,7 +145,7 @@ class SignupPage {
 	_showEmailCard() {
 		this._passwordCard.css('visibility', 'hidden');
 		this._emailCard.css('visibility', 'visible');
-		this._firstNameEdit.textInput.focus();
+		this._firstNameEdit.textInput.trigger('focus');
 		let button = this._button;
 		animator.clearAnimatedClickHandler(button);
 		this._updateButtonEnabled();
@@ -162,7 +162,7 @@ class SignupPage {
 	_showPasswordCard() {
 		this._emailCard.css('visibility', 'hidden');
 		this._passwordCard.css('visibility', 'visible');
-		this._passwordEdit.textInput.focus();
+		this._passwordEdit.textInput.trigger('focus');
 		let button = this._button;
 		animator.clearAnimatedClickHandler(button);
 		this._updateButtonEnabled();
@@ -290,7 +290,7 @@ class SignupPage {
 			this._emailError.text(i18next.t(errors['emailError']));
 			this._emailError.show();
 			this._showEmailCard();
-			this._emailEdit.textInput.focus();
+			this._emailEdit.textInput.trigger('focus');
 		} else if (errors['passwordError']) {
 			this._passwordError.text(i18next.t(errors['passwordError']));
 			this._passwordError.show();

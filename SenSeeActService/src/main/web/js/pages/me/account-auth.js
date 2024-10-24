@@ -169,7 +169,7 @@ class MyAccountAuthForm {
 			}
 		);
 		buttonsDiv.append(button);
-		form.find('input').eq(0).focus();
+		form.find('input').eq(0).trigger('focus');
 	}
 
 	_onChangePasswordCancelClick() {
@@ -212,26 +212,26 @@ class MyAccountAuthForm {
 			if (repeatPassword.length > 0)
 				errorMessage = i18next.t('password_too_short');
 			repeatInput.addClass('error');
-			repeatInput.focus();
+			repeatInput.trigger('focus');
 		}
 		if (newPassword.length < 6) {
 			error = true;
 			if (newPassword.length > 0)
 				errorMessage = i18next.t('password_too_short');
 			newInput.addClass('error');
-			newInput.focus();
+			newInput.trigger('focus');
 		}
 		if (!error && repeatPassword != newPassword) {
 			error = true;
 			errorMessage = i18next.t('no_repeat_new_password_match');
 			repeatInput.addClass('error');
 			newInput.addClass('error');
-			newInput.focus();
+			newInput.trigger('focus');
 		}
 		if (oldInput && !oldPassword) {
 			error = true;
 			oldInput.addClass('error');
-			oldInput.focus();
+			oldInput.trigger('focus');
 		}
 		if (errorMessage) {
 			errorDiv.text(errorMessage);
@@ -252,7 +252,7 @@ class MyAccountAuthForm {
 		let client = new SenSeeActClient();
 		if (client.hasInvalidInputField(xhr, 'oldPassword')) {
 			oldInput.addClass('error');
-			oldInput.focus();
+			oldInput.trigger('focus');
 			errorDiv.text(i18next.t('old_password_incorrect'));
 			errorDiv.show();
 		} else {

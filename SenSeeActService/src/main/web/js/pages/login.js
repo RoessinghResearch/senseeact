@@ -40,7 +40,7 @@ class LoginPage {
 
 		$(document.body).addClass('tinted-background');
 		$('#content').css('visibility', 'visible');
-		emailEdit.textInput.focus();
+		emailEdit.textInput.trigger('focus');
 	}
 
 	_registerEvents() {

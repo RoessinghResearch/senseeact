@@ -55,7 +55,7 @@ class ResetPasswordPage {
 
 		$(document.body).addClass('tinted-background');
 		$('#content').show();
-		passwordEdit.textInput.focus();
+		passwordEdit.textInput.trigger('focus');
 	}
 
 	_registerEvents() {
