@@ -144,3 +144,8 @@
 	align-items: center;
 	justify-content: center;
 }
+
+#mfa-add-totp-qr-box img {
+	width: 100%;
+	height: 100%;
+}

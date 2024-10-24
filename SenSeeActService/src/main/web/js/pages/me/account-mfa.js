@@ -103,14 +103,22 @@ class MyAccountMfaForm {
 			url: url
 		})
 		.done((result) => {
-			self._onAddMfaTotpDone(result);
+			self._onAddMfaTotpDone(dlg, result);
 		})
 		.fail((xhr, status, error) => {
 			self._onAddMfaTotpFail(xhr);
 		});
 	}
 
-	_onAddMfaTotpDone(result) {
+	_onAddMfaTotpDone(dlg, result) {
+		let dlgContent = dlg.dialogueContentDiv;
+		let addTotpCard = dlgContent.find('#mfa-add-totp-card');
+		let imgBox = addTotpCard.find('#mfa-add-totp-qr-box');
+		imgBox.empty();
+		let mfaId = result['id'];
+		let img = $('<img></img>');
+		img.attr('src', servicePath + '/auth/mfa/add/totp/qrcode?id=' + mfaId);
+		imgBox.append(img);
 	}
 
 	_onAddMfaTotpFail(xhr) {
