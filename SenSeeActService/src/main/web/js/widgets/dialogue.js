@@ -107,10 +107,22 @@ class Dialogue {
 	 */
 	addText(text) {
 		let content = this._dlgContent;
+		let textDiv = this.createText(text);
+		content.append(textDiv);
+		return textDiv;
+	}
+
+	/**
+	 * Creates a text div.
+	 * 
+	 * - text (String): the text
+	 * 
+	 * Returns (jQuery element): the text div
+	 */
+	createText(text) {
 		let textDiv = $('<div></div>');
 		textDiv.addClass('dialogue-text');
 		textDiv.text(text);
-		content.append(textDiv);
 		return textDiv;
 	}
 

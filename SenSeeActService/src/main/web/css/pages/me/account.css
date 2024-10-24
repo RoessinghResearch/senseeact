@@ -119,3 +119,28 @@
 #password-value .form-button-row button:first-child {
 	margin-left: 0px;
 }
+
+.small-text {
+	font-size: 14px;
+	color: #7f7f7f;
+}
+
+.radio-explanation {
+	margin-left: 36px;
+	margin-top: 4px;
+	font-size: 14px;
+	color: #7f7f7f;
+}
+
+#mfa-add-totp-qr-box {
+	display: flex;
+	margin-top: 8px;
+	margin-left: auto;
+	margin-right: auto;
+	width: 200px;
+	height: 200px;
+	box-sizing: border-box;
+	border: 1px solid #373844;
+	align-items: center;
+	justify-content: center;
+}
