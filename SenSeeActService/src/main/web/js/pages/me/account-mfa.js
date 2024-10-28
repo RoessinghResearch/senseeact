@@ -213,7 +213,8 @@ class MyAccountMfaForm {
 		let code = this._totpVerifyCodeEdit.code;
 		if (!state.mfaId || !code || this._totpVerifyRunning) {
 			animator.onAnimatedClickHandlerCompleted(clickId, {
-				success: false
+				success: false,
+				error: null
 			});
 			return;
 		}
@@ -221,6 +222,7 @@ class MyAccountMfaForm {
 	}
 
 	_runTotpVerify(dlg, code, clickId) {
+		this._totpVerifyCodeEdit.hideError();
 		this._totpVerifyRunning = true;
 		let url = servicePath + '/auth/mfa/add/verify';
 		let mfaId = this._addTotpState.mfaId;
@@ -244,38 +246,77 @@ class MyAccountMfaForm {
 	}
 
 	_onAddTotpVerifyDone(dlg, clickId) {
-		if (dlg != this._addDialogue)
-			return;
-		this._totpVerifyRunning = false;
 		if (clickId) {
 			animator.onAnimatedClickHandlerCompleted(clickId, {
 				success: true
 			});
 		} else {
-			this._completeAddTotp(dlg);
+			this._handleAddTotpDone(dlg);
 		}
 	}
 
 	_onAddTotpVerifyFail(dlg, clickId, xhr) {
-		if (dlg != this._addDialogue)
-			return;
-		this._totpVerifyRunning = false;
 		if (clickId) {
 			animator.onAnimatedClickHandlerCompleted(clickId, {
-				success: false
+				success: false,
+				error: xhr
 			});
+		} else {
+			this._handleAddTotpFail(dlg, xhr);
 		}
 	}
 
 	_onAddTotpOkClickDone(dlg, result) {
-		if (result.success) {
-			this._completeAddTotp(dlg);
+		if (result.success)
+			this._handleAddTotpDone(dlg);
+		else if (result.error)
+			this._handleAddTotpFail(dlg, result.error);
+	}
+
+	_handleAddTotpDone(dlg) {
+		if (dlg != this._addDialogue)
 			return;
+		this._totpVerifyRunning = false;
+		dlg.close();
+	}
+
+	_handleAddTotpFail(dlg, xhr) {
+		if (dlg != this._addDialogue)
+			return;
+		this._totpVerifyRunning = false;
+		if (xhr.status == 400 && xhr.responseJSON) {
+			if (xhr.responseJSON.code == 'AUTH_MFA_TYPE_MAX') {
+				this._showErrorCard(dlg, 'mfa-totp-max-card');
+			} else if (xhr.responseJSON.code == 'AUTH_MFA_VERIFY_MAX') {
+				showToast(i18next.t('mfa_error_verify_max'));
+			} else if (this._hasXhrFieldError(xhr, 'code')) {
+				let codeEdit = this._totpVerifyCodeEdit;
+				codeEdit.showError();
+				codeEdit.focus();
+			} else {
+				showToast(i18next.t('unexpected_error'));
+			}
+		} else {
+			showToast(i18next.t('unexpected_error'));
 		}
 	}
 
-	_completeAddTotp(dlg) {
-		dlg.close();
+	_hasXhrFieldError(xhr, field) {
+		if (xhr.status != 400)
+			return false;
+		if (!xhr.responseJSON)
+			return false;
+		if (xhr.responseJSON.code != 'INVALID_INPUT')
+			return false;
+		let fieldErrors = xhr.responseJSON.fieldErrors;
+		if (!Array.isArray(fieldErrors))
+			return false;
+		for (let i = 0; i < fieldErrors.length; i++) {
+			let fieldError = fieldErrors[i];
+			if (fieldError.field == field)
+				return true;
+		}
+		return false;
 	}
 
 	_onMfaTypeSmsContinueClick(dlg) {

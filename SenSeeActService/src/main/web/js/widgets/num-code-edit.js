@@ -35,6 +35,14 @@ class NumCodeEdit {
 		}
 	}
 
+	showError() {
+		this._root.addClass('error');
+	}
+
+	hideError() {
+		this._root.removeClass('error');
+	}
+
 	_addDigitBox(i) {
 		let input = $('<input></input>');
 		input.attr('type', 'text');

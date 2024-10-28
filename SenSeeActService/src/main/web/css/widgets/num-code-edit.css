@@ -11,3 +11,7 @@
 .num-code-edit input:first-child {
 	margin-left: 0px;
 }
+
+.num-code-edit.error input {
+	border: 2px solid #be2b2b;
+}
