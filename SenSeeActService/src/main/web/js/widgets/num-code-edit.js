@@ -3,6 +3,7 @@ class NumCodeEdit {
 		this._root = root;
 		root.addClass('num-code-edit');
 		this._codeLength = 6;
+		this._onenter = null;
 	}
 
 	get codeLength() {
@@ -11,6 +12,21 @@ class NumCodeEdit {
 
 	set codeLength(value) {
 		this._codeLength = value;
+	}
+
+	get code() {
+		let code = '';
+		this._root.find('input').each((index, elem) => {
+			code += elem.value;
+		});
+		if (code.length == this._codeLength)
+			return code;
+		else
+			return null;
+	}
+
+	onenter(onenter) {
+		this._onenter = onenter;
 	}
 
 	render() {
@@ -34,9 +50,6 @@ class NumCodeEdit {
 		});
 		inputElem.addEventListener('keydown', function(ev) {
 			self._onKeyDown(inputElem, i, ev);
-		});
-		inputElem.addEventListener('keyup', function(ev) {
-			self._onKeyUp(inputElem, i, ev);
 		});
 	}
 
@@ -73,21 +86,53 @@ class NumCodeEdit {
 				let nextInput = inputs.get(inputIndex);
 				nextInput.focus();
 				nextInput.setSelectionRange(0, 0);
+			} else {
+				let nextInput = inputs.get(this._codeLength - 1);
+				nextInput.focus();
+				nextInput.setSelectionRange(1, 1);
+				let code = this.code;
+				if (this._onenter && code.length == this._codeLength) {
+					this._onenter(this, code);
+				}
 			}
 		}
 	}
 
 	_onKeyDown(input, i, ev) {
-		this._keyDownValue = input.value;
+		if (ev.key == 'Backspace')
+			this._onKeyBackspace(input, i);
+		else if (ev.key == 'ArrowLeft')
+			this._onKeyArrowLeft(input, i, ev);
+		else if (ev.key == 'ArrowRight')
+			this._onKeyArrowRight(input, i, ev);
 	}
 
-	_onKeyUp(input, i, ev) {
-		if (ev.key == 'Backspace' && input.value == this._keyDownValue &&
-				input.selectionStart == 0 &&
-				input.selectionEnd == 0 && i > 0) {
+	_onKeyBackspace(input, i) {
+		if (input.selectionStart == 0 && input.selectionEnd == 0 && i > 0) {
 			let prevInput = this._root.find('input').get(i - 1);
 			prevInput.value = '';
 			prevInput.focus();
+		}
+	}
+
+	_onKeyArrowLeft(input, i, ev) {
+		if (input.selectionStart == 0 && input.selectionEnd == 0 && i > 0) {
+			let prevInput = this._root.find('input').get(i - 1);
+			let len = prevInput.value.length;
+			prevInput.focus();
+			prevInput.setSelectionRange(len, len);
+			ev.preventDefault();
+		}
+	}
+
+	_onKeyArrowRight(input, i, ev) {
+		let len = input.value.length;
+		if (input.selectionStart == len && input.selectionEnd == len &&
+				i < this._codeLength - 1) {
+			let nextInput = this._root.find('input').get(i + 1);
+			nextInput.focus();
+			nextInput.setSelectionRange(0, 0);
+			ev.preventDefault();
 		}
 	}
 }

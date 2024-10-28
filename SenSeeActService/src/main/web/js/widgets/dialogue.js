@@ -448,6 +448,8 @@ class Dialogue_ButtonPanel {
 	 *       This is called when both the asynchronous action (if any) and the
 	 *       animation are completed. It receives the result that was set with
 	 *       onAnimatedClickHandlerCompleted() or null.
+	 * 
+	 * Returns (jQuery element): the button
 	 */
 	addSubmitButton(text, asyncHandler, callback) {
 		let button = $('<button></button>');
@@ -457,6 +459,7 @@ class Dialogue_ButtonPanel {
 		animator.addAnimatedClickHandler(button, button,
 			'animate-blue-button-click', asyncHandler, callback);
 		this._panelDiv.append(button);
+		return button;
 	}
 
 	/**
@@ -475,6 +478,8 @@ class Dialogue_ButtonPanel {
 	 *       This is called when both the asynchronous action (if any) and the
 	 *       animation are completed. It receives the result that was set with
 	 *       onAnimatedClickHandlerCompleted() or null.
+	 * 
+	 * Returns (jQuery element): the button
 	 */
 	addButton(text, asyncHandler, callback) {
 		let button = $('<button></button>');
@@ -484,10 +489,13 @@ class Dialogue_ButtonPanel {
 		animator.addAnimatedClickHandler(button, button,
 			'animate-blue-button-click', asyncHandler, callback);
 		this._panelDiv.append(button);
+		return button;
 	}
 
 	/**
 	 * Adds a cancel button. The button will just close the window.
+	 * 
+	 * Returns (jQuery element): the button
 	 */
 	addCancelButton() {
 		let button = $('<button></button>');
@@ -502,5 +510,6 @@ class Dialogue_ButtonPanel {
 				self._dialogue.close();
 			});
 		this._panelDiv.append(button);
+		return button;
 	}
 }

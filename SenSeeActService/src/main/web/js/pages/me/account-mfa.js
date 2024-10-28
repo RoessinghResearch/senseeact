@@ -1,11 +1,17 @@
 class MyAccountMfaForm {
 	/**
 	 * Properties:
+	 * - _addDialogue (Dialogue)
+	 * - _continueButton (jQuery element)
 	 * - _totpVerifyCodeEdit (NumCodeEdit)
+	 * - _addTotpState: object with the following property:
+	 *     - mfaId (string)
+	 * - _totpVerifyRunning (boolean)
 	 */
 
 	constructor() {
 		var self = this;
+		this._addDialogue = null;
 		$('#mfa-title').text(i18next.t('mfa_title'));
 		$('#mfa-intro').text(i18next.t('mfa_intro'));
 		let button = $('#mfa-add-button');
@@ -20,7 +26,12 @@ class MyAccountMfaForm {
 	}
 
 	_onAddClick() {
+		var self = this;
 		let dlg = Dialogue.openDialogue();
+		this._addDialogue = dlg;
+		dlg.onclose(() => {
+			self._onAddDialogueClose();
+		});
 		dlg.initMainForm(i18next.t('mfa_title'));
 		let dlgContent = dlg.dialogueContentDiv;
 		let cardContainer = $('<div></div>');
@@ -29,8 +40,8 @@ class MyAccountMfaForm {
 		this._addMfaTypeCard(dlg, cardContainer);
 		this._addMfaTypeTotpCard(dlg, cardContainer);
 		dlg.leftButtons.addCancelButton();
-		var self = this;
-		dlg.rightButtons.addSubmitButton(i18next.t('continue'), null,
+		this._continueButton = dlg.rightButtons.addSubmitButton(
+			i18next.t('continue'), null,
 			(result) => {
 				self._onMfaTypeContinueClick(dlg);
 			}
@@ -87,6 +98,10 @@ class MyAccountMfaForm {
 		numCodeEditDiv.attr('id', 'mfa-add-totp-verify-code');
 		let numCodeEdit = new NumCodeEdit(numCodeEditDiv);
 		this._totpVerifyCodeEdit = numCodeEdit;
+		this._addTotpState = {
+			mfaId: null
+		};
+		this._totpVerifyRunning = false;
 		numCodeEdit.render();
 		card.append(numCodeEditDiv);
 	}
@@ -106,6 +121,19 @@ class MyAccountMfaForm {
 	}
 
 	_onMfaTypeTotpContinueClick(dlg) {
+		var self = this;
+		let button = this._continueButton;
+		animator.clearAnimatedClickHandler(button);
+		animator.addAnimatedClickHandler(button, button,
+			'animate-blue-button-click',
+			(clickId) => {
+				self._onAddTotpOkClick(dlg, clickId);
+			},
+			(result) => {
+				self._onAddTotpOkClickDone(dlg, result);
+			}
+		);
+		this._continueButton.text(i18next.t('ok'));
 		let dlgContent = dlg.dialogueContentDiv;
 		let mfaTypeCard = dlgContent.find('#mfa-type-card');
 		mfaTypeCard.css('visibility', 'hidden');
@@ -127,14 +155,93 @@ class MyAccountMfaForm {
 	}
 
 	_onAddMfaTotpDone(dlg, result) {
+		if (dlg != this._addDialogue)
+			return;
 		let dlgContent = dlg.dialogueContentDiv;
 		let addTotpCard = dlgContent.find('#mfa-add-totp-card');
 		let imgBox = addTotpCard.find('#mfa-add-totp-qr-box');
 		imgBox.empty();
 		let mfaId = result['id'];
+		this._addTotpState.mfaId = mfaId;
 		let img = $('<img></img>');
 		img.attr('src', servicePath + '/auth/mfa/add/totp/qrcode?id=' + mfaId);
 		imgBox.append(img);
+		var self = this;
+		let numCodeEdit = this._totpVerifyCodeEdit;
+		numCodeEdit.onenter((edit, code) => {
+			self._onEnterTotpCode(dlg, code);
+		});
+	}
+
+	_onEnterTotpCode(dlg, code) {
+		if (!this._totpVerifyRunning)
+			this._runTotpVerify(dlg, code, null);
+	}
+
+	_onAddTotpOkClick(dlg, clickId) {
+		let state = this._addTotpState;
+		let code = this._totpVerifyCodeEdit.code;
+		if (!state.mfaId || !code || this._totpVerifyRunning) {
+			animator.onAnimatedClickHandlerCompleted(clickId, {
+				success: false
+			});
+			return;
+		}
+		this._runTotpVerify(dlg, code, clickId);
+	}
+
+	_runTotpVerify(dlg, code, clickId) {
+		this._totpVerifyRunning = true;
+		let url = servicePath + '/auth/mfa/add/verify';
+		let mfaId = this._addTotpState.mfaId;
+		let data = {
+			'mfaId': mfaId,
+			'code': code
+		}
+		var self = this;
+		$.ajax({
+			method: 'POST',
+			url: url,
+			data: JSON.stringify(data),
+			contentType: 'application/json'
+		})
+		.done((result) => {
+			self._onAddTotpVerifyDone(dlg, clickId);
+		})
+		.fail((xhr, status, error) => {
+			self._onAddTotpVerifyFail(dlg, clickId, xhr);
+		});
+	}
+
+	_onAddTotpVerifyDone(dlg, clickId) {
+		this._totpVerifyRunning = false;
+		if (clickId) {
+			animator.onAnimatedClickHandlerCompleted(clickId, {
+				success: true
+			});
+		} else {
+			this._completeAddTotp(dlg);
+		}
+	}
+
+	_onAddTotpVerifyFail(dlg, clickId, xhr) {
+		this._totpVerifyRunning = false;
+		if (clickId) {
+			animator.onAnimatedClickHandlerCompleted(clickId, {
+				success: false
+			});
+		}
+	}
+
+	_onAddTotpOkClickDone(dlg, result) {
+		if (result.success) {
+			this._completeAddTotp(dlg);
+			return;
+		}
+	}
+
+	_completeAddTotp(dlg) {
+		dlg.close();
 	}
 
 	_onAddMfaTotpFail(xhr) {
@@ -143,5 +250,9 @@ class MyAccountMfaForm {
 
 	_onMfaTypeSmsContinueClick(dlg) {
 
+	}
+
+	_onAddDialogueClose() {
+		this._addDialogue = null;
 	}
 }
