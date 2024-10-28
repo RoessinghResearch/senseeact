@@ -154,3 +154,11 @@
 	margin-top: 8px;
 	text-align: center;
 }
+
+#mfa-totp-max-card .dialogue-text {
+	margin-top: 12px;
+}
+
+#mfa-totp-max-card .dialogue-text:first-child {
+	margin-top: 0px;
+}

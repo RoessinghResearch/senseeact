@@ -39,6 +39,7 @@ class MyAccountMfaForm {
 		dlgContent.append(cardContainer);
 		this._addMfaTypeCard(dlg, cardContainer);
 		this._addMfaTypeTotpCard(dlg, cardContainer);
+		this._addTotpMaxCard(dlg, cardContainer);
 		dlg.leftButtons.addCancelButton();
 		this._continueButton = dlg.rightButtons.addSubmitButton(
 			i18next.t('continue'), null,
@@ -106,6 +107,20 @@ class MyAccountMfaForm {
 		card.append(numCodeEditDiv);
 	}
 
+	_addTotpMaxCard(dlg, cardContainer) {
+		let card = $('<div></div>');
+		card.attr('id', 'mfa-totp-max-card');
+		card.addClass('card');
+		card.css('visibility', 'hidden');
+		cardContainer.append(card);
+		let text = i18next.t('mfa_error_type_totp_max');
+		let lines = text.split('\n');
+		for (let i = 0; i < lines.length; i++) {
+			let textDiv = dlg.createText(lines[i]);
+			card.append(textDiv);
+		}
+	}
+
 	_onMfaTypeContinueClick(dlg) {
 		let dlgContent = dlg.dialogueContentDiv;
 		let totpRadio = dlgContent.find('#mfatype-totp');
@@ -135,8 +150,7 @@ class MyAccountMfaForm {
 		);
 		this._continueButton.text(i18next.t('ok'));
 		let dlgContent = dlg.dialogueContentDiv;
-		let mfaTypeCard = dlgContent.find('#mfa-type-card');
-		mfaTypeCard.css('visibility', 'hidden');
+		dlgContent.find('.card').css('visibility', 'hidden');
 		let addTotpCard = dlgContent.find('#mfa-add-totp-card');
 		addTotpCard.css('visibility', 'visible');
 		this._totpVerifyCodeEdit.focus();
@@ -150,7 +164,7 @@ class MyAccountMfaForm {
 			self._onAddMfaTotpDone(dlg, result);
 		})
 		.fail((xhr, status, error) => {
-			self._onAddMfaTotpFail(xhr);
+			self._onAddMfaTotpFail(dlg, xhr);
 		});
 	}
 
@@ -171,6 +185,22 @@ class MyAccountMfaForm {
 		numCodeEdit.onenter((edit, code) => {
 			self._onEnterTotpCode(dlg, code);
 		});
+	}
+
+	_onAddMfaTotpFail(dlg, xhr) {
+		if (dlg != this._addDialogue)
+			return;
+		if (xhr.status == 400 && xhr.responseJSON) {
+			if (xhr.responseJSON.code == 'AUTH_MFA_TYPE_MAX') {
+				this._showErrorCard(dlg, 'mfa-totp-max-card');
+			} else if (xhr.responseJSON.code == 'AUTH_MFA_ADD_MAX') {
+				showToast(i18next.t('mfa_error_add_max'));
+			} else {
+				showToast(i18next.t('unexpected_error'));
+			}
+		} else {
+			showToast(i18next.t('unexpected_error'));
+		}
 	}
 
 	_onEnterTotpCode(dlg, code) {
@@ -214,6 +244,8 @@ class MyAccountMfaForm {
 	}
 
 	_onAddTotpVerifyDone(dlg, clickId) {
+		if (dlg != this._addDialogue)
+			return;
 		this._totpVerifyRunning = false;
 		if (clickId) {
 			animator.onAnimatedClickHandlerCompleted(clickId, {
@@ -225,6 +257,8 @@ class MyAccountMfaForm {
 	}
 
 	_onAddTotpVerifyFail(dlg, clickId, xhr) {
+		if (dlg != this._addDialogue)
+			return;
 		this._totpVerifyRunning = false;
 		if (clickId) {
 			animator.onAnimatedClickHandlerCompleted(clickId, {
@@ -244,12 +278,25 @@ class MyAccountMfaForm {
 		dlg.close();
 	}
 
-	_onAddMfaTotpFail(xhr) {
-		showToast(i18next.t('unexpected_error'));
-	}
-
 	_onMfaTypeSmsContinueClick(dlg) {
 
+	}
+
+	_showErrorCard(dlg, cardId) {
+		let button = this._continueButton;
+		animator.clearAnimatedClickHandler(button);
+		animator.addAnimatedClickHandler(button, button,
+			'animate-blue-button-click',
+			null,
+			(result) => {
+				dlg.close();
+			}
+		);
+		this._continueButton.text(i18next.t('ok'));
+		let dlgContent = dlg.dialogueContentDiv;
+		dlgContent.find('.card').css('visibility', 'hidden');
+		let card = dlgContent.find('#' + cardId);
+		card.css('visibility', 'visible');
 	}
 
 	_onAddDialogueClose() {
