@@ -39,7 +39,10 @@ class MyAccountMfaForm {
 		dlgContent.append(cardContainer);
 		this._addMfaTypeCard(dlg, cardContainer);
 		this._addMfaTypeTotpCard(dlg, cardContainer);
-		this._addTotpMaxCard(dlg, cardContainer);
+		this._addErrorCard(dlg, cardContainer, 'mfa-totp-max-card',
+			i18next.t('mfa_error_type_totp_max'));
+		this._addErrorCard(dlg, cardContainer, 'mfa-add-verify-max-card',
+			i18next.t('mfa_error_add_verify_max'));
 		dlg.leftButtons.addCancelButton();
 		this._continueButton = dlg.rightButtons.addSubmitButton(
 			i18next.t('continue'), null,
@@ -107,16 +110,16 @@ class MyAccountMfaForm {
 		card.append(numCodeEditDiv);
 	}
 
-	_addTotpMaxCard(dlg, cardContainer) {
+	_addErrorCard(dlg, cardContainer, cardId, text) {
 		let card = $('<div></div>');
-		card.attr('id', 'mfa-totp-max-card');
+		card.attr('id', cardId);
 		card.addClass('card');
 		card.css('visibility', 'hidden');
 		cardContainer.append(card);
-		let text = i18next.t('mfa_error_type_totp_max');
 		let lines = text.split('\n');
 		for (let i = 0; i < lines.length; i++) {
 			let textDiv = dlg.createText(lines[i]);
+			textDiv.addClass('error-card-text');
 			card.append(textDiv);
 		}
 	}
@@ -251,7 +254,7 @@ class MyAccountMfaForm {
 				success: true
 			});
 		} else {
-			this._handleAddTotpDone(dlg);
+			this._handleAddTotpVerifyDone(dlg);
 		}
 	}
 
@@ -262,25 +265,25 @@ class MyAccountMfaForm {
 				error: xhr
 			});
 		} else {
-			this._handleAddTotpFail(dlg, xhr);
+			this._handleAddTotpVerifyFail(dlg, xhr);
 		}
 	}
 
 	_onAddTotpOkClickDone(dlg, result) {
 		if (result.success)
-			this._handleAddTotpDone(dlg);
+			this._handleAddTotpVerifyDone(dlg);
 		else if (result.error)
-			this._handleAddTotpFail(dlg, result.error);
+			this._handleAddTotpVerifyFail(dlg, result.error);
 	}
 
-	_handleAddTotpDone(dlg) {
+	_handleAddTotpVerifyDone(dlg) {
 		if (dlg != this._addDialogue)
 			return;
 		this._totpVerifyRunning = false;
 		dlg.close();
 	}
 
-	_handleAddTotpFail(dlg, xhr) {
+	_handleAddTotpVerifyFail(dlg, xhr) {
 		if (dlg != this._addDialogue)
 			return;
 		this._totpVerifyRunning = false;
@@ -296,6 +299,8 @@ class MyAccountMfaForm {
 			} else {
 				showToast(i18next.t('unexpected_error'));
 			}
+		} else if (xhr.status == 404) {
+			this._showErrorCard(dlg, 'mfa-add-verify-max-card');
 		} else {
 			showToast(i18next.t('unexpected_error'));
 		}

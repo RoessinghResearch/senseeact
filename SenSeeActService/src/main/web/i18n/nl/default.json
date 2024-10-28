@@ -66,6 +66,7 @@
 	"mfa_error_sms_already_exists": "U heeft al sms-verificatie toegevoegd met dit telefoonnummer.",
 	"mfa_error_add_max": "U heeft het maximale aantal pogingen bereikt om een verificatiemethode toe te voegen. U kunt het later nog eens proberen.",
 	"mfa_error_verify_max": "U heeft het maximale aantal pogingen bereikt om een code te controleren. U kunt het later nog eens proberen.",
+	"mfa_error_add_verify_max": "U heeft te vaak een verkeerde code ingevoerd.",
 	"first_name": "Voornaam",
 	"last_name": "Achternaam",
 	"download": "Downloaden",

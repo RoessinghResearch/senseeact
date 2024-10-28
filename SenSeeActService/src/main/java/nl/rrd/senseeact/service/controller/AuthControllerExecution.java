@@ -64,6 +64,7 @@ public class AuthControllerExecution {
 
 	private static final int MAX_MFA_SMS_COUNT = 2;
 	private static final int MAX_MFA_TOTP_COUNT = 1;
+	private static final int MAX_MFA_ADD_VERIFY = 5;
 	private static final int MAX_MFA_ADD_COUNT = 10;
 	private static final int MAX_MFA_ADD_MINUTES = 60;
 	private static final int MAX_MFA_VERIFY_COUNT = 10;
@@ -1075,6 +1076,8 @@ public class AuthControllerExecution {
 			HttpServletResponse response, Database authDb, User user,
 			AuthDetails authDetails, VerifyMfaParams params)
 			throws HttpException, Exception {
+		Logger logger = AppComponents.getLogger(getClass().getSimpleName());
+		ZonedDateTime now = DateTimeUtils.nowMs();
 		cleanMfaRecords(authDb, user);
 		validateVerifyMfaParams(params);
 		String mfaId = params.getMfaId();
@@ -1089,14 +1092,16 @@ public class AuthControllerExecution {
 					authDetails, mfaId, record.toPublicMfaRecord());
 		}
 		checkMaxMfaVerifyCount(record);
+		record.getVerifyTimes().add(now);
+		UserCache cache = UserCache.getInstance();
+		cache.updateUser(authDb, user);
 		String type = record.getType();
 		MfaRecord result;
-		if (type.equals(MfaRecord.Constants.TYPE_SMS)) {
-			result = verifyAddMfaRecordSms(record, code, authDb, user);
-		} else if (type.equals(MfaRecord.Constants.TYPE_TOTP)) {
+		if (type.equals(MfaRecord.Constants.TYPE_TOTP)) {
 			result = verifyAddMfaRecordTotp(record, code, authDb, user);
+		} else if (type.equals(MfaRecord.Constants.TYPE_SMS)) {
+			result = verifyAddMfaRecordSms(record, code, authDb, user);
 		} else {
-			Logger logger = AppComponents.getLogger(getClass().getSimpleName());
 			logger.error("MFA type not supported: " + type);
 			throw new InternalServerErrorException();
 		}
@@ -1139,7 +1144,8 @@ public class AuthControllerExecution {
 		boolean verifyResult = twilioTotpVerificationCheck(user, factorSid,
 				code);
 		if (!verifyResult) {
-			record.setStatus(PrivateMfaRecord.Status.VERIFY_FAIL);
+			if (record.getVerifyTimes().size() > MAX_MFA_ADD_VERIFY)
+				record.setStatus(PrivateMfaRecord.Status.VERIFY_FAIL);
 			record.setPublicData(new LinkedHashMap<>());
 			cache.updateUser(authDb, user);
 			HttpFieldError error = new HttpFieldError("code",
@@ -1171,7 +1177,8 @@ public class AuthControllerExecution {
 		checkExistingMfaSms(user, phone);
 		boolean verifyResult = twilioSmsVerificationCheck(phone, code);
 		if (!verifyResult) {
-			record.setStatus(PrivateMfaRecord.Status.VERIFY_FAIL);
+			if (record.getVerifyTimes().size() > MAX_MFA_ADD_VERIFY)
+				record.setStatus(PrivateMfaRecord.Status.VERIFY_FAIL);
 			record.setPublicData(new LinkedHashMap<>());
 			cache.updateUser(authDb, user);
 			HttpFieldError error = new HttpFieldError("code",

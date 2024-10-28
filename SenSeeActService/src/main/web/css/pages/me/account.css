@@ -155,10 +155,10 @@
 	text-align: center;
 }
 
-#mfa-totp-max-card .dialogue-text {
+.error-card-text {
 	margin-top: 12px;
 }
 
-#mfa-totp-max-card .dialogue-text:first-child {
+.error-card-text:first-child {
 	margin-top: 0px;
 }

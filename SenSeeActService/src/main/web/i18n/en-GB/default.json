@@ -66,6 +66,7 @@
 	"mfa_error_sms_already_exists": "You have already added SMS verification with this phone number.",
 	"mfa_error_add_max": "You have reached the maximum number of attempts to add a verification method. You can try it again later.",
 	"mfa_error_verify_max": "You have reached the maximum number of attempts to verify a code. You can try it again later.",
+	"mfa_error_add_verify_max": "You have entered a wrong code too many times.",
 	"first_name": "First name",
 	"last_name": "Last name",
 	"download": "Download",
