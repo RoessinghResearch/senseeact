@@ -626,7 +626,7 @@ public class AuthControllerExecution {
 		Logger logger = AppComponents.getLogger(getClass().getSimpleName());
 		logger.info("User {} logged in as: userid: {}, email: {}",
 				user.getUserid(), asUser.getUserid(), asUser.getEmail());
-		PrivateMfaRecord mfaRecord = user.findDefaultMfaRecord();
+		PrivateMfaRecord mfaRecord = asUser.findDefaultMfaRecord();
 		String mfaId = mfaRecord == null ? null : mfaRecord.getId();
 		String token = AuthToken.createToken(version, asUser, false, mfaId, now,
 				LoginParams.DEFAULT_EXPIRATION, false, false, null);
