@@ -155,6 +155,52 @@
 	text-align: center;
 }
 
+#mfa-add-button {
+	display: none;
+}
+
+.mfa-record {
+	display: flex;
+	border-top: 0.5px solid #bfbfbf;
+	padding-top: 4px;
+	margin-bottom: 8px;
+}
+
+.mfa-record:last-child {
+	border-bottom: 0.5px solid #bfbfbf;
+	padding-bottom: 4px;
+	margin-bottom: 16px;
+}
+
+.mfa-record-content {
+	flex-grow: 1;
+}
+
+.mfa-record-date {
+	font-weight: 300;
+	color: #7f7f7f;
+	font-size: 14px;
+	margin-top: 2px;
+}
+
+.mfa-record-buttons {
+	margin-top: 4px;
+}
+
+.mfa-record .icon {
+	border-radius: 0px;
+	width: 20px;
+	height: 20px;
+	mask-size: 20px 20px;
+	-webkit-mask-size: 20px 20px;
+	background-color: #373844;
+	cursor: pointer;
+}
+
+.mfa-record .icon:focus {
+	background-color: #0000ff;
+}
+
 .error-card-text {
 	margin-top: 12px;
 }

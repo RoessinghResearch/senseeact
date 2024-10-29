@@ -14,8 +14,34 @@ class MyAccountMfaForm {
 		this._addDialogue = null;
 		$('#mfa-title').text(i18next.t('mfa_title'));
 		$('#mfa-intro').text(i18next.t('mfa_intro'));
+		let url = servicePath + '/auth/mfa/list';
+		$.ajax({
+			url: url
+		})
+		.done((result) => {
+			self._onGetMfaListDone(result);
+		})
+		.fail((xhr, status, error) => {
+			showToast(i18next.t('unexpected_error'));
+		});
+	}
+
+	_onGetMfaListDone(records) {
+		var self = this;
+		let form = $('#mfa-form-content');
+		let waitCircle = form.find('.wait-circle');
+		waitCircle.hide();
+		for (let i = 0; i < records.length; i++) {
+			let record = records[i];
+			if (record.type == 'totp')
+				this._showTotpRecord(record);
+			else if (record.type == 'sms')
+				this._showSmsRecord(record);
+		}
 		let button = $('#mfa-add-button');
 		button.text(i18next.t('enable'));
+		button.show();
+		form.append(button);
 		animator.addAnimatedClickHandler(button, button,
 			'animate-blue-button-click',
 			null,
@@ -23,6 +49,38 @@ class MyAccountMfaForm {
 				self._onAddClick();
 			}
 		);
+	}
+
+	_showTotpRecord(record) {
+		let container = $('#mfa-records-list');
+		let date = luxon.DateTime.fromISO(record.created);
+		let recordDiv = $('<div></div>');
+		recordDiv.addClass('mfa-record');
+		container.append(recordDiv);
+		let contentDiv = $('<div></div>');
+		contentDiv.addClass('mfa-record-content');
+		recordDiv.append(contentDiv);
+		let titleDiv = $('<div></div>');
+		titleDiv.addClass('mfa-record-title');
+		titleDiv.text(i18next.t('authenticator_app'));
+		contentDiv.append(titleDiv);
+		let dateDiv = $('<div></div>');
+		dateDiv.addClass('mfa-record-date');
+		contentDiv.append(dateDiv);
+		dateDiv.text(date.toLocaleString(luxon.DateTime.DATE_FULL));
+		let buttonsDiv = $('<div></div>');
+		buttonsDiv.addClass('mfa-record-buttons');
+		let button = $('<button></button>');
+		button.addClass('icon');
+		let icon = basePath + '/images/icon_trash_can.svg';
+		let iconUrl = "url('" + icon + "')";
+		button.css('mask-image', iconUrl);
+		button.css('-webkit-mask-image', iconUrl);
+		buttonsDiv.append(button);
+		recordDiv.append(buttonsDiv);
+	}
+
+	_showSmsRecord(record) {
 	}
 
 	_onAddClick() {
