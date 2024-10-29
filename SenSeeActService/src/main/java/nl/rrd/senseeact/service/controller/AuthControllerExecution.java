@@ -1141,7 +1141,7 @@ public class AuthControllerExecution {
 		}
 		String factorSid = (String)record.getPrivateData().get(
 				PrivateMfaRecord.Constants.KEY_TOTP_FACTOR_SID);
-		boolean verifyResult = twilioTotpVerificationCheck(user, factorSid,
+		boolean verifyResult = twilioAddTotpVerificationCheck(user, factorSid,
 				code);
 		if (!verifyResult) {
 			if (record.getVerifyTimes().size() > MAX_MFA_ADD_VERIFY)
@@ -1235,7 +1235,7 @@ public class AuthControllerExecution {
 		public String bindingUri;
 	}
 
-	private boolean twilioTotpVerificationCheck(User user, String factorSid,
+	private boolean twilioAddTotpVerificationCheck(User user, String factorSid,
 			String code) throws HttpClientException, ParseException,
 			IOException {
 		Configuration config = AppComponents.get(Configuration.class);
@@ -1257,6 +1257,31 @@ public class AuthControllerExecution {
 			throw new ParseException("Unexpected verify response");
 		}
 		return "verified".equals(status);
+	}
+
+	private boolean twilioTotpChallengeCheck(User user, String factorSid,
+			String code) throws HttpClientException, ParseException,
+			IOException {
+		Configuration config = AppComponents.get(Configuration.class);
+		String serviceSid = config.get(Configuration.TWILIO_VERIFY_SERVICE_SID);
+		String url = String.format(
+				"https://verify.twilio.com/v2/Services/%s/Entities/%s/Challenges",
+				serviceSid, user.getUserid());
+		Map<String,String> params = new LinkedHashMap<>();
+		params.put("AuthPayload", code);
+		params.put("FactorSid", factorSid);
+		Map<String,Object> response;
+		try (HttpClient2 httpClient = new HttpClient2(url)) {
+			addTwilioAuthHeader(httpClient);
+			response = httpClient.setMethod("POST")
+					.writePostParams(params)
+					.readJson(new TypeReference<>() {});
+		}
+		Object status = response.get("status");
+		if (!(status instanceof String)) {
+			throw new ParseException("Unexpected verify response");
+		}
+		return "approved".equals(status);
 	}
 
 	private boolean twilioRequestSmsVerification(String phone)
@@ -1475,7 +1500,7 @@ public class AuthControllerExecution {
 			String code) throws HttpException, Exception {
 		String factorSid = (String)record.getPrivateData().get(
 				PrivateMfaRecord.Constants.KEY_TOTP_FACTOR_SID);
-		return twilioTotpVerificationCheck(user, factorSid, code);
+		return twilioTotpChallengeCheck(user, factorSid, code);
 	}
 
 	private boolean verifyMfaCodeSms(PrivateMfaRecord record, String code)
