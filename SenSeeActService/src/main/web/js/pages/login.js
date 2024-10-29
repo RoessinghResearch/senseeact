@@ -4,6 +4,7 @@ class LoginPage {
 	 *
 	 * - _emailEdit (IconTextEdit)
 	 * - _passwordEdit (IconTextEdit)
+	 * - _mfaVerifyCodeEdit (NumCodeEdit)
 	 * - _button (jQuery element)
 	 * - _error (jQuery element)
 	 */
@@ -29,6 +30,10 @@ class LoginPage {
 		passwordEdit.icon = basePath + '/images/icon_password.svg';
 		passwordEdit.render();
 		passwordEdit.textInput.attr('type', 'password');
+
+		let mfaVerifyCodeEdit = new NumCodeEdit($('#mfa-verify-code-edit'));
+		this._mfaVerifyCodeEdit = mfaVerifyCodeEdit;
+		mfaVerifyCodeEdit.render();
 		
 		let error = $('#login-error');
 		this._error = error;
@@ -81,7 +86,10 @@ class LoginPage {
 	}
 
 	_onLoginDone(clickId, result) {
-		animator.onAnimatedClickHandlerCompleted(clickId, null);
+		animator.onAnimatedClickHandlerCompleted(clickId, {
+			success: true,
+			result: result
+		});
 	}
 
 	_onLoginFail(clickId, xhr, status, error) {
@@ -96,18 +104,119 @@ class LoginPage {
 				message = 'account_blocked';
 			}
 		}
-		animator.onAnimatedClickHandlerCompleted(clickId, message);
+		animator.onAnimatedClickHandlerCompleted(clickId, {
+			success: false,
+			error: message
+		});
 	}
 
-	_onLoginCompleted(error) {
-		if (error == 'unexpected_error') {
+	_onLoginCompleted(result) {
+		if (result.success && result.result.status == 'COMPLETE') {
+			redirectOnLogin();
+		} else if (result.success) {
+			this._showMfaLogin(result.result.mfaRecord);
+		} else if (result.error == 'unexpected_error') {
 			showToast(i18next.t(error));
-		} else if (error) {
+		} else {
 			this._error.text(i18next.t(error))
 			this._error.show();
-		} else {
-			redirectOnLogin();
 		}
+	}
+
+	_showMfaLogin(mfaRecord) {
+		$('#factor1').hide();
+		$('#factor2').show();
+		this._mfaVerifyCodeEdit.focus();
+		let button = this._button;
+		var self = this;
+		let mfaVerifyCodeEdit = this._mfaVerifyCodeEdit;
+		mfaVerifyCodeEdit.onenter((edit, code) => {
+			self._onMfaVerifyCodeEnter(mfaRecord.id, code);
+		});
+		animator.clearAnimatedClickHandler(button);
+		animator.addAnimatedClickHandler(button, button,
+			'animate-blue-button-click',
+			(clickId) => {
+				self._onMfaLoginClick(clickId, mfaRecord.id);
+			},
+			(result) => {
+				self._onMfaLoginClickCallback(result);
+			}
+		);
+	}
+
+	_onMfaVerifyCodeEnter(mfaId, code) {
+		this._runMfaVerify(null, mfaId, code);
+	}
+
+	_onMfaLoginClick(clickId, mfaId) {
+		let codeEdit = this._mfaVerifyCodeEdit;
+		let code = codeEdit.code;
+		if (!code) {
+			animator.onAnimatedClickHandlerCompleted(clickId, {
+				success: false,
+				error: null
+			});
+			return;
+		}
+		this._runMfaVerify(clickId, mfaId, code);
+	}
+
+	_runMfaVerify(clickId, mfaId, code) {
+		var self = this;
+		let url = servicePath + '/auth/mfa/verify';
+		let data = {
+			'mfaId': mfaId,
+			'code': code
+		};
+		$.ajax({
+			method: 'POST',
+			url: url,
+			data: JSON.stringify(data),
+			contentType: 'application/json'
+		})
+		.done((result) => {
+			self._onMfaVerifyDone(clickId);
+		})
+		.fail((xhr, status, error) => {
+			self._onMfaVerifyFail(clickId, xhr);
+		});
+	}
+
+	_onMfaVerifyDone(clickId) {
+		if (clickId) {
+			animator.onAnimatedClickHandlerCompleted(clickId, {
+				success: true
+			});
+		} else {
+			this._handleMfaVerifyDone();
+		}
+	}
+
+	_onMfaVerifyFail(clickId, xhr) {
+		if (clickId) {
+			animator.onAnimatedClickHandlerCompleted(clickId, {
+				success: false,
+				error: xhr
+			});
+		} else {
+			this._handleMfaVerifyFail(xhr);
+		}
+	}
+
+	_onMfaLoginClickCallback(result) {
+		if (result.success)
+			this._handleMfaVerifyDone();
+		else
+			this._handleMfaVerifyFail(result.error);
+	}
+
+	_handleMfaVerifyDone() {
+		redirectOnLogin();
+	}
+
+	_handleMfaVerifyFail(error) {
+		showToast(i18next.t('unexpected_error'));
 	}
 
 	_updateButtonEnabled() {
