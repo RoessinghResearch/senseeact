@@ -10,10 +10,14 @@ class MyAccountMfaForm {
 	 */
 
 	constructor() {
-		var self = this;
 		this._addDialogue = null;
 		$('#mfa-title').text(i18next.t('mfa_title'));
 		$('#mfa-intro').text(i18next.t('mfa_intro'));
+		this._loadRecords();
+	}
+
+	_loadRecords() {
+		var self = this;
 		let url = servicePath + '/auth/mfa/list';
 		$.ajax({
 			url: url
@@ -31,6 +35,8 @@ class MyAccountMfaForm {
 		let form = $('#mfa-form-content');
 		let waitCircle = form.find('.wait-circle');
 		waitCircle.hide();
+		let container = $('#mfa-records-list');
+		container.empty();
 		for (let i = 0; i < records.length; i++) {
 			let record = records[i];
 			if (record.type == 'totp')
@@ -39,9 +45,11 @@ class MyAccountMfaForm {
 				this._showSmsRecord(record);
 		}
 		let button = $('#mfa-add-button');
-		button.text(i18next.t('enable'));
+		if (records.length > 0)
+			button.text(i18next.t('add'));
+		else
+			button.text(i18next.t('enable'));
 		button.show();
-		form.append(button);
 		animator.addAnimatedClickHandler(button, button,
 			'animate-blue-button-click',
 			null,
@@ -53,10 +61,12 @@ class MyAccountMfaForm {
 
 	_showTotpRecord(record) {
 		let container = $('#mfa-records-list');
-		let date = luxon.DateTime.fromISO(record.created);
+		let date = luxon.DateTime.fromISO(record.created)
+			.setLocale(i18next.resolvedLanguage);
 		let recordDiv = $('<div></div>');
 		recordDiv.addClass('mfa-record');
 		container.append(recordDiv);
+
 		let contentDiv = $('<div></div>');
 		contentDiv.addClass('mfa-record-content');
 		recordDiv.append(contentDiv);
@@ -68,19 +78,68 @@ class MyAccountMfaForm {
 		dateDiv.addClass('mfa-record-date');
 		contentDiv.append(dateDiv);
 		dateDiv.text(date.toLocaleString(luxon.DateTime.DATE_FULL));
+
 		let buttonsDiv = $('<div></div>');
 		buttonsDiv.addClass('mfa-record-buttons');
+
 		let button = $('<button></button>');
+		buttonsDiv.append(button);
 		button.addClass('icon');
 		let icon = basePath + '/images/icon_trash_can.svg';
 		let iconUrl = "url('" + icon + "')";
 		button.css('mask-image', iconUrl);
 		button.css('-webkit-mask-image', iconUrl);
-		buttonsDiv.append(button);
+		var self = this;
+		button.on('click', () => {
+			self._onDeleteRecordClick(record);
+		});
 		recordDiv.append(buttonsDiv);
 	}
 
 	_showSmsRecord(record) {
+	}
+
+	_onDeleteRecordClick(record) {
+		var self = this;
+		let dlg = Dialogue.openDialogue();
+		dlg.initMainForm(i18next.t('delete'));
+		dlg.addText(i18next.t('mfa_confirm_delete'));
+		dlg.centralButtons.addButton(i18next.t('yes'),
+			(clickId) => {
+				self._onDeleteRecordYesClick(clickId, record);
+			},
+			(result) => {
+				self._onDeleteRecordYesCallback(result, dlg);
+			});
+		dlg.centralButtons.addButton(i18next.t('no'), null,
+			() => {
+				dlg.close();
+			}
+		);
+	}
+
+	_onDeleteRecordYesClick(clickId, record) {
+		let url = servicePath + '/auth/mfa?id=' + record.id;
+		$.ajax({
+			method: 'DELETE',
+			url: url,
+			mimeType: 'text/plain'
+		})
+		.done(() => {
+			animator.onAnimatedClickHandlerCompleted(clickId, true);
+		})
+		.fail(() => {
+			animator.onAnimatedClickHandlerCompleted(clickId, false);
+		});
+	}
+
+	_onDeleteRecordYesCallback(result, dlg) {
+		if (result) {
+			dlg.close();
+			this._loadRecords();
+		} else {
+			showToast(i18next.t('unexpected_error'));
+		}
 	}
 
 	_onAddClick() {
@@ -339,6 +398,7 @@ class MyAccountMfaForm {
 			return;
 		this._totpVerifyRunning = false;
 		dlg.close();
+		this._loadRecords();
 	}
 
 	_handleAddTotpVerifyFail(dlg, xhr) {

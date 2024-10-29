@@ -162,7 +162,8 @@ class DownloadPage {
 	 */
 	_createActiveDownloadItem(item) {
 		let project = this._findProjectForCode(item.project);
-		let time = luxon.DateTime.fromISO(item.localTime);
+		let time = luxon.DateTime.fromISO(item.localTime)
+			.setLocale(i18next.resolvedLanguage);
 		let dateTimeFormat = i18next.t('date_hour_minute_format');
 		let timeStr = time.toFormat(dateTimeFormat);
 		let itemDiv = $('<div></div>');
