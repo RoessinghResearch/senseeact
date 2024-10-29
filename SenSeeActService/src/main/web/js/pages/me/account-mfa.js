@@ -50,11 +50,12 @@ class MyAccountMfaForm {
 		else
 			button.text(i18next.t('enable'));
 		button.show();
+		animator.clearAnimatedClickHandler(button);
 		animator.addAnimatedClickHandler(button, button,
 			'animate-blue-button-click',
 			null,
-			(result) => {
-				self._onAddClick();
+			() => {
+				self._onAddClick(records);
 			}
 		);
 	}
@@ -85,8 +86,20 @@ class MyAccountMfaForm {
 		let button = $('<button></button>');
 		buttonsDiv.append(button);
 		button.addClass('icon');
-		let icon = basePath + '/images/icon_trash_can.svg';
+		let icon = basePath + '/images/icon_scan_qrcode.svg';
 		let iconUrl = "url('" + icon + "')";
+		button.css('mask-image', iconUrl);
+		button.css('-webkit-mask-image', iconUrl);
+		var self = this;
+		button.on('click', () => {
+			self._onShowQRCodeClick(record);
+		});
+
+		button = $('<button></button>');
+		buttonsDiv.append(button);
+		button.addClass('icon');
+		icon = basePath + '/images/icon_trash_can.svg';
+		iconUrl = "url('" + icon + "')";
 		button.css('mask-image', iconUrl);
 		button.css('-webkit-mask-image', iconUrl);
 		var self = this;
@@ -97,6 +110,25 @@ class MyAccountMfaForm {
 	}
 
 	_showSmsRecord(record) {
+	}
+
+	_onShowQRCodeClick(record) {
+		let dlg = Dialogue.openDialogue();
+		dlg.initMainForm(i18next.t('qr_code'));
+
+		let dlgContent = dlg.dialogueContentDiv;
+		this._addTotpQRCodeInstructions(dlg, dlgContent);
+		let imgBox = $('#mfa-add-totp-qr-box');
+		let img = $('<img></img>');
+		img.attr('src', servicePath + '/auth/mfa/add/totp/qrcode?id=' +
+			record.id);
+		imgBox.append(img);
+
+		dlg.centralButtons.addButton(i18next.t('ok'), null,
+			() => {
+				dlg.close();
+			}
+		);
 	}
 
 	_onDeleteRecordClick(record) {
@@ -142,7 +174,7 @@ class MyAccountMfaForm {
 		}
 	}
 
-	_onAddClick() {
+	_onAddClick(records) {
 		var self = this;
 		let dlg = Dialogue.openDialogue();
 		this._addDialogue = dlg;
@@ -164,7 +196,7 @@ class MyAccountMfaForm {
 		this._continueButton = dlg.rightButtons.addSubmitButton(
 			i18next.t('continue'), null,
 			(result) => {
-				self._onMfaTypeContinueClick(dlg);
+				self._onMfaTypeContinueClick(dlg, records);
 			}
 		);
 	}
@@ -197,21 +229,12 @@ class MyAccountMfaForm {
 		card.addClass('card');
 		card.css('visibility', 'hidden');
 		cardContainer.append(card);
-		let textDiv = dlg.createText(i18next.t(
-			'mfa_add_totp_install_authenticator'));
-		textDiv.addClass('small-text');
-		card.append(textDiv);
-		textDiv = dlg.createText(i18next.t('mfa_add_totp_scan_qr'));
-		textDiv.addClass('small-text');
-		textDiv.css('margin-top', '8px');
-		card.append(textDiv);
-		let imgBox = $('<div></div>');
-		imgBox.attr('id', 'mfa-add-totp-qr-box');
-		card.append(imgBox);
+		this._addTotpQRCodeInstructions(dlg, card);
 		let waitCircle = $('<div></div>');
 		waitCircle.addClass('wait-circle');
+		let imgBox = $('#mfa-add-totp-qr-box');
 		imgBox.append(waitCircle);
-		textDiv = dlg.createText(i18next.t('mfa_add_totp_enter_code'));
+		let textDiv = dlg.createText(i18next.t('mfa_add_totp_enter_code'));
 		textDiv.addClass('small-text');
 		textDiv.css('margin-top', '8px');
 		card.append(textDiv);
@@ -225,6 +248,20 @@ class MyAccountMfaForm {
 		this._totpVerifyRunning = false;
 		numCodeEdit.render();
 		card.append(numCodeEditDiv);
+	}
+
+	_addTotpQRCodeInstructions(dlg, container) {
+		let textDiv = dlg.createText(i18next.t(
+			'mfa_add_totp_install_authenticator'));
+		textDiv.addClass('small-text');
+		container.append(textDiv);
+		textDiv = dlg.createText(i18next.t('mfa_add_totp_scan_qr'));
+		textDiv.addClass('small-text');
+		textDiv.css('margin-top', '8px');
+		container.append(textDiv);
+		let imgBox = $('<div></div>');
+		imgBox.attr('id', 'mfa-add-totp-qr-box');
+		container.append(imgBox);
 	}
 
 	_addErrorCard(dlg, cardContainer, cardId, text) {
@@ -241,21 +278,25 @@ class MyAccountMfaForm {
 		}
 	}
 
-	_onMfaTypeContinueClick(dlg) {
+	_onMfaTypeContinueClick(dlg, records) {
 		let dlgContent = dlg.dialogueContentDiv;
 		let totpRadio = dlgContent.find('#mfatype-totp');
 		if (totpRadio.prop('checked')) {
-			this._onMfaTypeTotpContinueClick(dlg);
+			this._onMfaTypeTotpContinueClick(dlg, records);
 			return;
 		}
 		let smsRadio = dlgContent.find('#mfatype-sms');
 		if (smsRadio.prop('checked')) {
-			this._onMfaTypeSmsContinueClick(dlg);
+			this._onMfaTypeSmsContinueClick(dlg, records);
 			return;
 		}
 	}
 
-	_onMfaTypeTotpContinueClick(dlg) {
+	_onMfaTypeTotpContinueClick(dlg, records) {
+		if (this._countMfaType('totp', records) >= 1) {
+			this._showErrorCard(dlg, 'mfa-totp-max-card');
+			return;
+		}
 		var self = this;
 		let button = this._continueButton;
 		animator.clearAnimatedClickHandler(button);
@@ -286,6 +327,16 @@ class MyAccountMfaForm {
 		.fail((xhr, status, error) => {
 			self._onAddMfaTotpFail(dlg, xhr);
 		});
+	}
+
+	_countMfaType(type, records) {
+		let count = 0;
+		for (let i = 0; i < records.length; i++) {
+			let record = records[i];
+			if (record.type == type)
+				count++;
+		}
+		return count;
 	}
 
 	_onAddMfaTotpDone(dlg, result) {
@@ -442,7 +493,7 @@ class MyAccountMfaForm {
 		return false;
 	}
 
-	_onMfaTypeSmsContinueClick(dlg) {
+	_onMfaTypeSmsContinueClick(dlg, records) {
 
 	}
 
