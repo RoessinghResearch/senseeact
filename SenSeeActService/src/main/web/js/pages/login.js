@@ -116,9 +116,9 @@ class LoginPage {
 		} else if (result.success) {
 			this._showMfaLogin(result.result.mfaRecord);
 		} else if (result.error == 'unexpected_error') {
-			showToast(i18next.t(error));
+			showToast(i18next.t(result.error));
 		} else {
-			this._error.text(i18next.t(error))
+			this._error.text(i18next.t(result.error))
 			this._error.show();
 		}
 	}
