@@ -5,6 +5,7 @@ class LoginPage {
 	 * - _emailEdit (IconTextEdit)
 	 * - _passwordEdit (IconTextEdit)
 	 * - _mfaVerifyCodeEdit (NumCodeEdit)
+	 * - _mfaVerifyRunning (boolean)
 	 * - _button (jQuery element)
 	 * - _error (jQuery element)
 	 */
@@ -34,6 +35,7 @@ class LoginPage {
 		let mfaVerifyCodeEdit = new NumCodeEdit($('#mfa-verify-code-edit'));
 		this._mfaVerifyCodeEdit = mfaVerifyCodeEdit;
 		mfaVerifyCodeEdit.render();
+		this._mfaVerifyRunning = false;
 		
 		let error = $('#login-error');
 		this._error = error;
@@ -129,6 +131,8 @@ class LoginPage {
 		this._mfaVerifyCodeEdit.focus();
 		let button = this._button;
 		var self = this;
+		let textDiv = $('#mfa-verify-code-text');
+		textDiv.text(i18next.t('mfa_verify_' + mfaRecord.type + '_instruct'));
 		let mfaVerifyCodeEdit = this._mfaVerifyCodeEdit;
 		mfaVerifyCodeEdit.onenter((edit, code) => {
 			self._onMfaVerifyCodeEnter(mfaRecord.id, code);
@@ -154,8 +158,8 @@ class LoginPage {
 		let code = codeEdit.code;
 		if (!code) {
 			animator.onAnimatedClickHandlerCompleted(clickId, {
-				success: false,
-				error: null
+				status: 'error',
+				error: 'invalid_code'
 			});
 			return;
 		}
@@ -163,6 +167,17 @@ class LoginPage {
 	}
 
 	_runMfaVerify(clickId, mfaId, code) {
+		if (this._mfaVerifyRunning) {
+			if (clickId) {
+				animator.onAnimatedClickHandlerCompleted(clickId, {
+					status: 'cancelled',
+				});
+			}
+			return;
+		}
+		this._error.hide();
+		this._mfaVerifyCodeEdit.hideError();
+		this._mfaVerifyRunning = true;
 		var self = this;
 		let url = servicePath + '/auth/mfa/verify';
 		let data = {
@@ -184,9 +199,10 @@ class LoginPage {
 	}
 
 	_onMfaVerifyDone(clickId) {
+		this._mfaVerifyRunning = false;
 		if (clickId) {
 			animator.onAnimatedClickHandlerCompleted(clickId, {
-				success: true
+				status: 'success'
 			});
 		} else {
 			this._handleMfaVerifyDone();
@@ -194,9 +210,10 @@ class LoginPage {
 	}
 
 	_onMfaVerifyFail(clickId, xhr) {
+		this._mfaVerifyRunning = false;
 		if (clickId) {
 			animator.onAnimatedClickHandlerCompleted(clickId, {
-				success: false,
+				status: 'error',
 				error: xhr
 			});
 		} else {
@@ -205,9 +222,9 @@ class LoginPage {
 	}
 
 	_onMfaLoginClickCallback(result) {
-		if (result.success)
+		if (result.status == 'success')
 			this._handleMfaVerifyDone();
-		else
+		else if (result.status == 'error')
 			this._handleMfaVerifyFail(result.error);
 	}
 
@@ -216,7 +233,16 @@ class LoginPage {
 	}
 
 	_handleMfaVerifyFail(error) {
-		showToast(i18next.t('unexpected_error'));
+		let client = new SenSeeActClient();
+		if (error == 'invalid_code' || client.hasInvalidInputField(error,
+				'code')) {
+			this._mfaVerifyCodeEdit.showError();
+		} else if (client.hasErrorCode('AUTH_MFA_VERIFY_MAX')) {
+			this._error.show();
+			this._error.text(i18next.t('mfa_error_verify_max'));
+		} else {
+			showToast(i18next.t('unexpected_error'));
+		}
 	}
 
 	_updateButtonEnabled() {

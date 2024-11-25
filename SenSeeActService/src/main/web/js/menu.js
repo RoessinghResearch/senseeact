@@ -85,7 +85,8 @@ class MenuController {
 	}
 
 	_createLogoutItem() {
-		let item = this._createMenuItem('logout', i18next.t('log_out'));
+		let container = this._createMenuItem('logout', i18next.t('log_out'));
+		let item = container.find('.menu-item');
 		var self = this;
 		animator.addAnimatedClickHandler(item, item,
 			'animate-menu-item-click',
@@ -96,7 +97,7 @@ class MenuController {
 				self._onLogoutCompleted(result);
 			}
 		);
-		return item;
+		return container;
 	}
 
 	showSidebar() {
@@ -164,6 +165,7 @@ class MenuController {
 	_onLogoutClick(clickId) {
 		let client = new SenSeeActClient();
 		var self = this;
+		animator.onAnimatedClickHandlerCompleted(clickId, true);
 		client.logout()
 			.done(function(result) {
 				self._onLogoutDone(clickId, result);

@@ -456,12 +456,13 @@ class MyAccountMfaForm {
 		if (dlg != this._addDialogue)
 			return;
 		this._totpVerifyRunning = false;
+		let client = new SenSeeActClient();
 		if (xhr.status == 400 && xhr.responseJSON) {
 			if (xhr.responseJSON.code == 'AUTH_MFA_TYPE_MAX') {
 				this._showErrorCard(dlg, 'mfa-totp-max-card');
 			} else if (xhr.responseJSON.code == 'AUTH_MFA_VERIFY_MAX') {
 				showToast(i18next.t('mfa_error_verify_max'));
-			} else if (this._hasXhrFieldError(xhr, 'code')) {
+			} else if (client.hasInvalidInputField(xhr, 'code')) {
 				let codeEdit = this._totpVerifyCodeEdit;
 				codeEdit.showError();
 				codeEdit.focus();
@@ -473,24 +474,6 @@ class MyAccountMfaForm {
 		} else {
 			showToast(i18next.t('unexpected_error'));
 		}
-	}
-
-	_hasXhrFieldError(xhr, field) {
-		if (xhr.status != 400)
-			return false;
-		if (!xhr.responseJSON)
-			return false;
-		if (xhr.responseJSON.code != 'INVALID_INPUT')
-			return false;
-		let fieldErrors = xhr.responseJSON.fieldErrors;
-		if (!Array.isArray(fieldErrors))
-			return false;
-		for (let i = 0; i < fieldErrors.length; i++) {
-			let fieldError = fieldErrors[i];
-			if (fieldError.field == field)
-				return true;
-		}
-		return false;
 	}
 
 	_onMfaTypeSmsContinueClick(dlg, records) {

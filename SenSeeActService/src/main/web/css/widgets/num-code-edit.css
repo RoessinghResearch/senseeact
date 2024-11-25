@@ -7,6 +7,7 @@
 	font-size: 18px;
 	text-align: center;
 	font-family: 'Open Sans', sans-serif;
+	color: #373844;
 }
 
 .num-code-edit input:first-child {
@@ -15,4 +16,5 @@
 
 .num-code-edit.error input {
 	border: 2px solid #be2b2b;
+	color: #be2b2b;
 }

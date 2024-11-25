@@ -73,6 +73,8 @@
 	"mfa_error_verify_max": "U heeft het maximale aantal pogingen bereikt om een code te controleren. U kunt het later nog eens proberen.",
 	"mfa_error_add_verify_max": "U heeft te vaak een verkeerde code ingevoerd.",
 	"mfa_confirm_delete": "Weet u zeker dat u deze verificatie wilt verwijderen?",
+	"mfa_verify_totp_instruct": "Open de authenticator-app op uw telefoon and zoek de verificatiecode op voor SenSeeAct. Voer de code hieronder in.",
+	"mfa_verify_sms_instruct": "We hebben per sms een verificatiecode naar uw telefoonnummer gestuurd. Voer de code hieronder in.",
 	"first_name": "Voornaam",
 	"last_name": "Achternaam",
 	"download": "Downloaden",

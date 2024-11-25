@@ -1,5 +1,11 @@
+#mfa-verify-code-text {
+	text-align: center;
+	margin-top: 16px;
+}
+
 #mfa-verify-code-edit {
 	text-align: center;
+	margin-top: 16px;
 }
 
 #mfa-verify-code-edit input {
@@ -9,6 +15,11 @@
 	font-size: 20px;
 	font-weight: 600;
 	color: #5298b2;
+}
+
+#mfa-verify-code-edit.error input {
+	border: 2px solid #be2b2b;
+	color: #be2b2b;
 }
 
 #factor2 {
