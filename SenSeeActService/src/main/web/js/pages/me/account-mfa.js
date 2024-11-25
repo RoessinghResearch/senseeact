@@ -215,12 +215,12 @@ class MyAccountMfaForm {
 		textDiv = dlg.createText(i18next.t('mfatype_totp_explanation'));
 		textDiv.addClass('radio-explanation');
 		card.append(textDiv);
-		radio = dlg.createRadioInput('mfatype-sms', 'mfatype',
-			i18next.t('sms'), false);
-		card.append(radio.fieldDiv);
-		textDiv = dlg.createText(i18next.t('mfatype_sms_explanation'));
-		textDiv.addClass('radio-explanation');
-		card.append(textDiv);
+		// radio = dlg.createRadioInput('mfatype-sms', 'mfatype',
+		// 	i18next.t('sms'), false);
+		// card.append(radio.fieldDiv);
+		// textDiv = dlg.createText(i18next.t('mfatype_sms_explanation'));
+		// textDiv.addClass('radio-explanation');
+		// card.append(textDiv);
 	}
 
 	_addMfaTypeTotpCard(dlg, cardContainer) {
