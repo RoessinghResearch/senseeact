@@ -25,7 +25,7 @@ dependencies {
 	testImplementation 'junit:junit:4.13.2'
 	runtimeOnly 'ch.qos.logback:logback-classic:1.5.12'
 	testRuntimeOnly 'org.slf4j:slf4j-simple:2.0.16'
-	providedRuntime 'org.springframework.boot:spring-boot-starter-tomcat:3.3.5'
+	providedRuntime 'org.springframework.boot:spring-boot-starter-tomcat:3.4.0'
 }
 
 configurations.testRuntimeOnly.exclude group: 'ch.qos.logback', module: 'logback-classic'
