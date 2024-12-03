@@ -13,6 +13,7 @@ import nl.rrd.senseeact.client.project.BaseProject;
 import nl.rrd.senseeact.client.project.ProjectRepository;
 import nl.rrd.senseeact.dao.*;
 import nl.rrd.senseeact.service.PermissionManager;
+import nl.rrd.senseeact.service.PermissionRepository;
 import nl.rrd.senseeact.service.ProtocolVersion;
 import nl.rrd.senseeact.service.UserListenerRepository;
 import nl.rrd.senseeact.service.exception.BadRequestException;
@@ -384,7 +385,9 @@ public class AccessControllerExecution {
 
 	private void validatePermission(String permission)
 			throws BadRequestException {
-		if (!PermissionRecord.PERMISSIONS.contains(permission)) {
+		PermissionRepository permRepo = AppComponents.get(
+				PermissionRepository.class);
+		if (!permRepo.getPermissionNames().contains(permission)) {
 			HttpFieldError error = new HttpFieldError("permission",
 					"Unknown permission: " + permission);
 			throw BadRequestException.withInvalidInput(error);

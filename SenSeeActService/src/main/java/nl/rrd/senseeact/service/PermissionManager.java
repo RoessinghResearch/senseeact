@@ -66,20 +66,6 @@ public class PermissionManager {
 		}
 	}
 
-	public List<PermissionRecord> getPermissions(Database authDb, String user,
-			String permission) throws DatabaseException {
-		synchronized (LOCK) {
-			DatabaseCriteria criteria = new DatabaseCriteria.And(
-					new DatabaseCriteria.Equal("user", user),
-					new DatabaseCriteria.Equal("permission", permission)
-			);
-			DatabaseSort[] sort = new DatabaseSort[] {
-					new DatabaseSort("id", true)
-			};
-			return authDb.select(new PermissionTable(), criteria, 0, sort);
-		}
-	}
-
 	public void grant(Database authDb, String user, String permission)
 			throws DatabaseException {
 		grant(authDb, user, permission, null);

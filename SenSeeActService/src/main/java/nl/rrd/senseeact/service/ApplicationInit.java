@@ -178,6 +178,10 @@ public abstract class ApplicationInit {
 	protected abstract ProjectUserAccessControlRepository
 	createProjectUserAccessControlRepository();
 
+	protected PermissionRepository createPermissionRepository() {
+		return new PermissionRepository();
+	}
+
 	protected abstract MobileAppRepository createMobileAppRepository();
 
 	protected abstract DataExporterFactory createDataExporterFactory();
