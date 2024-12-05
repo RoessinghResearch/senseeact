@@ -64,6 +64,8 @@ public abstract class ApplicationInit {
 				ProjectUserAccessControlRepository.class) == null) {
 			components.addComponent(createProjectUserAccessControlRepository());
 		}
+		if (components.findComponent(PermissionRepository.class) == null)
+			components.addComponent(createPermissionRepository());
 		if (components.findComponent(MobileAppRepository.class) == null)
 			components.addComponent(createMobileAppRepository());
 		if (components.findComponent(DataExporterFactory.class) == null)
