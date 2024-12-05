@@ -964,8 +964,7 @@ public class ProjectControllerExecution {
 		permParams.put("project", project);
 		permParams.put("table", table);
 		permMgr.checkPermission(authDb, user.getUserid(),
-				PermissionRecord.PERMISSION_WRITE_RESOURCE_TABLE,
-				permParams);
+				PermissionName.PERMISSION_WRITE_RESOURCE_TABLE, permParams);
 	}
 
 	/**

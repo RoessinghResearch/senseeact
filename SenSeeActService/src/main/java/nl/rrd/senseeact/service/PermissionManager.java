@@ -6,8 +6,10 @@ import nl.rrd.senseeact.dao.DatabaseCriteria;
 import nl.rrd.senseeact.dao.DatabaseSort;
 import nl.rrd.senseeact.service.exception.ForbiddenException;
 import nl.rrd.senseeact.service.model.PermissionTable;
+import nl.rrd.utils.AppComponents;
 import nl.rrd.utils.exception.DatabaseException;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,18 +41,98 @@ public class PermissionManager {
 		}
 	}
 
+	public void checkPermission(String permission, Map<String,Object> params,
+			List<PermissionRecord> records) throws ForbiddenException {
+		if (params == null)
+			params = new LinkedHashMap<>();
+		if (!hasPermission(permission, params, records)) {
+			throw new ForbiddenException(String.format(
+					"Required permission \"%s\" not found", permission));
+		}
+	}
+
 	public boolean hasPermission(Database authDb, String user,
 			String permission, Map<String,Object> params)
 			throws DatabaseException {
 		synchronized (LOCK) {
 			List<PermissionRecord> records = findPermissions(authDb, user,
-					permission);
-			for (PermissionRecord record : records) {
-				if (matchesParams(params, record.getParamsMap()))
-					return true;
-			}
-			return false;
+					null);
+			return hasPermission(permission, params, records);
 		}
+	}
+
+	public boolean hasPermission(String permission, Map<String,Object> params,
+			List<PermissionRecord> records) {
+		PermissionRecord required = new PermissionRecord();
+		required.setPermission(permission);
+		required.setParamsMap(params);
+		List<PermissionRecord> requiredAtomicList = getAtomicPermissions(
+				required);
+		List<PermissionRecord> availableAtomicList = new ArrayList<>();
+		for (PermissionRecord record : records) {
+			availableAtomicList.addAll(getAtomicPermissions(record));
+		}
+		for (PermissionRecord requiredAtomic : requiredAtomicList) {
+			if (!hasAtomicPermission(requiredAtomic, availableAtomicList))
+				return false;
+		}
+		return true;
+	}
+
+	private boolean hasAtomicPermission(PermissionRecord required,
+			List<PermissionRecord> availableList) {
+		for (PermissionRecord available : availableList) {
+			if (matchesPermission(required, available))
+				return true;
+		}
+		return false;
+	}
+
+	private boolean matchesPermission(PermissionRecord required,
+			PermissionRecord available) {
+		if (!required.getPermission().equals(available.getPermission()))
+			return false;
+		Map<String,Object> requiredParams = required.getParamsMap();
+		Map<String,Object> availableParams = available.getParamsMap();
+		for (String requiredKey : requiredParams.keySet()) {
+			if (!availableParams.containsKey(requiredKey))
+				return false;
+			Object requiredValue = requiredParams.get(requiredKey);
+			Object availableValue = availableParams.get(requiredKey);
+			if (!matchesValue(requiredValue, availableValue))
+				return false;
+		}
+		return true;
+	}
+
+	private boolean matchesValue(Object requiredValue, Object permissionValue) {
+		if (permissionValue instanceof String permissionStr) {
+			if (permissionStr.equals("*"))
+				return true;
+		}
+		if (requiredValue == null)
+			return permissionValue == null;
+		if (permissionValue == null)
+			return false;
+		return requiredValue.equals(permissionValue);
+	}
+
+	private List<PermissionRecord> getAtomicPermissions(
+			PermissionRecord record) {
+		PermissionRepository permRepo = AppComponents.get(
+				PermissionRepository.class);
+		PermissionType type = permRepo.findPermissionType(
+				record.getPermission());
+		if (type == null)
+			return List.of(record);
+		List<PermissionRecord> children = type.getChildren(record);
+		if (children.isEmpty())
+			return List.of(record);
+		List<PermissionRecord> result = new ArrayList<>();
+		for (PermissionRecord child : children) {
+			result.addAll(getAtomicPermissions(child));
+		}
+		return result;
 	}
 
 	public List<PermissionRecord> getPermissions(Database authDb, String user)
@@ -129,35 +211,14 @@ public class PermissionManager {
 
 	private List<PermissionRecord> findPermissions(Database authDb, String user,
 			String permission) throws DatabaseException {
+		List<DatabaseCriteria> andCriteria = new ArrayList<>();
+		andCriteria.add(new DatabaseCriteria.Equal("user", user));
+		if (permission != null) {
+			andCriteria.add(new DatabaseCriteria.Equal("permission",
+					permission));
+		}
 		DatabaseCriteria criteria = new DatabaseCriteria.And(
-				new DatabaseCriteria.Equal("user", user),
-				new DatabaseCriteria.Equal("permission", permission)
-		);
+				andCriteria.toArray(new DatabaseCriteria[0]));
 		return authDb.select(new PermissionTable(), criteria, 0, null);
-	}
-
-	private boolean matchesParams(Map<String,Object> requiredParams,
-			Map<String,Object> permissionParams) {
-		for (String required : requiredParams.keySet()) {
-			if (!permissionParams.containsKey(required))
-				return false;
-			Object requiredValue = requiredParams.get(required);
-			Object permissionValue = permissionParams.get(required);
-			if (!matchesValue(requiredValue, permissionValue))
-				return false;
-		}
-		return true;
-	}
-
-	private boolean matchesValue(Object requiredValue, Object permissionValue) {
-		if (permissionValue instanceof String permissionStr) {
-			if (permissionStr.equals("*"))
-				return true;
-		}
-		if (requiredValue == null)
-			return permissionValue == null;
-		if (permissionValue == null)
-			return false;
-		return requiredValue.equals(permissionValue);
 	}
 }
