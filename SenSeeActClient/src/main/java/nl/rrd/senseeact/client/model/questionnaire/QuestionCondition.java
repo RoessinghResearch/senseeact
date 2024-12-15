@@ -12,12 +12,12 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import nl.rrd.utils.exception.LineNumberParseException;
 import nl.rrd.utils.exception.ParseException;
-import nl.rrd.utils.expressions.Expression;
-import nl.rrd.utils.expressions.ExpressionParser;
-import nl.rrd.utils.expressions.Token;
-import nl.rrd.utils.expressions.Tokenizer;
+import nl.rrd.utils.expressions.*;
+import nl.rrd.utils.expressions.types.DotExpression;
+import nl.rrd.utils.expressions.types.ValueExpression;
 
 import java.io.IOException;
+import java.util.List;
 
 @JsonSerialize(using=QuestionCondition.ConditionSerializer.class)
 @JsonDeserialize(using=QuestionCondition.ConditionDeserializer.class)
@@ -64,11 +64,20 @@ public abstract class QuestionCondition {
 
 	public static QuestionCondition parse(String condStr)
 			throws ParseException {
+		try {
+			return parseFullCondition(condStr);
+		} catch (ParseException ex) {
+			return parseSimpleCondition(condStr);
+		}
+	}
+
+	private static QuestionCondition parseFullCondition(String condStr)
+			throws ParseException {
 		Tokenizer tokenizer = new Tokenizer(condStr);
 		ExpressionParser exprParser = new ExpressionParser(tokenizer);
 		try {
 			try {
-				return parseCondition(tokenizer, exprParser);
+				return parseFullCondition(tokenizer, exprParser);
 			} catch (LineNumberParseException ex) {
 				throw new ParseException(
 						"Invalid value of attribute \"condition\": " +
@@ -82,7 +91,7 @@ public abstract class QuestionCondition {
 		}
 	}
 
-	private static QuestionCondition parseCondition(Tokenizer tokenizer,
+	private static QuestionCondition parseFullCondition(Tokenizer tokenizer,
 			ExpressionParser exprParser) throws ParseException,
 			IOException {
 		Token token = tokenizer.readToken();
@@ -144,6 +153,57 @@ public abstract class QuestionCondition {
 					token.getText());
 		}
 		return new QuestionCondition.If(expr);
+	}
+
+	private static QuestionCondition parseSimpleCondition(String condStr)
+			throws ParseException {
+		Tokenizer tokenizer = new Tokenizer(condStr);
+		ExpressionParser exprParser = new ExpressionParser(tokenizer);
+		exprParser.getConfig().setAllowSingleEquals(true);
+		try {
+			try {
+				return parseSimpleCondition(tokenizer, exprParser);
+			} catch (LineNumberParseException ex) {
+				throw new ParseException(
+						"Invalid value of attribute \"condition\": " +
+						condStr + ": " + ex.getMessage(), ex);
+			} finally {
+				exprParser.close();
+			}
+		} catch (IOException ex) {
+			throw new RuntimeException("I/O exception in string reader: " +
+					ex.getMessage(), ex);
+		}
+	}
+
+	private static QuestionCondition parseSimpleCondition(Tokenizer tokenizer,
+			ExpressionParser exprParser) throws ParseException,
+			IOException {
+		QuestionCondition.If cond = parseIfCondition(tokenizer, exprParser);
+		cond.expression = addDotValueToVariables(cond.expression);
+		return cond;
+	}
+
+	private static Expression addDotValueToVariables(Expression expr) {
+		if (expr instanceof ValueExpression valueExpr) {
+			Token token = valueExpr.getToken();
+			if (token.getType() != Token.Type.NAME)
+				return expr;
+			ValueExpression operandExpr = new ValueExpression(new Token(
+					Token.Type.NAME, "value", 0, 0, 0, new Value("value")));
+			return new DotExpression(valueExpr, operandExpr);
+		} else if (expr instanceof DotExpression) {
+			return expr;
+		} else {
+			List<Expression> children = expr.getChildren();
+			for (int i = 0; i < children.size(); i++) {
+				Expression child = children.get(i);
+				Expression substitute = addDotValueToVariables(child);
+				if (substitute != child)
+					expr.substituteChild(i, substitute);
+			}
+			return expr;
+		}
 	}
 
 	public static class ConditionSerializer

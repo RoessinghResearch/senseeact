@@ -7,7 +7,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import nl.rrd.utils.AppComponents;
 import nl.rrd.utils.exception.ParseException;
 import nl.rrd.utils.expressions.EvaluationException;
@@ -36,6 +35,7 @@ public abstract class Question {
 
 	private String type;
 	private StringExpression id;
+	private String conditionInput = null;
 	private QuestionCondition condition = null;
 	private String title = null;
 	private String question;
@@ -74,6 +74,28 @@ public abstract class Question {
 	 */
 	public void setId(StringExpression id) {
 		this.id = id;
+	}
+
+	/**
+	 * Returns the condition string as it was entered by the user in the
+	 * questionnaire editor. The parsed version of this string can be obtained
+	 * from {@link #getCondition() getCondition()}.
+	 *
+	 * @return the condition input string
+	 */
+	public String getConditionInput() {
+		return conditionInput;
+	}
+
+	/**
+	 * Sets the condition string as it was entered by the user in the
+	 * questionnaire editor. The parsed version of this string should be set
+	 * with {@link #setConditionInput(String) setConditionInput()}.
+	 *
+	 * @param conditionInput the condition input string
+	 */
+	public void setConditionInput(String conditionInput) {
+		this.conditionInput = conditionInput;
 	}
 
 	/**
@@ -336,6 +358,7 @@ public abstract class Question {
 	private static class XMLHandler extends AbstractSimpleSAXHandler<Question> {
 		private int rootLevel = -1;
 		private SimpleSAXHandler<? extends Question> delegate = null;
+		private String conditionInput = null;
 		private QuestionCondition condition = null;
 		private boolean inCondition = false;
 
@@ -398,6 +421,7 @@ public abstract class Question {
 		public void characters(String ch, List<String> parents)
 				throws ParseException {
 			if (inCondition) {
+				conditionInput = ch.trim();
 				condition = QuestionCondition.parse(ch);
 			} else {
 				delegate.characters(ch, parents);
@@ -415,13 +439,18 @@ public abstract class Question {
 		private void parseCommonAttributes(Attributes atts)
 				throws ParseException {
 			String condStr = atts.getValue("condition");
-			if (condStr != null && !condStr.trim().isEmpty())
+			if (condStr != null)
+				condStr = condStr.trim();
+			if (condStr != null && !condStr.isEmpty()) {
+				conditionInput = condStr;
 				condition = QuestionCondition.parse(condStr);
+			}
 		}
 
 		@Override
 		public Question getObject() {
 			Question result = delegate.getObject();
+			result.conditionInput = conditionInput;
 			result.condition = condition;
 			return result;
 		}
