@@ -35,8 +35,6 @@ public abstract class Question {
 	public static final String TYPE_VAS = "vas";
 
 	private String type;
-	@JsonSerialize(using=StringExpression.PlainSerializer.class)
-	@JsonDeserialize(using=StringExpression.PlainDeserializer.class)
 	private StringExpression id;
 	private QuestionCondition condition = null;
 	private String title = null;
