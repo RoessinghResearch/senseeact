@@ -19,8 +19,13 @@ public class UserInteractionEvent extends UTCSample {
 		PAUSE_FRAGMENT,
 		BACK_PRESSED,
 		BUTTON_CLICK,
+		// based on android.intent.action.BOOT_COMPLETED, which has different semantics in Android 15
+		// https://developer.android.com/reference/android/content/Intent#ACTION_BOOT_COMPLETED
+		// so it may be sent too often
 		STARTUP,
-		SHUTDOWN
+		SHUTDOWN,
+		// Calls to MainActivity.onCreate
+		CREATE_ACTIVITY,
 	}
 
 	@DatabaseField(value=DatabaseType.STRING)
